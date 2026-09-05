@@ -1029,3 +1029,31 @@
   font-size: 18px;
   line-height: 1.32;
 }
+
+.slidev-layout.impeccable-skill-slide .structure-code-shell {
+  height: 560px;
+}
+
+.slidev-layout.impeccable-skill-slide pre.structure-code {
+  height: 512px;
+  font-size: 14px !important;
+  line-height: 1.4 !important;
+}
+
+.structure-code-shell.is-wrapped .structure-code code {
+  width: 100%;
+}
+
+.structure-code-shell.is-wrapped .structure-code-line {
+  min-height: 20px;
+  grid-template-columns: 3.2rem minmax(0, 1fr);
+}
+
+.structure-code-shell.is-wrapped .structure-code-line > span:last-child {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.structure-code-line.table-row {
+  color: #d9edf0;
+}

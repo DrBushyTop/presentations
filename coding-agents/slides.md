@@ -736,6 +736,30 @@ Other skills, models or a good prompt may fit another stack better.
 
 ---
 part: Execution
+class: structure-example-slide impeccable-skill-slide
+---
+
+# The main skill routes visual work into focused playbooks
+
+<ImpeccableSkillExample />
+
+<!--
+The main skill is not one giant prompt telling the model how to make everything
+beautiful. It first loads product and design context, chooses the mode for the
+surface, and routes the request to a narrower playbook.
+
+Walk through the setup, the distinction between refinement and redesign, the
+four surface modes, and the command table. The command names are useful because
+they make the requested intervention explicit. The linked playbooks hold the
+detailed workflow and checks.
+
+This is still one implementation of the idea. The useful pattern is routing a
+broad request into focused instructions with project context and a bounded
+verification pass.
+-->
+
+---
+part: Execution
 ---
 
 # I rarely parallelize inside one project. I do juggle several projects
