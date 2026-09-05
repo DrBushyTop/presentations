@@ -390,7 +390,7 @@
 }
 
 .capability-grid {
-  min-height: 410px;
+  min-height: 485px;
   grid-template-rows: repeat(2, minmax(0, 1fr));
 }
 
@@ -408,6 +408,10 @@
 .slidev-layout.model-routes-slide table th:first-child,
 .slidev-layout.model-routes-slide table td:first-child {
   width: 34%;
+}
+
+.slidev-layout.model-routes-slide tbody td {
+  vertical-align: middle;
 }
 
 .route-cell {
