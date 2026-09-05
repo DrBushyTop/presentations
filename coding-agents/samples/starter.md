@@ -1,5 +1,7 @@
 ---
-theme: ./theme
+theme: zure
+addons:
+  - slidev-addon-shared-mermaid
 title: Presentation title
 titleTemplate: '%s · Zure'
 author: Zure

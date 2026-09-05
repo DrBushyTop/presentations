@@ -925,3 +925,107 @@
     linear-gradient(155deg, transparent 0 72%, rgb(3 127 145 / 7%) 72% 100%),
     var(--z-white);
 }
+
+/* ---------- Impeccable ---------- */
+
+.slidev-layout.impeccable-slide {
+  --uno: px-18 pt-11 pb-18;
+}
+
+.slidev-layout.impeccable-slide h1 {
+  max-width: none;
+  margin-bottom: 0.45em;
+}
+
+.impeccable-grid {
+  display: grid;
+  min-height: 500px;
+  grid-template-columns: 0.78fr 1.45fr;
+  gap: 1.35rem;
+  align-items: stretch;
+}
+
+.impeccable-copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  border-top: 6px solid var(--z-teal);
+  padding: 1.35rem;
+  background: var(--z-grey-100);
+}
+
+.impeccable-copy > p {
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.34;
+}
+
+.impeccable-commands {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.65rem;
+  margin: 1.25rem 0;
+}
+
+.impeccable-commands code {
+  display: flex;
+  min-height: 58px;
+  align-items: center;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--z-grey-200);
+  background: var(--z-white);
+  color: var(--z-teal);
+  font-size: 19px;
+}
+
+.impeccable-commands code:last-child {
+  grid-column: 1 / -1;
+}
+
+.impeccable-shot {
+  display: flex;
+  margin: 0;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.impeccable-shot img {
+  display: block;
+  width: 100%;
+  height: 475px;
+  object-fit: cover;
+  object-position: top;
+  border: 1px solid var(--z-grey-200);
+  box-shadow: 0 12px 28px rgb(26 26 26 / 12%);
+}
+
+.impeccable-shot figcaption {
+  margin-top: 0.45rem;
+  color: var(--z-grey-600);
+  font-size: 13px;
+  line-height: 1.3;
+}
+
+.impeccable-caveat {
+  margin-top: auto;
+  padding: 1rem 1.05rem;
+  border-left: 4px solid var(--z-red);
+  background: var(--z-white);
+  color: var(--z-ink-800);
+}
+
+.impeccable-caveat span {
+  display: block;
+  color: var(--z-red);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.impeccable-caveat p {
+  max-width: none;
+  margin: 0.35rem 0 0;
+  font-size: 18px;
+  line-height: 1.32;
+}

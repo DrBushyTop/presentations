@@ -1,0 +1,24 @@
+.database-cover-art {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+  background:
+    linear-gradient(145deg, rgb(3 127 145 / 10%), transparent 55%),
+    var(--z-grey-100);
+}
+
+.database-ring {
+  position: absolute;
+  left: 50%;
+  width: 70%;
+  height: 24%;
+  transform: translateX(-50%);
+  border: 5px solid var(--z-teal);
+  border-radius: 50%;
+  background: var(--z-white);
+  box-shadow: 0 18px 35px rgb(26 26 26 / 10%);
+}
+
+.database-ring-one { top: 18%; }
+.database-ring-two { top: 38%; border-color: var(--z-red); }
+.database-ring-three { top: 58%; }

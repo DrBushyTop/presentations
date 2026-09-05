@@ -1,5 +1,7 @@
 ---
-theme: ./theme
+theme: zure
+addons:
+  - slidev-addon-shared-mermaid
 title: Do we need Kubernetes?
 titleTemplate: '%s · Zure'
 author: Zure

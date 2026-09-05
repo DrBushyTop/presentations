@@ -1,6 +1,5 @@
 node_modules/
 dist/
-samples/node_modules/
-samples/dist-sample/
+**/dist/
 .render-check/
 .DS_Store

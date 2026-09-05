@@ -1,0 +1,13 @@
+{
+  "name": "slidev-addon-shared-mermaid",
+  "version": "1.0.0",
+  "private": true,
+  "keywords": [
+    "slidev-addon",
+    "slidev",
+    "mermaid"
+  ],
+  "engines": {
+    "slidev": ">=52.0.0"
+  }
+}

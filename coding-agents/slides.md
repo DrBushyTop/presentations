@@ -1,5 +1,7 @@
 ---
-theme: ./theme
+theme: zure
+addons:
+  - slidev-addon-shared-mermaid
 title: How I develop with coding agents
 titleTemplate: '%s · Zure'
 author: Pasi Huuhka

@@ -15,12 +15,13 @@
       {{ $slidev.nav.currentPage }} / {{ $slidev.nav.total }}
     </div>
   </div>
-  <img v-if="showBrand" class="z-brand" src="/assets/zure-logo.svg" alt="Zure" />
+  <img v-if="showBrand" class="z-brand" :src="zureLogo" alt="Zure" />
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useSlideContext } from '@slidev/client'
+import zureLogo from './assets/zure-logo.svg?url'
 
 const { $slidev } = useSlideContext()
 

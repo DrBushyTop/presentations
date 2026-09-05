@@ -1,51 +1,44 @@
-# How I develop with coding agents
+# Zure Slidev presentations
 
-A [Slidev](https://sli.dev) presentation about Pasi Huuhka's human-led
-development workflow with coding agents, using the local Zure theme.
+This repository contains reusable Slidev themes and individual presentations.
 
-## Run
+## Presentations
+
+- `coding-agents/` contains **How I develop with coding agents**.
+- `database-modernization/` contains the initial **Modernizing databases** deck.
+
+Run the coding agents deck:
 
 ```bash
 npm install
 npm run dev
 ```
 
-The presentation opens at `http://localhost:3030`. Presenter mode is available
-at `/presenter/` and the slide overview at `/overview/`.
-
-## Edit the presentation
-
-The slide content and presenter notes are in `slides.md`. Presentation-specific
-layouts are in `style.css`; the reusable theme remains under `theme/`.
-
-The previous AKS and Azure Container Apps workshop is preserved in
-`samples/aks-aca-workshop.md`. It contains more extensive examples of tables,
-code blocks, Mermaid diagrams, click animations, citations, and presenter notes.
-The earlier blank starter is preserved as `samples/starter.md`.
-
-Run the archived sample with:
+Run the database modernization deck:
 
 ```bash
-npm run sample
+npm run dev:database-modernization
 ```
 
-## Export
+Build both decks:
 
 ```bash
-npm run build
-npm run export
-npm run export-pptx
+npm run build:all
 ```
 
-## Theme conventions
+## Shared presentation code
 
-- Use complete-sentence slide titles that state the takeaway.
-- Prefer one exhibit or main idea per slide.
-- Use `.exhibit` or `.exhibit-wide` for two-column content.
-- Use `.col-label`, `.sowhat`, `.note`, and `.cite` for common treatments.
-- Use `part:` in slide frontmatter to update the footer section label.
-- Use `nofooter: true` on full-bleed section and closing slides.
-- Use semantic `--z-*` CSS variables for any presentation-specific styling.
+- `themes/zure/` is the reusable Zure theme. It includes typography, layouts,
+  the footer, branding and shared visual styles.
+- `themes/shared/` is a Slidev addon containing Mermaid configuration and the
+  `<MermaidSteps>` click controller. Add it beside the chosen theme in a deck's
+  headmatter.
 
-The theme source is in `theme/`, the persistent footer is in `global-top.vue`,
-and static images are served from `public/assets/`.
+```yaml
+theme: zure
+addons:
+  - slidev-addon-shared-mermaid
+```
+
+Each presentation keeps its own `slides.md`, `style.css`, components, assets and
+Vite configuration in its directory.

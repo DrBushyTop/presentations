@@ -81,7 +81,7 @@ Palette taken from the zure.com design tokens:
 Typeface is **Inter** (Google Fonts) as the closest freely available substitute
 for Zure's licensed Neue Haas Grotesk.
 
-The deck uses the local **Zure** theme (`theme: ./theme`). Slidev supports one
+The deck uses the shared **Zure** theme (`theme: zure`). Slidev supports one
 theme per deck, so the two requested treatments are variants within that theme:
 light is the default, while `.theme-dark` supplies the black-background token
 set. Existing full-bleed dark slides use `.zdark`, which applies the same dark
