@@ -1,0 +1,20 @@
+{
+  "name": "zure-slidev-presentation",
+  "type": "module",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Zure-styled presentation about a human-led coding-agent workflow",
+  "scripts": {
+    "dev": "slidev --remote=slides --bind 0.0.0.0 --open",
+    "start": "slidev --remote=slides --bind 0.0.0.0",
+    "sample": "slidev samples/aks-aca-workshop.md --open",
+    "build": "slidev build",
+    "export": "slidev export",
+    "export-pptx": "slidev export --format pptx"
+  },
+  "devDependencies": {
+    "@slidev/cli": "^52.19.1",
+    "@slidev/theme-default": "^0.25.0",
+    "playwright-chromium": "^1.50.0"
+  }
+}

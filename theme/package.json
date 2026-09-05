@@ -1,0 +1,26 @@
+{
+  "name": "slidev-theme-zure",
+  "version": "1.0.0",
+  "private": true,
+  "keywords": [
+    "slidev-theme",
+    "slidev"
+  ],
+  "engines": {
+    "slidev": ">=52.0.0"
+  },
+  "slidev": {
+    "colorSchema": "both",
+    "defaults": {
+      "aspectRatio": "16/9",
+      "canvasWidth": 1280,
+      "transition": "none",
+      "fonts": {
+        "provider": "google",
+        "sans": "Inter",
+        "mono": "JetBrains Mono",
+        "weights": "400,600,700"
+      }
+    }
+  }
+}

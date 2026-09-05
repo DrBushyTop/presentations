@@ -1,0 +1,554 @@
+/* Presentation-specific layouts. The reusable Zure system remains in theme/. */
+
+.ceremony-grid,
+.slice-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.4rem;
+}
+
+.ceremony-card,
+.slice-card,
+.capability-card,
+.review-box {
+  border: 1px solid var(--z-grey-200);
+  background: var(--z-white);
+  padding: 1.25rem 1.35rem;
+}
+
+.ceremony-card-accent,
+.review-box-accent {
+  border-top: 5px solid var(--z-red);
+}
+
+.ceremony-card h2,
+.slice-card h2,
+.capability-card h2,
+.review-box h2 {
+  color: var(--z-ink);
+  margin-bottom: 0.55rem;
+}
+
+.ceremony-card p,
+.slice-card p,
+.capability-card p,
+.review-box p {
+  font-size: 20px;
+  line-height: 1.34;
+}
+
+.ceremony-size,
+.slice-number {
+  color: var(--z-red) !important;
+  font-size: 16px !important;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.stack-map {
+  width: 88%;
+  margin: 0 auto;
+}
+
+.stack-layer {
+  display: grid;
+  grid-template-columns: 7rem 14rem 1fr;
+  gap: 1.2rem;
+  align-items: baseline;
+  border: 1px solid var(--z-grey-200);
+  padding: 0.65rem 1rem;
+  background: var(--z-grey-100);
+}
+
+.stack-layer strong {
+  font-size: 22px;
+}
+
+.stack-layer span:last-child {
+  color: var(--z-ink-800);
+  font-size: 18px;
+}
+
+.stack-human {
+  border-left: 5px solid var(--z-red);
+  background: var(--z-white);
+}
+
+.stack-models {
+  border-left: 5px solid var(--z-teal);
+}
+
+.stack-label {
+  color: var(--z-teal);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.stack-connector {
+  height: 1.25rem;
+  color: var(--z-red);
+  font-size: 20px;
+  line-height: 1.25rem;
+  text-align: center;
+}
+
+.stack-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.stack-split .stack-layer {
+  grid-template-columns: 5rem 8rem 1fr;
+}
+
+.capability-grid,
+.principle-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem 1.3rem;
+}
+
+.capability-card {
+  min-height: 148px;
+  padding: 0.85rem 1.1rem;
+}
+
+.capability-card .col-label {
+  margin-bottom: 0.2rem !important;
+}
+
+.capability-card h2 {
+  font-size: 23px;
+  margin-bottom: 0.3rem;
+}
+
+.capability-card p {
+  margin: 0;
+}
+
+.phase-flow {
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  gap: 0.45rem;
+  margin-top: 1.1rem;
+}
+
+.phase-box {
+  display: flex;
+  width: 174px;
+  min-height: 166px;
+  flex-direction: column;
+  justify-content: center;
+  border: 1px solid var(--z-grey-200);
+  padding: 0.75rem;
+  background: var(--z-white);
+  text-align: center;
+}
+
+.phase-box-wide {
+  width: 192px;
+  border-top: 5px solid var(--z-red);
+}
+
+.phase-box span {
+  color: var(--z-red);
+  font-size: 34px;
+  font-weight: 700;
+}
+
+.phase-box strong,
+.phase-box small {
+  display: block;
+}
+
+.phase-box strong {
+  margin: 0.2rem 0 0.45rem;
+  font-size: 20px;
+}
+
+.phase-box small {
+  color: var(--z-grey-600);
+  font-size: 15px;
+  line-height: 1.28;
+}
+
+.phase-arrow,
+.review-arrow,
+.ui-arrow {
+  display: flex;
+  align-items: center;
+  color: var(--z-teal);
+  font-size: 25px;
+  font-weight: 700;
+}
+
+.flow-artifacts {
+  display: grid;
+  grid-template-columns: 174px 174px 192px 174px 174px;
+  justify-content: center;
+  gap: 2.05rem;
+  margin-top: 0.65rem;
+}
+
+.flow-artifacts span {
+  color: var(--z-grey-600);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  text-align: center;
+}
+
+.optional-plan {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  max-width: 890px;
+  border-left: 5px solid var(--z-teal);
+  margin-right: auto;
+  margin-left: auto;
+  padding: 0.65rem 0.9rem;
+  background: var(--z-grey-100);
+}
+
+.optional-plan span {
+  flex: none;
+  color: var(--z-teal);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.optional-plan strong {
+  font-size: 16px;
+}
+
+.slice-card {
+  min-height: 235px;
+}
+
+.slice-card small {
+  display: block;
+  border-top: 1px solid var(--z-grey-200);
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  color: var(--z-teal);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.execution-loop {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.execution-step {
+  min-height: 245px;
+  border-top: 5px solid var(--z-teal);
+  background: var(--z-grey-100);
+  padding: 1.15rem;
+}
+
+.execution-step span,
+.execution-step strong,
+.execution-step small {
+  display: block;
+}
+
+.execution-step span {
+  color: var(--z-red);
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.execution-step strong {
+  margin: 0.7rem 0 1rem;
+  font-size: 22px;
+}
+
+.execution-step small {
+  color: var(--z-ink-800);
+  font-size: 17px;
+  line-height: 1.4;
+}
+
+.review-sequence {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr auto 1fr;
+  gap: 1rem;
+  align-items: stretch;
+}
+
+.review-box {
+  min-height: 220px;
+}
+
+.ui-loop {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr auto 1fr auto 1fr;
+  gap: 0.75rem;
+  align-items: stretch;
+}
+
+.ui-step {
+  min-height: 180px;
+  border: 1px solid var(--z-grey-200);
+  padding: 0.9rem;
+}
+
+.ui-step span,
+.ui-step strong,
+.ui-step small {
+  display: block;
+}
+
+.ui-step span {
+  color: var(--z-red);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.ui-step strong {
+  margin: 0.55rem 0 0.7rem;
+  font-size: 20px;
+}
+
+.ui-step small {
+  color: var(--z-grey-600);
+  font-size: 15px;
+  line-height: 1.35;
+}
+
+.principle-grid > div {
+  display: grid;
+  grid-template-columns: 2.2rem 12rem 1fr;
+  gap: 0.7rem;
+  align-items: baseline;
+  border-bottom: 1px solid var(--z-grey-200);
+  padding: 0.7rem 0;
+}
+
+.principle-grid span {
+  color: var(--z-red);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.principle-grid strong {
+  font-size: 20px;
+}
+
+.principle-grid small {
+  color: var(--z-ink-800);
+  font-size: 16px;
+  line-height: 1.3;
+}
+
+/* Use the full teaching area between the title and the fixed source line. */
+.ceremony-grid,
+.slice-grid {
+  min-height: 340px;
+  align-items: stretch;
+}
+
+.ceremony-card,
+.slice-card,
+.capability-card,
+.review-box {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.stack-map {
+  display: flex;
+  min-height: 440px;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.stack-layer {
+  min-height: 68px;
+}
+
+.capability-grid {
+  min-height: 410px;
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+}
+
+.slidev-layout table {
+  height: 350px;
+  table-layout: fixed;
+}
+
+.slidev-layout table th,
+.slidev-layout table td {
+  padding-top: 0.75em;
+  padding-bottom: 0.75em;
+}
+
+.slidev-layout.model-routes-slide table th:first-child,
+.slidev-layout.model-routes-slide table td:first-child {
+  width: 34%;
+}
+
+.route-cell {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.route-logo {
+  display: grid;
+  place-items: center;
+  flex: 0 0 58px;
+  width: 58px;
+  height: 58px;
+  border: 1px solid var(--z-grey-300);
+  border-radius: 12px;
+  background: var(--z-white);
+}
+
+.route-logo img {
+  display: block;
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+}
+
+.route-logo-foundry img {
+  width: 40px;
+  height: 40px;
+}
+
+.phase-flow {
+  min-height: 270px;
+  margin-top: 0.4rem;
+}
+
+.phase-box {
+  min-height: 270px;
+}
+
+.slidev-layout > h1 + .exhibit {
+  min-height: 360px;
+  align-items: stretch;
+}
+
+.slidev-layout > h1 + .exhibit:has(+ .cite) {
+  min-height: 440px;
+}
+
+.slidev-layout > h1 + .exhibit > div {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.execution-loop {
+  min-height: 360px;
+}
+
+.execution-step {
+  min-height: 360px;
+}
+
+.review-sequence,
+.review-box {
+  min-height: 330px;
+}
+
+.t3-workspace-image {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+.image-only-slide {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: #17212d;
+}
+
+.full-slide-image {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.full-slide-image-contain {
+  object-fit: contain;
+  object-position: center;
+}
+
+.slidev-layout.slice-evidence-loop-slide {
+  --uno: px-18 pt-11 pb-18;
+}
+
+.slidev-layout.slice-evidence-loop-slide h1 {
+  max-width: none;
+  margin-bottom: 0.3em;
+}
+
+.slice-evidence-loop {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.slice-evidence-loop {
+  height: 510px;
+}
+
+.slice-evidence-loop .mermaid {
+  min-height: 0;
+  height: 100%;
+}
+
+.slice-evidence-loop .mermaid svg {
+  width: 100% !important;
+  max-width: 100% !important;
+  height: auto !important;
+  max-height: 500px !important;
+}
+
+.ui-loop,
+.ui-step {
+  min-height: 225px;
+}
+
+.ui-loop + .exhibit {
+  min-height: 150px;
+  align-items: stretch;
+}
+
+.ui-loop + .exhibit > div {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.principle-grid {
+  min-height: 420px;
+  grid-template-rows: repeat(3, minmax(0, 1fr));
+}
+
+.zrefs {
+  display: grid;
+  min-height: 420px;
+  grid-template-rows: repeat(3, minmax(0, 1fr));
+  align-items: center;
+}
