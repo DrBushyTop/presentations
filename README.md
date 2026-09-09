@@ -6,6 +6,8 @@ This repository contains reusable Slidev themes and individual presentations.
 
 - `coding-agents/` contains **How I develop with coding agents**.
 - `database-modernization/` contains the initial **Modernizing databases** deck.
+- `agent-building-blocks/` contains **Skills, tools and agent boundaries**,
+  a six-slide companion on configuration, reusable skills, context and subagents.
 
 Run the coding agents deck:
 
@@ -20,7 +22,13 @@ Run the database modernization deck:
 npm run dev:database-modernization
 ```
 
-Build both decks:
+Run the skills and agent boundaries deck:
+
+```bash
+npm run dev:agent-building-blocks
+```
+
+Build all decks:
 
 ```bash
 npm run build:all
