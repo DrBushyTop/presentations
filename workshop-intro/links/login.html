@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="App modernization MicroHack: setup, sign-in, walkthroughs and practical lab tips.">
+  <title>Log in to the lab · App modernization lab · Zure</title>
+  <link rel="stylesheet" href="styles.css?v=5">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="wrap"><p class="eyebrow">Zure · GitHub Copilot MicroHack</p><div class="masthead"><a class="site-title" href="index.html">App modernization lab</a><a class="portal-link" href="https://emea.microhack.cloud/login">Lab portal ↗</a></div></header>
+<nav class="wrap timeline" aria-label="Workshop steps"><ol><li><a href="index.html"><span class="step-number">1</span><span>Intro</span></a></li><li><a href="install.html"><span class="step-number">2</span><span>Install</span></a></li><li><a href="login.html" aria-current="step"><span class="step-number">3</span><span>Login</span></a></li><li><a href="walkthroughs.html"><span class="step-number">4</span><span>Walkthroughs & tips</span></a></li></ol></nav>
+<main id="main" class="wrap"><h1>Log in to the lab</h1>
+<p class="lead">First open the lab portal. Then use the account details inside it to sign in to GitHub and Azure.</p>
+<section class="portal-banner"><div><h2>1. Open the MicroHack portal</h2><p>Use the portal login credentials you are given. You'll find your lab materials and <strong>Credentials</strong> tab after signing in.</p></div><a class="button" href="https://emea.microhack.cloud/login">emea.microhack.cloud/login ↗</a></section>
+<section><h2>2. Use the accounts in the Credentials tab</h2><figure class="credentials-tab"><figcaption>Select <strong>Credentials</strong> in the lab portal's top navigation. Admin view shown; participants have the same Credentials tab.</figcaption><img src="assets/credentials-tab.png" width="1180" height="116" alt="MicroHack admin-view top navigation showing Dashboard, Challenges, Solutions, Credentials and Timer. Credentials is highlighted in purple." /></figure><p class="small">A separate browser profile or private window helps avoid selecting your personal account.</p><div class="credentials-layout"><figure class="credentials-example"><img src="assets/credentials-example.png" alt="Example MicroHack Credentials tab with Entra ID TAP, Entra ID Username and Github SSO Login User fields. All values are placeholders." /><figcaption>Example values. Use the details in your own Credentials tab.</figcaption></figure><div class="account-grid"><article class="account-card"><h3>GitHub → Entra SSO</h3><p>At <a href="https://github.com/login">github.com</a>, enter <strong>Github SSO Login User</strong>.</p><p>On the Microsoft sign-in page, use <strong>Entra ID Username</strong> and <strong>Entra ID TAP</strong> from the same tab.</p></article><article class="account-card"><h3>Azure</h3><p>At <a href="https://portal.azure.com">portal.azure.com</a>, use your lab <strong>Entra ID Username</strong> and <strong>TAP</strong>.</p><p>Select the lab subscription. Its ID and resource group are in the Credentials tab too.</p></article></div></div></section>
+<details open><summary>3. Sign in to your local tools</summary><p>Use the lab GitHub account in VS Code and Copilot. A browser session may not authenticate every client.</p><div class="grid"><article><h3>GitHub CLI</h3><pre><code>gh auth login
+gh auth status</code></pre><p>Choose GitHub.com and browser login. Then launch <code>modernize</code> and confirm the account.</p></article><article><h3>Copilot CLI</h3><pre><code>copilot</code></pre><p>Use <code>/login</code> inside Copilot and check the displayed account.</p></article><article><h3>Azure CLI</h3><pre><code>az login
+az account show</code></pre><p>Use the lab Entra identity in the Microsoft browser sign-in flow.</p></article></div><p>If needed, select the subscription using the ID from the Credentials tab:</p><pre><code>az account set --subscription &lt;LAB-SUBSCRIPTION-ID&gt;</code></pre><p>If your workflow uses <code>azd</code>, also run <code>azd auth login</code> with the lab Entra identity. A client already showing the right account does not need another sign-in.</p></details>
+<p class="small">The TAP is a Temporary Access Pass for Entra sign-in. Ask a facilitator if it expires. Keep passwords and TAPs out of agent prompts.</p>
+<div class="page-navigation"><a href="install.html">← Install</a><a href="walkthroughs.html">Next: Walkthroughs & tips →</a></div></main>
+<footer class="wrap">Pasi Huuhka · Zure</footer>
+</body></html>

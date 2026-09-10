@@ -1,0 +1,635 @@
+.slidev-layout.lab-slide {
+  padding: 48px 72px 90px;
+}
+
+.lab-slide h1 {
+  max-width: none;
+  margin: 12px 0 28px;
+}
+
+.lab-slide .eyebrow {
+  margin: 0;
+}
+
+.lab-cover {
+  grid-template-columns: 560px 1fr;
+  overflow: hidden;
+}
+
+.lab-cover .zcover-text {
+  width: 560px;
+  box-sizing: border-box;
+  z-index: 1;
+  margin-top: -35px;
+}
+
+.lab-cover .zcover-text h1 {
+  font-size: 49px;
+}
+
+.lab-cover .zcover-sub {
+  font-size: 25px;
+}
+
+.intro-duration {
+  color: var(--z-teal);
+  font-size: 16px;
+  margin-top: 42px;
+}
+
+.lab-cover-art {
+  height: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.lab-cover-art img {
+  height: 100%;
+  width: 100%;
+  object-fit: cover;
+  object-position: 80% center;
+}
+
+.foundation-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 22px;
+}
+
+.foundation-card {
+  padding: 25px 24px 23px;
+  background: var(--z-surface);
+  border-top: 4px solid var(--z-teal);
+}
+
+.artifact-type,
+.foundation-card .artifact-type {
+  display: block;
+  color: var(--z-grey-600);
+  font-size: 17px;
+  margin-bottom: 14px;
+}
+
+.foundation-card h2 {
+  font-size: 25px;
+  color: var(--z-ink);
+}
+
+.file-exhibit {
+  margin: 27px 0 24px;
+  border: 1px solid var(--z-border);
+  background: white;
+  padding: 17px;
+}
+
+.file-exhibit span,
+.file-exhibit code {
+  display: block;
+}
+
+.file-exhibit span {
+  font-size: 16px;
+  color: var(--z-grey-600);
+  margin-bottom: 10px;
+}
+
+.file-exhibit code {
+  font-size: 25px;
+  color: var(--z-teal);
+}
+
+.foundation-card p {
+  font-size: 21px;
+  margin: 0;
+}
+
+.gated-loop {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 30px;
+  padding: 18px 26px;
+  border: 1px solid var(--z-border);
+  font-weight: 600;
+}
+
+.gated-loop b {
+  color: var(--z-teal);
+}
+
+.gated-loop small {
+  flex-basis: 100%;
+  font-size: 18px;
+  color: var(--z-grey-600);
+  font-weight: 400;
+  margin-top: 14px;
+}
+
+.upgrade-map {
+  padding-top: 3px;
+}
+
+.app-pair,
+.pair-connectors,
+.upgrade-results {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 50px;
+}
+
+.app-pair > div {
+  background: var(--z-surface);
+  padding: 19px 26px;
+  border-left: 4px solid var(--z-teal);
+}
+
+.app-pair span,
+.app-pair strong,
+.upgrade-results span,
+.upgrade-results strong {
+  display: block;
+}
+
+.app-pair span {
+  font-size: 18px;
+  margin-bottom: 6px;
+  color: var(--z-grey-600);
+}
+
+.app-pair strong {
+  font-size: 28px;
+}
+
+.pair-connectors span {
+  text-align: center;
+  font-size: 32px;
+  color: var(--z-teal);
+  height: 48px;
+}
+
+.batch-assessment {
+  border: 2px solid var(--z-teal);
+  background: #f1fbfc;
+  padding: 22px 26px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.batch-assessment span {
+  font-size: 21px;
+}
+
+.upgrade-results {
+  margin-top: 24px;
+}
+
+.upgrade-results > div {
+  padding: 16px 26px 19px;
+  border-bottom: 3px solid var(--z-teal);
+  background: var(--z-surface);
+}
+
+.upgrade-results span {
+  font-size: 19px;
+  color: var(--z-teal);
+  margin-bottom: 8px;
+}
+
+.upgrade-results strong {
+  font-size: 28px;
+}
+
+.completion-bar {
+  margin-top: 27px;
+  padding: 19px 25px;
+  background: var(--z-ink);
+  color: white;
+  font-size: 23px;
+}
+
+.deployment-map {
+  display: grid;
+  grid-template-columns: 1fr 78px 1fr;
+  height: 437px;
+}
+
+.plan-exhibit,
+.azure-exhibit {
+  padding: 28px;
+}
+
+.plan-exhibit {
+  display: flex;
+  flex-direction: column;
+  background: var(--z-surface);
+}
+
+.plan-exhibit h2 {
+  color: var(--z-ink);
+  font-size: 30px;
+  max-width: 19ch;
+  margin: 8px 0 23px;
+}
+
+.plan-exhibit p {
+  line-height: 1.7;
+  font-size: 24px;
+}
+
+.plan-review {
+  margin-top: auto;
+  font-size: 20px;
+  border-top: 1px solid var(--z-border);
+  padding-top: 20px;
+}
+
+.deploy-arrow {
+  align-self: center;
+  text-align: center;
+  font-size: 44px;
+  color: var(--z-teal);
+}
+
+.azure-exhibit {
+  border: 2px solid var(--z-teal);
+  background: #f1fbfc;
+}
+
+.azure-exhibit .artifact-type {
+  color: var(--z-teal);
+}
+
+.deployed-app {
+  display: flex;
+  flex-direction: column;
+  background: white;
+  border: 1px solid var(--z-border);
+  padding: 16px 21px;
+  margin-top: 18px;
+}
+
+.deployed-app strong {
+  font-size: 26px;
+}
+
+.deployed-app span {
+  margin-top: 5px;
+  font-size: 18px;
+  color: var(--z-grey-600);
+}
+
+.validation-result {
+  margin-top: 25px;
+  font-size: 22px;
+}
+
+.credentials-slide h1 {
+  margin-bottom: 30px;
+}
+
+.setup-grid {
+  display: grid;
+  grid-template-columns: 560px 1fr;
+  gap: 42px;
+}
+
+.credentials-caption {
+  font-size: 17px;
+  font-weight: 600;
+  margin: 0 0 5px !important;
+}
+
+.credentials-caption span {
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--z-grey-600);
+  float: right;
+}
+
+.credentials-image {
+  width: 560px;
+  height: 280px;
+  object-fit: contain;
+}
+
+.credentials-reminder {
+  margin-top: 27px;
+  border-left: 3px solid var(--z-teal);
+  padding: 15px 20px;
+  font-size: 23px;
+  background: var(--z-surface);
+}
+
+.azure-sign-in {
+  background: #f1fbfc;
+  padding: 22px;
+  border: 1px solid var(--z-teal);
+  margin-top: 16px;
+}
+
+.azure-sign-in h2 {
+  font-size: 23px;
+}
+
+.azure-sign-in p {
+  font-size: 23px;
+  margin: 13px 0;
+}
+
+.azure-sign-in span {
+  display: block;
+  font-size: 18px;
+  color: var(--z-grey-600);
+}
+
+.tools-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 34px;
+}
+
+.install-list {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.install-group {
+  padding: 18px 22px;
+  border-left: 4px solid var(--z-teal);
+  background: var(--z-surface);
+}
+
+.install-group h2 {
+  font-size: 22px;
+  margin-bottom: 12px;
+}
+
+.install-group p {
+  font-size: 21px;
+  line-height: 1.55;
+  margin: 0;
+}
+
+.install-group span {
+  display: block;
+  font-size: 17px;
+  margin-top: 5px;
+  color: var(--z-grey-600);
+}
+
+.install-group code {
+  font-size: 19px;
+}
+
+.client-sign-in {
+  border: 1px solid var(--z-border);
+  padding: 25px;
+}
+
+.client-sign-in h2 {
+  font-size: 23px;
+  margin: 0 0 22px;
+}
+
+.auth-client {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  border-bottom: 1px solid var(--z-border);
+  padding: 15px 0;
+  font-size: 20px;
+}
+
+.auth-client code {
+  font-size: 19px;
+}
+
+.check-account {
+  margin-top: 21px;
+  padding: 18px 19px;
+  background: #f1fbfc;
+}
+
+.check-account strong {
+  font-size: 20px;
+}
+
+.check-account p {
+  font-size: 18px;
+  line-height: 1.65;
+  margin: 13px 0 0;
+}
+
+.check-account code {
+  font-size: 17px;
+}
+
+.azure-auth-client {
+  color: var(--z-teal);
+}
+
+.azure-auth-client strong {
+  color: var(--z-teal);
+}
+
+.sign-in-step {
+  display: flex;
+  gap: 18px;
+  padding: 6px 0 18px;
+}
+
+.step-number {
+  display: flex;
+  width: 39px;
+  height: 39px;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: var(--z-teal);
+  color: white;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.sign-in-step h2 {
+  font-size: 24px;
+  color: var(--z-ink);
+  margin: 0 0 10px;
+}
+
+.sign-in-step p {
+  font-size: 20px;
+  line-height: 1.45;
+  margin: 0;
+}
+
+.walkthrough-rescue {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f1fbfc;
+  border: 2px solid var(--z-teal);
+  padding: 29px 30px;
+}
+
+.walkthrough-rescue p {
+  font-size: 21px;
+  margin: 0;
+}
+
+.short-url {
+  font-size: 40px;
+  color: var(--z-teal);
+  font-weight: 700;
+  letter-spacing: -0.035em;
+}
+
+.fork-rescue {
+  margin-top: 32px;
+}
+
+.fork-rescue h2 {
+  color: var(--z-ink);
+}
+
+.repo-route {
+  display: grid;
+  grid-template-columns: 1fr 40px 1fr 40px 1fr;
+  align-items: center;
+  margin-top: 19px;
+}
+
+.repo-route > div {
+  background: var(--z-surface);
+  padding: 19px 20px;
+}
+
+.repo-route > b {
+  color: var(--z-teal);
+  text-align: center;
+}
+
+.repo-route span {
+  color: var(--z-teal);
+  display: block;
+  font-size: 18px;
+  margin-bottom: 7px;
+}
+
+.repo-route strong,
+.repo-route small {
+  display: block;
+}
+
+.repo-route strong {
+  font-size: 22px;
+}
+
+.repo-route small {
+  font-size: 17px;
+  color: var(--z-grey-600);
+  margin-top: 8px;
+}
+
+.remote-command {
+  background: var(--z-ink);
+  color: white;
+  padding: 20px 26px;
+  margin-top: 23px;
+}
+
+.remote-command > code {
+  font-size: 25px;
+}
+
+.remote-command p {
+  font-size: 18px;
+  margin: 11px 0 0;
+  color: var(--z-grey-200);
+}
+
+.remote-command p code {
+  font-size: 17px;
+}
+
+.policy-context {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px;
+}
+
+.policy-context > div {
+  padding: 20px 25px;
+  background: var(--z-surface);
+  border-left: 4px solid var(--z-teal);
+}
+
+.policy-context .policy-failure {
+  border-color: var(--z-red);
+}
+
+.policy-context span,
+.policy-context strong {
+  display: block;
+}
+
+.policy-context span {
+  font-size: 17px;
+  color: var(--z-grey-600);
+  margin-bottom: 10px;
+}
+
+.policy-context strong {
+  font-size: 24px;
+}
+
+.prompt-exhibit {
+  margin-top: 27px;
+  padding: 23px 28px;
+  border: 2px solid var(--z-teal);
+  background: #f1fbfc;
+}
+
+.prompt-exhibit .artifact-type {
+  color: var(--z-teal);
+}
+
+.prompt-exhibit blockquote {
+  padding: 0;
+  margin: 0;
+  border: none;
+  font-size: 27px;
+  line-height: 1.48;
+  font-style: normal;
+}
+
+.lab-start {
+  margin-top: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.lab-start span {
+  font-size: 20px;
+  color: var(--z-grey-600);
+}
+
+.lab-start strong {
+  font-size: 26px;
+}
+
+.tools-slide .install-list { gap: 12px; }
+.tools-slide .install-group { padding: 14px 20px; }
+.tools-slide .install-group h2 { margin-bottom: 7px; }
+.tools-slide .optional-tools { background: #fff; border: 1px solid var(--z-border); }
+.tools-slide .optional-tools h2 { color: var(--z-grey-600); font-size: 20px; }
+
+.credentials-reminder > strong { font-size: 26px; color: var(--z-teal); }
+.credentials-reminder > p { font-size: 20px; margin: 10px 0 0; }
+.links-only { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 48px; background: white; }
+.links-only > div { font-size: 100px; font-weight: 700; letter-spacing: -0.04em; color: var(--z-ink); }
+.links-only img { width: 300px; height: 300px; }

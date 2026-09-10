@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="App modernization MicroHack: setup, sign-in, walkthroughs and practical lab tips.">
+  <title>Walkthroughs &amp; tips · App modernization lab · Zure</title>
+  <link rel="stylesheet" href="styles.css?v=5">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="wrap"><p class="eyebrow">Zure · GitHub Copilot MicroHack</p><div class="masthead"><a class="site-title" href="index.html">App modernization lab</a><a class="portal-link" href="https://emea.microhack.cloud/login">Lab portal ↗</a></div></header>
+<nav class="wrap timeline" aria-label="Workshop steps"><ol><li><a href="index.html"><span class="step-number">1</span><span>Intro</span></a></li><li><a href="install.html"><span class="step-number">2</span><span>Install</span></a></li><li><a href="login.html"><span class="step-number">3</span><span>Login</span></a></li><li><a href="walkthroughs.html" aria-current="step"><span class="step-number">4</span><span>Walkthroughs & tips</span></a></li></ol></nav>
+<main id="main" class="wrap"><h1>Walkthroughs &amp; tips</h1>
+<p class="lead">Direct links to the solutions. Use these alongside the materials in your lab portal.</p><div class="grid solutions"><a class="solution-card" href="https://github.com/microsoft/MicroHack/blob/main/03-Azure/01-01-App%20Innovation/03_GHCPAppModernization/walkthrough/challenge-01/solution-01.md"><span class="number">Challenge 1</span><h2>Set up the agent</h2><p>Custom agent, skill and MCP configuration.</p><strong>Open walkthrough ↗</strong></a><a class="solution-card" href="https://github.com/microsoft/MicroHack/blob/main/03-Azure/01-01-App%20Innovation/03_GHCPAppModernization/walkthrough/challenge-02/solution-02.md"><span class="number">Challenge 2</span><h2>Assess and upgrade</h2><p>Batch assessment, .NET and Java upgrades.</p><strong>Open walkthrough ↗</strong></a><a class="solution-card" href="https://github.com/microsoft/MicroHack/blob/main/03-Azure/01-01-App%20Innovation/03_GHCPAppModernization/walkthrough/challenge-03/solution-03.md"><span class="number">Challenge 3</span><h2>Modernize and deploy</h2><p>Cloud readiness and Azure deployment.</p><strong>Open walkthrough ↗</strong></a></div><section class="tips"><h2>If you get stuck</h2><p class="small">These issues came up in Pasi's lab run. Open a tip when you need it.</p><details><summary>A walkthrough link returns 404</summary><p>Open <a href="walkthroughs.html">the walkthrough links above</a>. If the lab account still cannot access them, ask a facilitator.</p></details><details><summary>A sample repository won't fork</summary>
+<p>First confirm that GitHub CLI is using your lab account. If needed, use <code>gh auth login</code> or <code>gh auth switch</code> to select it before continuing.</p>
+<pre><code>gh auth status</code></pre>
+<p>Run the blocks below from the folder where you want the two sample folders. They work in Bash, Zsh and PowerShell 7+. Each block clones the sample, keeps its history, creates a private repository in your signed-in account and pushes the code. No repository URL placeholder is needed.</p>
+<h3>PhotoAlbum</h3>
+<pre class="command"><code>git clone https://github.com/Azure-Samples/PhotoAlbum.git PhotoAlbum &amp;&amp;
+git -C PhotoAlbum remote rename origin upstream &amp;&amp;
+gh repo create PhotoAlbum --private --source ./PhotoAlbum --remote origin --push &amp;&amp;
+git -C PhotoAlbum remote -v</code></pre>
+<h3>PhotoAlbum-Java</h3>
+<pre class="command"><code>git clone https://github.com/Azure-Samples/PhotoAlbum-Java.git PhotoAlbum-Java &amp;&amp;
+git -C PhotoAlbum-Java remote rename origin upstream &amp;&amp;
+gh repo create PhotoAlbum-Java --private --source ./PhotoAlbum-Java --remote origin --push &amp;&amp;
+git -C PhotoAlbum-Java remote -v</code></pre>
+<p>The sample remains available as <code>upstream</code>; <code>origin</code> points to your new repository. The <code>&amp;&amp;</code> operators stop the remaining commands if one fails.</p>
+<p>These blocks are for a fresh setup. If a folder or repository already exists, stop and inspect it before retrying. If your lab account cannot create a private repository, ask a facilitator for an approved destination.</p>
+<p><a href="https://cli.github.com/manual/gh_repo_create">GitHub CLI repository creation reference</a></p></details><details><summary>Azure Policy blocks deployment</summary><p>In Pasi's run, subscription policies required VNet configuration that the generated deployment files did not satisfy. Read the actual denial message and policy name before changing the deployment.</p><p>Add the specific constraints to the plan's instructions before execution. You can start with this prompt and include the error details:</p><blockquote>Check the target subscription's policies. Update the deployment files to meet the required networking rules. Validate before retrying. Do not disable policies. Ask me if permissions block the fix.</blockquote><p>Review the proposed changes and validation output, then retry. If the agent cannot read the policy, ask a facilitator for the rules. Check the deployed resources and both frontends after the deployment completes.</p><a href="https://learn.microsoft.com/azure/azure-resource-manager/troubleshooting/error-policy-requestdisallowedbypolicy">Azure Policy deployment error reference</a></details></section><details><summary>Sample repositories and reference instructions</summary><div class="reference-links"><a href="https://github.com/Azure-Samples/PhotoAlbum">PhotoAlbum · .NET ↗</a><a href="https://github.com/Azure-Samples/PhotoAlbum-Java">PhotoAlbum-Java ↗</a><a href="https://github.com/microsoft/MicroHack/tree/main/03-Azure/01-01-App%20Innovation/03_GHCPAppModernization">MicroHack reference instructions ↗</a></div><p>Keep your work in your own copies of both repositories. Check origin before pushing.</p></details>
+<div class="page-navigation"><a href="login.html">← Login</a><a href="https://emea.microhack.cloud/login">Open the lab portal ↗</a></div></main>
+<footer class="wrap">Pasi Huuhka · Zure</footer>
+</body></html>
