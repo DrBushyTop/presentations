@@ -51,6 +51,183 @@ Cover artwork generated with Azure AI Foundry, not an architecture diagram.
 -->
 
 ---
+part: Today's agenda
+class: lab-slide agenda-slide
+---
+
+<p class="eyebrow">Workshop schedule</p>
+
+# Today's agenda
+
+<div class="agenda-layout">
+  <div class="agenda-list">
+    <div class="agenda-item"><time>09:00–09:30</time><strong>Breakfast &amp; welcome</strong></div>
+    <div class="agenda-item"><time>09:30–12:00</time><strong>Hack challenges</strong></div>
+    <div class="agenda-item agenda-break"><time>12:00–13:00</time><strong>Lunch &amp; networking</strong></div>
+    <div class="agenda-item"><time>13:30–15:30</time><strong>Hack challenges</strong></div>
+    <div class="agenda-item"><time>15:30–16:00</time><strong>Wrap-up &amp; Q&amp;A</strong></div>
+  </div>
+  <aside class="agenda-rhythm">
+    <div><span>While agents run</span><strong>Short talks between hands-on work.</strong></div>
+    <div><span>Solution walkthroughs</span><strong>Compare approaches and work through key answers together.</strong></div>
+  </aside>
+</div>
+
+<!--
+Timing: 0:30–1:00, 30 seconds.
+
+This is a working agenda, not a promise that every agent run will take the
+same time. Start with breakfast and welcome, then use the morning and
+afternoon for the challenges. Lunch begins at 12:00 and the afternoon
+challenge block starts at 13:30. We close together at 15:30.
+
+Help participants as questions come up during the challenges.
+If several people are waiting for agents or deployments, use that time for a
+short presentation or a walkthrough of a solution. Do not let a long-running
+agent make the room feel stalled.
+-->
+
+---
+part: Meet Pasi
+class: speaker-intro-slide
+nofooter: true
+---
+
+<div class="speaker-intro">
+  <section class="speaker-identity">
+    <p class="speaker-kicker">Your workshop host · Zure</p>
+    <h1>Pasi<br />Huuhka<span>.</span></h1>
+    <div class="speaker-focus">
+      <span class="speaker-kicker">What I work on</span>
+      <p>AI app dev<br /><span>&amp; SRE</span></p>
+    </div>
+  </section>
+  <section class="speaker-experience" aria-label="Experience and community">
+    <div class="speaker-stat">
+      <div class="speaker-number">13<span>years</span></div>
+      <p>Working on<br /><strong>Azure</strong></p>
+    </div>
+    <div class="speaker-stat">
+      <div class="speaker-number">6<span>years</span></div>
+      <p>Microsoft<br /><strong>Foundry &amp; DevOps MVP</strong></p>
+    </div>
+    <div class="speaker-stat">
+      <div class="speaker-number">~7<span>years</span></div>
+      <p>Organizing the<br /><strong>Finland Azure<br />User Group</strong></p>
+    </div>
+  </section>
+</div>
+
+<!--
+Allow about 30 seconds for the speaker introduction.
+
+I'm Pasi Huuhka from Zure. I've worked on Azure for 13 years and have been
+a Microsoft MVP for six, now in Microsoft Foundry and DevOps.
+My focus is AI application development and site reliability engineering.
+
+I've also helped organize the Finland Azure User Group for roughly seven
+years. That community connection is a good excuse for one quick announcement.
+
+The experience figures and MVP wording are Pasi's supplied biography.
+Keep the slide static so the introduction does not need extra clicks.
+-->
+
+---
+part: IglooConf 2027
+class: igloo-promo-slide
+nofooter: true
+---
+
+<div class="igloo-promo">
+  <header class="igloo-heading">
+    <div>
+      <p class="igloo-kicker">Finland Azure User Group presents</p>
+      <h1>IglooConf<span>27</span></h1>
+    </div>
+    <div class="igloo-date">
+      <strong>4 &amp; 5 February 2027</strong>
+      <span>Scandic Park Helsinki</span>
+      <span>2 days · 2 tracks · All Azure</span>
+    </div>
+  </header>
+  <p class="igloo-speaker-rule">Every speaker is an <strong>MVP</strong>, <strong>Regional Director</strong> or <strong>Microsoft product group member</strong>.</p>
+  <section class="igloo-lineup" aria-label="All seven announced speakers for 2027">
+    <p class="igloo-kicker">Announced for 2027 · More to come</p>
+    <div class="igloo-speakers">
+      <figure>
+        <img src="/assets/iglooconf-2027/richard-campbell.png" alt="Richard Campbell" />
+        <figcaption>Richard<br />Campbell</figcaption>
+      </figure>
+      <figure>
+        <img src="/assets/iglooconf-2027/paula-januszkiewicz.jpg" alt="Paula Januszkiewicz" />
+        <figcaption>Paula<br />Januszkiewicz</figcaption>
+      </figure>
+      <figure>
+        <img src="/assets/iglooconf-2027/david-whitney.jpg" alt="David Whitney" />
+        <figcaption>David<br />Whitney</figcaption>
+      </figure>
+      <figure>
+        <img src="/assets/iglooconf-2027/sami-laiho.jpg" alt="Sami Laiho" />
+        <figcaption>Sami<br />Laiho</figcaption>
+      </figure>
+      <figure>
+        <img src="/assets/iglooconf-2027/jouni-heikniemi.jpg" alt="Jouni Heikniemi" />
+        <figcaption>Jouni<br />Heikniemi</figcaption>
+      </figure>
+      <figure>
+        <img src="/assets/iglooconf-2027/rik-hepworth.jpg" alt="Rik Hepworth" />
+        <figcaption>Rik<br />Hepworth</figcaption>
+      </figure>
+      <figure>
+        <img src="/assets/iglooconf-2027/sakari-nahi.png" alt="Sakari Nahi" />
+        <figcaption>Sakari<br />Nahi</figcaption>
+      </figure>
+    </div>
+  </section>
+  <a class="igloo-ticket" href="https://www.iglooconf.fi/#tickets" target="_blank" rel="noopener noreferrer">
+    <span class="igloo-ticket-status">Tickets<br />on sale now</span>
+    <span class="igloo-ticket-url">www.iglooconf.fi</span>
+    <span class="igloo-ticket-arrow" aria-hidden="true">↗</span>
+  </a>
+  <div class="igloo-sponsors" aria-label="IglooConf 2027 sponsors">
+    <span>Sponsors</span>
+    <img src="/assets/iglooconf-2027/sponsors/knowit.png" alt="Knowit" />
+    <img src="/assets/iglooconf-2027/sponsors/arrow.png" alt="Arrow" />
+    <img src="/assets/iglooconf-2027/sponsors/nordcloud.png" alt="Nordcloud, an IBM company" />
+    <img src="/assets/iglooconf-2027/sponsors/zure.svg" alt="Zure" />
+  </div>
+</div>
+
+<!--
+Allow about 30 seconds for this announcement.
+
+A quick plug for IglooConf, organized by the Finland Azure User Group.
+For my money, it's the best Azure event in Finland. Tickets have just gone
+on sale. The upcoming event is February 4 and 5, 2027, at Scandic Park Helsinki.
+
+The 2027 site already confirms Richard Campbell, Paula Januszkiewicz,
+David Whitney and Sami Laiho. Jouni Heikniemi, Rik Hepworth and Sakari Nahi
+are also confirmed. More speakers and the programme are still to come.
+
+Every speaker is a Microsoft MVP, Microsoft Regional Director or member
+of a Microsoft product group. Two days, two tracks, technical talks.
+
+Invite people to visit www.iglooconf.fi for tickets and the growing lineup.
+The large address is clickable. Keep the slide static for a short announcement.
+
+The slide includes all seven speakers announced as of September 10, 2026.
+Portraits come from their speaker cards on the official 2027 event site.
+The sponsor strip uses the site's logos for Knowit, Arrow, Nordcloud and Zure.
+References stay in these notes, not in a visible source footer.
+
+Official sources for the announced lineup, portraits, sponsors and tickets:
+https://www.iglooconf.fi/
+https://www.iglooconf.fi/#speakers
+https://www.iglooconf.fi/#tickets
+https://www.iglooconf.fi/#sponsors
+-->
+
+---
 class: links-only-slide
 nofooter: true
 ---

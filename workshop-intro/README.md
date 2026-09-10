@@ -1,6 +1,6 @@
 # App modernization lab intro
 
-Nine slides for Pasi Huuhka's ten-minute introduction to the GitHub Copilot
+Twelve slides for Pasi Huuhka's introduction to the GitHub Copilot
 app modernization MicroHack. Uses the shared Zure theme.
 
 ```bash
@@ -13,14 +13,24 @@ npm run build:workshop-intro
 | Slide | Topic | Time |
 | --- | --- | --- |
 | 1 | Welcome | 0:15 |
-| 2 | Open the participant site, link and QR | 0:15 |
-| 3 | Challenge 1, agent, skill and MCP | 1:00 |
-| 4 | Challenge 2, assess and upgrade | 1:15 |
-| 5 | Challenge 3, modernize and deploy | 1:15 |
-| 6 | Credentials and browser sign-in | 1:30 |
-| 7 | Local tools and client sign-in | 1:30 |
-| 8 | Walkthrough and fork workarounds | 1:15 |
-| 9 | Policy-aware deployment and start the lab | 1:45 |
+| 2 | Today's agenda | 0:30 |
+| 3 | Meet Pasi, experience and community | 0:30 |
+| 4 | IglooConf 2027, speakers and tickets | 0:30 |
+| 5 | Open the participant site, link and QR | 0:15 |
+| 6 | Challenge 1, agent, skill and MCP | 1:00 |
+| 7 | Challenge 2, assess and upgrade | 1:15 |
+| 8 | Challenge 3, modernize and deploy | 1:15 |
+| 9 | Credentials and browser sign-in | 1:30 |
+| 10 | Local tools and client sign-in | 1:30 |
+| 11 | Walkthrough and fork workarounds | 1:15 |
+| 12 | Policy-aware deployment and start the lab | 1:45 |
+
+The speaker introduction uses a type-only, full-canvas layout. The IglooConf
+announcement shows portraits of all seven announced 2027 speakers, links
+to ticket sales and includes a small sponsor strip. Both slides are static,
+with no source footer. The portraits and sponsor logos are stored locally
+in `public/assets/iglooconf-2027` so the deck does not need the event site
+to load them during the presentation.
 
 Speaker notes include the detailed steps, caveats and official source URLs.
 Slide text uses readable addresses and tool names rather than installation
@@ -32,6 +42,7 @@ run. They are not universal product limitations.
 
 ## Sources
 
+- [IglooConf, announced 2027 speakers, portraits, sponsors and tickets](https://www.iglooconf.fi/)
 - [Microsoft MicroHack](https://github.com/microsoft/MicroHack/tree/main/03-Azure/01-01-App%20Innovation/03_GHCPAppModernization)
 - [Modernization agent quickstart](https://learn.microsoft.com/azure/developer/github-copilot-app-modernization/modernization-agent/quickstart)
 - [GitHub CLI authentication](https://cli.github.com/manual/gh_auth_login)
@@ -39,7 +50,7 @@ run. They are not universal product limitations.
 - [GitHub remote management](https://docs.github.com/en/get-started/git-basics/managing-remote-repositories)
 - [Azure Policy deployment errors](https://learn.microsoft.com/azure/azure-resource-manager/troubleshooting/error-policy-requestdisallowedbypolicy)
 
-Source content checked on September 10, 2026. SDK versions on slide 3 are the
+Source content checked on September 10, 2026. SDK versions on slide 7 are the
 lab's specified targets.
 
 ## Cover artwork
@@ -87,5 +98,5 @@ bash workshop-intro/deploy-links.sh
 The script reads the deployment token into an environment variable and deploys
 only `links/` to production. It does not publish slides or credentials.
 
-The second slide contains only `zure.ly/hack-links` and a QR code encoding
+The fifth slide contains only `zure.ly/hack-links` and a QR code encoding
 `https://zure.ly/hack-links`. The SVG was generated with Segno.

@@ -11,36 +11,24 @@ This repository contains reusable Slidev themes and individual presentations.
 - `workshop-intro/` contains an eight-slide, ten-minute **App modernization lab**
   introduction, including setup and lab troubleshooting tips.
 
-Run the coding agents deck:
+Run a deck interactively:
 
 ```bash
 npm install
 npm run dev
 ```
 
-Run the database modernization deck:
+Or run a specific deck:
 
 ```bash
+npm run dev:coding-agents
 npm run dev:database-modernization
-```
-
-Run the skills and agent boundaries deck:
-
-```bash
 npm run dev:agent-building-blocks
-```
-
-Build all decks:
-
-```bash
-npm run build:all
-```
-
-Run the workshop intro:
-
-```bash
 npm run dev:workshop-intro
 ```
+
+`npm run build` builds every deck. Use `npm run export` or
+`npm run export-pptx` to select one for export.
 
 ## Shared presentation code
 
