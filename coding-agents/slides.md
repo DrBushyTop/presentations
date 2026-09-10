@@ -545,9 +545,11 @@ Writing code used to build that model almost by accident. When an agent writes
 most of the code, I lose that source of understanding. It is now easy to accept
 plausible changes faster than I can absorb the system they create.
 
-Research and structure force me to reconstruct the map before implementation.
+Research and structure help me understand the system before implementation.
 Grilling forces unclear terms, hidden assumptions and unresolved decisions into
-the open. Small slices and review help me update the map as the code changes.
+the open. Small slices and review help me update my mental model as the code
+changes. I do not need to read every line, but I need to understand how the code
+fits together and how the system behaves.
 
 None of this is perfect. A document can be wrong. A review can miss something.
 I can believe I understand a system when I do not. The process reduces that
@@ -876,7 +878,7 @@ part: Takeaways
 
 <div class="principle-grid principle-grid-four">
   <div v-click="1"><span>01</span><strong>Own the decisions</strong><small>Intent, trade-offs and acceptance stay with me.</small></div>
-  <div v-click="2"><span>02</span><strong>Keep the map</strong><small>Understand responsibilities, data flow and assumptions.</small></div>
+  <div v-click="2"><span>02</span><strong>Understand the system</strong><small>Know how the code fits together and how the system behaves.</small></div>
   <div v-click="3"><span>03</span><strong>Verify each slice</strong><small>Use an adversary, automated gates and runtime evidence.</small></div>
   <div v-click="4"><span>04</span><strong>Encode repetition</strong><small>Turn recurring feedback into repository checks.</small></div>
 </div>
@@ -884,6 +886,13 @@ part: Takeaways
 <!--
 T3 Code, OpenCode, Codex and the models will change. I expect these habits to
 stick around for longer.
+
+Understanding the system means maintaining a mental model of the codebase and
+its functionality. Where do responsibilities live? How does data move? What
+happens when a user takes an action, and what can fail?
+
+I might not read every line of code. I still need enough understanding to judge
+a proposed change, spot a wrong assumption and know which details to inspect.
 -->
 
 ---
@@ -894,14 +903,20 @@ class: zend
 
 <div class="zdark zdark-center">
   <p class="eyebrow">The takeaway</p>
-  <p class="zbig">The agent can write the code. I still need the map.</p>
-  <p class="zdark-note">Own the decisions. Challenge the result. Check the evidence.</p>
+  <p class="zbig">The agent can write the code. I still need to understand the system.</p>
+  <p class="zdark-note">A working mental model, without reading every line.</p>
 </div>
 
 <!--
 Writing the code used to build part of my mental model almost automatically.
 When the agent writes most of it, I need to build and maintain that model on
 purpose.
+
+That means understanding the codebase's structure and the system's behavior.
+I should be able to explain how a feature works, which parts it depends on and
+what a change could affect. Reading selected code, asking questions and checking
+runtime behavior all help me test that understanding. Reading every line is not
+the goal.
 
 The tools will change. The responsibility does not. I own the decisions,
 challenge the result, inspect the evidence and decide whether the work is done.
