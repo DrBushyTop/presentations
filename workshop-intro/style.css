@@ -48,6 +48,8 @@
   grid-template-columns: 1fr 1fr;
   height: 720px;
   background: #f2f6f5;
+  color: var(--z-ink);
+  font-family: var(--z-font-text);
 }
 
 .speaker-identity {
@@ -151,9 +153,10 @@
 .igloo-promo {
   height: 720px;
   box-sizing: border-box;
-  padding: 40px 48px;
+  padding: 36px 48px;
   background: #0b202d;
   color: #f1f8fa;
+  font-family: var(--z-font-text);
 }
 
 .igloo-heading {
@@ -230,7 +233,7 @@
 .igloo-speakers img {
   display: block;
   width: 100%;
-  height: 176px;
+  height: 160px;
   object-fit: cover;
   object-position: center 25%;
 }
@@ -249,7 +252,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 24px;
-  margin-top: 20px;
+  margin-top: 16px;
   padding: 16px 30px;
   background: #a9eef5;
   color: #0b202d;
@@ -376,6 +379,7 @@
 }
 
 .lab-cover-art {
+  position: relative;
   height: 100%;
   min-width: 0;
   overflow: hidden;
@@ -968,6 +972,6 @@
 
 .credentials-reminder > strong { font-size: 26px; color: var(--z-teal); }
 .credentials-reminder > p { font-size: 20px; margin: 10px 0 0; }
-.links-only { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 48px; background: white; }
+.links-only { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 48px; background: white; font-family: var(--z-font-text); }
 .links-only > div { font-size: 100px; font-weight: 700; letter-spacing: -0.04em; color: var(--z-ink); }
 .links-only img { width: 300px; height: 300px; }

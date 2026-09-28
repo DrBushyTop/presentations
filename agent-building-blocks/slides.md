@@ -24,7 +24,7 @@ fonts:
   provider: google
   sans: Inter
   mono: JetBrains Mono
-  weights: '400,600,700'
+  weights: '200,400,600,700,800'
 seoMeta:
   ogTitle: Skills, tools and agent boundaries
   ogDescription: Reusable instructions belong in skills. Separate agents need a reason.

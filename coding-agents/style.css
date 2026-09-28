@@ -1061,3 +1061,93 @@
 .structure-code-line.table-row {
   color: #d9edf0;
 }
+
+/* Give the main exhibits enough height to carry each slide to its source line. */
+.slidev-layout.ceremony-slide .ceremony-grid {
+  min-height: 400px;
+}
+
+.slidev-layout.model-routes-slide table {
+  height: 400px;
+}
+
+.slidev-layout.phase-slide .phase-flow,
+.slidev-layout.phase-slide .phase-box {
+  min-height: 320px;
+}
+
+.slidev-layout.phase-slide .flow-artifacts span {
+  font-size: 15px;
+}
+
+.slidev-layout.phase-slide .optional-plan strong code {
+  font-size: 15px;
+}
+
+.slidev-layout.questions-slide .exhibit {
+  min-height: 390px;
+  gap: 1.3rem;
+}
+
+.slidev-layout.questions-slide .exhibit > div {
+  border-top: 5px solid var(--z-teal);
+  padding: 1.25rem 1.5rem;
+  background: var(--z-grey-100);
+}
+
+.slidev-layout.questions-slide .exhibit > div:last-child {
+  border-top-color: var(--z-red);
+}
+
+.slidev-layout.slice-grid-slide .slice-grid {
+  min-height: 400px;
+}
+
+.slidev-layout.ui-loop-slide .ui-loop,
+.slidev-layout.ui-loop-slide .ui-step {
+  min-height: 420px;
+}
+
+.slidev-layout.impeccable-slide .impeccable-shot figcaption {
+  font-size: 14px;
+}
+
+.slidev-layout.harness-slide .harness-loop {
+  min-height: 370px;
+}
+
+.slidev-layout.harness-slide .harness-step {
+  min-height: 350px;
+}
+
+.slidev-layout.harness-slide .harness-step small code {
+  font-size: 15px;
+}
+
+.slidev-layout.takeaways-slide .principle-grid {
+  min-height: 500px;
+}
+
+.slidev-layout.takeaways-slide .principle-grid > div {
+  align-items: center;
+}
+
+.slidev-layout.references-slide .zrefs {
+  min-height: 500px;
+  grid-template-rows: 1.5fr 1.35fr 0.8fr;
+  gap: 0.65rem;
+  align-items: stretch;
+}
+
+.slidev-layout.references-slide .zrefs > div {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  border-top: 4px solid var(--z-teal);
+  padding: 0.7rem 1.1rem;
+  background: var(--z-grey-100);
+}
+
+.slidev-layout.references-slide .zrefs > div:nth-child(2) {
+  border-top-color: var(--z-red);
+}

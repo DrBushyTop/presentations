@@ -1,0 +1,4 @@
+#!/bin/sh
+# Layout invariants for staged decks. Theme changes check every deck.
+# Bypass once with: git commit --no-verify
+exec node scripts/check-slides.mjs --staged

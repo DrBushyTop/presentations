@@ -15,7 +15,13 @@
       {{ $slidev.nav.currentPage }} / {{ $slidev.nav.total }}
     </div>
   </div>
-  <img v-if="showBrand" class="z-brand" :src="zureLogo" alt="Zure" />
+  <img
+    v-if="showBrand"
+    class="z-brand"
+    :class="{ 'z-brand-cover': isCover }"
+    :src="zureLogo"
+    alt="Zure"
+  />
 </template>
 
 <script setup lang="ts">
@@ -32,9 +38,8 @@ const frontmatter = computed<Record<string, any>>(
 const showFooter = computed(
   () => $slidev.nav.currentPage > 1 && frontmatter.value.nofooter !== true,
 )
-const showBrand = computed(
-  () => $slidev.nav.currentPage === 1 || showFooter.value,
-)
+const isCover = computed(() => $slidev.nav.currentPage === 1)
+const showBrand = computed(() => isCover.value || showFooter.value)
 const part = computed(() => frontmatter.value.part ?? '')
 const deckTitle = computed(() => $slidev?.configs?.title ?? 'Presentation')
 </script>

@@ -19,7 +19,7 @@ fonts:
   provider: google
   sans: Inter
   mono: JetBrains Mono
-  weights: '400,600,700'
+  weights: '200,400,600,700,800'
 ---
 
 <div class="zcover lab-cover">
@@ -89,6 +89,7 @@ agent make the room feel stalled.
 
 ---
 part: Meet Pasi
+layout: none
 class: speaker-intro-slide
 nofooter: true
 ---
@@ -134,6 +135,7 @@ Keep the slide static so the introduction does not need extra clicks.
 
 ---
 part: IglooConf 2027
+layout: none
 class: igloo-promo-slide
 nofooter: true
 ---
@@ -228,6 +230,7 @@ https://www.iglooconf.fi/#sponsors
 -->
 
 ---
+layout: none
 class: links-only-slide
 nofooter: true
 ---
