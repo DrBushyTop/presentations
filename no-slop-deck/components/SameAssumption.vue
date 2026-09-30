@@ -70,7 +70,7 @@ withDefaults(defineProps<{ step?: number }>(), { step: 0 })
 }
 
 .node small {
-  font-size: 15px;
+  font-size: var(--ns-label);
   font-weight: 700;
   letter-spacing: 0.02em;
   opacity: 0.75;
@@ -82,7 +82,7 @@ withDefaults(defineProps<{ step?: number }>(), { step: 0 })
 }
 
 .node span {
-  font-size: 17px;
+  font-size: 19px;
   line-height: 1.3;
 }
 

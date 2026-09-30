@@ -31,7 +31,7 @@ const fmt = (v: number) => v.toLocaleString('en-US')
         </div>
       </section>
     </div>
-    <p class="take" :class="{ on: step >= 2 }">Incidents grew with the volume of change. Spotify found no AI signature in its incidents, but change outran some of its checks.</p>
+    <p class="take" :class="{ on: step >= 2 }">Incidents grew with the volume of change.</p>
   </div>
 </template>
 
@@ -67,7 +67,7 @@ header b {
 }
 
 header span {
-  font-size: 16px;
+  font-size: var(--ns-label);
   color: var(--z-grey-600);
   font-weight: 600;
 }
@@ -118,7 +118,7 @@ header span {
 .l {
   position: absolute;
   bottom: -30px;
-  font-size: 15px;
+  font-size: var(--ns-label);
   color: var(--z-grey-600);
   font-weight: 600;
 }
@@ -126,7 +126,7 @@ header span {
 .take {
   margin: 20px 0 0;
   max-width: none;
-  font-size: 23px;
+  font-size: 28px;
   font-weight: 700;
   line-height: 1.3;
   transition: opacity 600ms var(--ns-ease);

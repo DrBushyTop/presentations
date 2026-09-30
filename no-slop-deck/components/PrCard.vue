@@ -9,8 +9,8 @@ import { computed } from 'vue'
 const props = withDefaults(defineProps<{ step?: number, mode?: 'hook' | 'evidence' }>(), { step: 0, mode: 'hook' })
 
 const hookChecks = [
-  { icon: 'check', tone: 'ok', label: '24 tests passed', meta: 'unit · 1.8 s' },
-  { icon: 'check', tone: 'ok', label: 'Lint, typecheck, build', meta: 'CI · 2 m 11 s' },
+  { icon: 'check', tone: 'ok', label: '24 tests passed', meta: 'unit tests' },
+  { icon: 'check', tone: 'ok', label: 'Lint, typecheck, build', meta: 'CI' },
   { icon: 'bot', tone: 'ok', label: 'Review bot: no issues found', meta: 'automated' },
   { icon: 'user', tone: 'ok', label: 'Approved by 1 reviewer', meta: '"LGTM, nice tests"' },
 ] as const
@@ -73,7 +73,7 @@ const rows = computed(() => (props.mode === 'hook' ? hookChecks : evidence))
 <style scoped>
 .pr {
   position: relative;
-  height: 500px;
+  height: 540px;
   border: 1px solid var(--ns-line);
   background: #fff;
   box-shadow: 0 24px 60px -30px rgba(26, 26, 26, 0.35);
@@ -118,7 +118,7 @@ const rows = computed(() => (props.mode === 'hook' ? hookChecks : evidence))
 
 .branch {
   font-family: var(--ns-mono);
-  font-size: 16px;
+  font-size: 17px;
   display: inline-flex;
   gap: 6px;
   align-items: center;
@@ -129,7 +129,7 @@ const rows = computed(() => (props.mode === 'hook' ? hookChecks : evidence))
 
 .body {
   display: grid;
-  grid-template-columns: 1fr 1.05fr;
+  grid-template-columns: 0.85fr 1.15fr;
   min-height: 0;
 }
 
@@ -176,7 +176,7 @@ const rows = computed(() => (props.mode === 'hook' ? hookChecks : evidence))
 }
 
 .checks .m {
-  font-size: 15px;
+  font-size: 17px;
   color: var(--z-grey-600);
 }
 
@@ -204,7 +204,7 @@ const rows = computed(() => (props.mode === 'hook' ? hookChecks : evidence))
   background: var(--z-ink);
   color: #d6d6d6;
   padding: 18px 22px;
-  font-size: 15.5px;
+  font-size: var(--ns-code);
   line-height: 1.75;
   overflow: hidden;
 }

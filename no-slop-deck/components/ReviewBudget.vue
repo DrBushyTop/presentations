@@ -149,7 +149,7 @@ const eur = (v: number) => `€${Math.round(v).toLocaleString('en-US')}`
 }
 
 .seg span {
-  font-size: 16px;
+  font-size: var(--ns-label);
   font-weight: 700;
   margin-right: 8px;
   color: var(--z-grey-600);
@@ -157,7 +157,7 @@ const eur = (v: number) => `€${Math.round(v).toLocaleString('en-US')}`
 
 .seg button {
   font: inherit;
-  font-size: 16px;
+  font-size: var(--ns-label);
   font-weight: 700;
   min-width: 38px;
   height: 38px;
@@ -192,7 +192,7 @@ const eur = (v: number) => `€${Math.round(v).toLocaleString('en-US')}`
 }
 
 .axis {
-  font-size: 16px;
+  font-size: var(--ns-label);
   color: var(--z-grey-600);
   font-weight: 700;
 }
@@ -252,7 +252,7 @@ const eur = (v: number) => `€${Math.round(v).toLocaleString('en-US')}`
 }
 
 .rl {
-  font-size: 15px;
+  font-size: var(--ns-label);
   padding: 8px 0 6px;
   color: var(--z-grey-600);
   font-weight: 600;
@@ -269,7 +269,7 @@ const eur = (v: number) => `€${Math.round(v).toLocaleString('en-US')}`
   align-items: flex-start;
   justify-content: center;
   padding-top: 8px;
-  font-size: 16px;
+  font-size: var(--ns-label);
   font-weight: 800;
   pointer-events: none;
 }
@@ -278,7 +278,7 @@ const eur = (v: number) => `€${Math.round(v).toLocaleString('en-US')}`
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 16px;
+  font-size: var(--ns-label);
   padding: 10px 0;
   color: var(--z-ink-800);
 }
@@ -314,7 +314,7 @@ const eur = (v: number) => `€${Math.round(v).toLocaleString('en-US')}`
 }
 
 .sum span {
-  font-size: 17px;
+  font-size: 19px;
   color: var(--z-grey-600);
   font-weight: 600;
 }

@@ -48,9 +48,10 @@ const small = minimap(10, 1, 1.5, 46)
       <div class="small-row">
         <svg class="map tiny" viewBox="0 0 56 16" aria-hidden="true"><path :d="small" /></svg>
         <div class="code ns-mono">
-          <div class="del">- if (!session.isAdmin(team)) throw forbidden()</div>
-          <div class="add">+ if (!session.isMember(team)) throw forbidden()</div>
-          <div>{{ '  ' }}await db.tasks.delete({ where: { id } })</div>
+          <div class="del">- if (!session.isAdmin(team))</div>
+          <div class="add">+ if (!session.isMember(team))</div>
+          <div>{{ '    ' }}throw forbidden()</div>
+          <div>{{ '  ' }}await db.tasks.delete(id)</div>
         </div>
       </div>
       <div class="needs bad" :class="{ on: step >= 1 }">
@@ -66,7 +67,7 @@ const small = minimap(10, 1, 1.5, 46)
 <style scoped>
 .risk {
   display: grid;
-  grid-template-columns: 1.15fr 1fr;
+  grid-template-columns: 1fr 1fr;
   grid-template-rows: 1fr auto;
   gap: 18px 40px;
   height: 500px;
@@ -93,7 +94,7 @@ header b {
 }
 
 header span {
-  font-size: 17px;
+  font-size: var(--ns-label);
   color: var(--z-grey-600);
 }
 
@@ -139,7 +140,7 @@ code {
   margin: 0;
   background: var(--z-ink);
   color: #cfcfcf;
-  font-size: 15px;
+  font-size: var(--ns-code);
   line-height: 1.8;
   padding: 16px 18px;
   white-space: pre;

@@ -123,7 +123,7 @@ header span {
   display: flex;
   justify-content: space-between;
   margin-top: 8px;
-  font-size: 17px;
+  font-size: var(--ns-label);
   color: var(--z-grey-600);
 }
 

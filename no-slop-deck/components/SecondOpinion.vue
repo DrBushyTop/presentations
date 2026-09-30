@@ -34,7 +34,6 @@ const risks = ['Reviewers undo each other', 'CI result from an older commit', 'C
     <section class="sitter">
       <div class="head" :class="{ on: step >= 2 }">
         <b>The babysitter</b>
-        <span>A local agent run that works the PR until it can stop.</span>
       </div>
       <ol class="cycle" :class="{ on: step >= 2 }">
         <li v-for="(c, i) in loop" :key="c" :style="{ '--i': i }"><span class="ns-mono">{{ i + 1 }}</span>{{ c }}</li>
@@ -114,7 +113,7 @@ const risks = ['Reviewers undo each other', 'CI result from an older commit', 'C
   position: absolute;
   left: 22px;
   transform: translateY(-2px);
-  font-size: 16px;
+  font-size: var(--ns-label);
   font-weight: 700;
   color: var(--ns-red);
   white-space: nowrap;
@@ -128,7 +127,7 @@ const risks = ['Reviewers undo each other', 'CI result from an older commit', 'C
 .name {
   height: 70px;
   padding-top: 12px;
-  font-size: 17px;
+  font-size: 19px;
   font-weight: 700;
   line-height: 1.25;
   text-align: center;
@@ -139,7 +138,7 @@ const risks = ['Reviewers undo each other', 'CI result from an older commit', 'C
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 16px;
+  font-size: var(--ns-label);
   color: var(--z-grey-600);
 }
 
@@ -207,7 +206,7 @@ const risks = ['Reviewers undo each other', 'CI result from an older commit', 'C
 .cycle li {
   background: var(--ns-soft);
   padding: 12px 14px;
-  font-size: 19px;
+  font-size: 21px;
   font-weight: 650;
   display: flex;
   gap: 10px;
@@ -216,7 +215,7 @@ const risks = ['Reviewers undo each other', 'CI result from an older commit', 'C
 
 .cycle li span {
   color: var(--ns-teal);
-  font-size: 16px;
+  font-size: var(--ns-label);
 }
 
 .risks {
@@ -237,7 +236,7 @@ const risks = ['Reviewers undo each other', 'CI result from an older commit', 'C
 }
 
 .risks li {
-  font-size: 19px;
+  font-size: 21px;
   display: flex;
   gap: 10px;
   align-items: center;

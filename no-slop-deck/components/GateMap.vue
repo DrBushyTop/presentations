@@ -11,7 +11,7 @@ withDefaults(defineProps<{ step?: number, current?: number, variant?: 'light' | 
 const gates = [
   { name: 'Research', q: 'What do we actually know?' },
   { name: 'Plan', q: 'What must stay true when it fails?' },
-  { name: 'Slice', q: 'Can each piece be explained?' },
+  { name: 'Slice', q: 'What can a person check today?' },
   { name: 'Verify', q: 'Which claim did we test?' },
   { name: 'Review', q: 'When do we stop?' },
   { name: 'Production', q: 'What would change our minds?' },

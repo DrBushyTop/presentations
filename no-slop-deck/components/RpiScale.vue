@@ -21,7 +21,7 @@ const sizes = [
 <template>
   <div class="rpi">
     <div class="corner">
-      <div class="zone-key"><i /> Context used. I aim to stay inside 40 to 60%.</div>
+      <div class="zone-key"><i /> Aim: 40 to 60% of the context</div>
     </div>
     <div v-for="(p, i) in phases" :key="p.name" class="phase" :class="{ on: step >= 1 }" :style="{ '--i': i }">
       <div class="name">{{ p.name }}</div>
@@ -55,7 +55,7 @@ const sizes = [
 }
 
 .zone-key {
-  font-size: 16px;
+  font-size: var(--ns-label);
   line-height: 1.35;
   color: var(--z-grey-600);
 }
@@ -141,7 +141,7 @@ const sizes = [
 
 .out {
   margin-top: 12px;
-  font-size: 16px;
+  font-size: var(--ns-label);
   color: var(--ns-teal);
   font-weight: 600;
 }

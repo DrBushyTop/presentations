@@ -35,7 +35,6 @@ const rows = [
     </div>
     <div class="policy" :class="{ on: step >= 3 }">
       <b>Missing evidence is a policy decision.</b>
-      <span>Their review dropped from about 7 minutes to 94 seconds with a 30-step budget and a fresh run for each new commit.</span>
     </div>
   </div>
 </template>
@@ -66,7 +65,7 @@ const rows = [
 }
 
 .node small {
-  font-size: 15px;
+  font-size: var(--ns-label);
   color: #bdbdbd;
   font-weight: 700;
 }
@@ -134,7 +133,7 @@ const rows = [
 }
 
 .row.dim {
-  opacity: 0.35;
+  opacity: 0.6;
   transition-delay: 0ms;
 }
 
@@ -146,7 +145,7 @@ const rows = [
 
 .chip {
   justify-self: start;
-  font-size: 16px;
+  font-size: var(--ns-label);
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -195,8 +194,7 @@ const rows = [
 }
 
 .policy b {
-  font-size: 25px;
-  white-space: nowrap;
+  font-size: 30px;
 }
 
 .policy span {

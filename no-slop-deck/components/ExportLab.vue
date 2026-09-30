@@ -137,7 +137,7 @@ watch(() => JSON.stringify(state.value) + showBoundary.value, () => {
 <style scoped>
 .lab {
   display: grid;
-  grid-template-columns: 590px 1fr;
+  grid-template-columns: 620px 1fr;
   grid-template-rows: 215px 1fr;
   gap: 16px 20px;
   height: 510px;
@@ -158,7 +158,7 @@ watch(() => JSON.stringify(state.value) + showBoundary.value, () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 16px;
+  font-size: 17px;
   padding: 12px 18px;
 }
 
@@ -171,7 +171,7 @@ watch(() => JSON.stringify(state.value) + showBoundary.value, () => {
   font-style: normal;
   font-family: var(--z-font-text);
   font-weight: 700;
-  font-size: 15px;
+  font-size: var(--ns-label);
   padding: 3px 10px;
   color: #fff;
 }
@@ -190,7 +190,7 @@ watch(() => JSON.stringify(state.value) + showBoundary.value, () => {
   width: 100%;
   text-align: left;
   font: inherit;
-  font-size: 16.5px;
+  font-size: 17.5px;
   line-height: 2;
   white-space: pre;
   color: #d4d4d4;
@@ -269,7 +269,7 @@ button.ln {
 .as {
   width: 100%;
   font-family: var(--z-font-text);
-  font-size: 15px;
+  font-size: 19px;
   color: #9a9a9a;
   margin-top: 4px;
 }
@@ -318,7 +318,7 @@ li::before {
 }
 
 .rows .id {
-  font-size: 15px;
+  font-size: 17px;
   color: var(--z-grey-600);
 }
 
@@ -338,7 +338,7 @@ li::before {
 .rows em {
   font-style: normal;
   font-weight: 700;
-  font-size: 15px;
+  font-size: var(--ns-label);
 }
 
 .tests header b.ok { color: var(--ns-teal); }

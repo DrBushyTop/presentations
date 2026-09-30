@@ -567,6 +567,7 @@ class: ns
 (Step 3 of 3)
 
 Exclusions matter as much. And the decision needs evidence, a check that can fail.
+- The plan also reuses the serializer and tests header, rows and escaping. Those lines are off the slide to keep it readable.
 
 - Say: "A markdown file is only useful if somebody challenges it."
 - Quote from my early-2026 workflow post. https://www.huuhka.net/how-i-currently-develop-with-llm-models-early-2026/
@@ -588,14 +589,11 @@ transition: view-transition
   <div class="ask-ev">
     <Show :step="0" :at="1" class="ev">
       <b>Aidan Harding</b>
-      <p>His planning skill asks what convinced you before you approve a decision the design depends on.</p>
+      <p>Before approving a key decision: what convinced you?</p>
     </Show>
     <Show :step="0" :at="2" class="ev">
-      <b>Honeycomb</b>
-      <p>Team plan reviews spread understanding. "Our velocity did not seem to go down." They relaxed it for small tasks.</p>
-    </Show>
-    <Show :step="0" :at="2" class="ev tools">
-      <p>Chopin and Spec Kit are pushing tools the same way: more attention on the plan.</p>
+      <b>Honeycomb, on team plan reviews</b>
+      <p>"Our velocity did not seem to go down."</p>
     </Show>
   </div>
 </div>
@@ -626,14 +624,11 @@ transition: view-transition
   <div class="ask-ev">
     <Show :step="1" :at="1" class="ev">
       <b>Aidan Harding</b>
-      <p>His planning skill asks what convinced you before you approve a decision the design depends on.</p>
+      <p>Before approving a key decision: what convinced you?</p>
     </Show>
     <Show :step="1" :at="2" class="ev">
-      <b>Honeycomb</b>
-      <p>Team plan reviews spread understanding. "Our velocity did not seem to go down." They relaxed it for small tasks.</p>
-    </Show>
-    <Show :step="1" :at="2" class="ev tools">
-      <p>Chopin and Spec Kit are pushing tools the same way: more attention on the plan.</p>
+      <b>Honeycomb, on team plan reviews</b>
+      <p>"Our velocity did not seem to go down."</p>
     </Show>
   </div>
 </div>
@@ -662,14 +657,11 @@ class: ns
   <div class="ask-ev">
     <Show :step="2" :at="1" class="ev">
       <b>Aidan Harding</b>
-      <p>His planning skill asks what convinced you before you approve a decision the design depends on.</p>
+      <p>Before approving a key decision: what convinced you?</p>
     </Show>
     <Show :step="2" :at="2" class="ev">
-      <b>Honeycomb</b>
-      <p>Team plan reviews spread understanding. "Our velocity did not seem to go down." They relaxed it for small tasks.</p>
-    </Show>
-    <Show :step="2" :at="2" class="ev tools">
-      <p>Chopin and Spec Kit are pushing tools the same way: more attention on the plan.</p>
+      <b>Honeycomb, on team plan reviews</b>
+      <p>"Our velocity did not seem to go down."</p>
     </Show>
   </div>
 </div>
@@ -677,8 +669,8 @@ class: ns
 <!--
 (Step 2 of 2)
 
-Honeycomb's Tenant team leaned into review with plan, review, implement and finish skills. Velocity held. They later relaxed the heavy version for simple work. https://www.honeycomb.io/blog/embracing-code-review-bottleneck
-- One line on tools: GitHub Next's Chopin and Spec Kit's assess step both move attention upstream. Don't demo them. https://githubnext.com/projects/chopin/
+Honeycomb's Tenant team leaned into review with plan, review, implement and finish skills. Team plan reviews spread understanding and velocity held. They later relaxed the heavy version for simple work. https://www.honeycomb.io/blog/embracing-code-review-bottleneck
+- One line on tools, not on the slide: GitHub Next's Chopin and Spec Kit's assess step both move attention upstream. Don't demo them. https://githubnext.com/projects/chopin/
 -->
 
 ---
@@ -703,10 +695,121 @@ Fallback: the plan-argument slide shows the same edit.
 layout: none
 ---
 
-<SectionGate :current="2" title="Keep the change inside your understanding" question="Can each piece be explained, exercised and reviewed?" />
+<SectionGate :current="2" title="Put something working in front of a person" question="What can someone see and check today?" />
 
 <!--
 17:30. Slice, about 5 minutes. No demo.
+-->
+
+---
+part: Slice
+class: ns allow-whitespace
+transition: view-transition
+---
+
+# Get a thin path working before the database is done
+
+<TracerBullet :step="0" />
+
+<!--
+17:30 to 19:15
+
+- The usual split is by layer: data first, then the API, then the UI. Nobody sees anything work until day four. That's when you find out the columns are wrong, or the whole idea is.
+
+
+(Build step. The empty space fills on the last step of this sequence.)
+-->
+
+---
+part: Slice
+class: ns allow-whitespace
+transition: view-transition
+---
+
+# Get a thin path working before the database is done
+
+<TracerBullet :step="1" />
+
+<!--
+(Step 1 of 2)
+
+Tracer bullets go the other way. A narrow path through every layer on day one. The data can be an in-memory fixture behind the same interface. The path is real, so a person can click it.
+
+
+(Build step. The empty space fills on the last step of this sequence.)
+-->
+
+---
+part: Slice
+class: ns
+---
+
+# Get a thin path working before the database is done
+
+<TracerBullet :step="2" />
+
+<!--
+(Step 2 of 2)
+
+Every day after that ends with something a person can check. Stubs are fine. A slice with no visible result isn't.
+
+- This matters more with agents. An agent will happily finish all four layers before you've looked at anything. A running prototype on day one is the cheapest review you'll get.
+- The term comes from The Pragmatic Programmer. Matt Pocock's skills use it for how agents should cut work. https://github.com/mattpocock/skills
+-->
+
+---
+part: Slice
+class: ns allow-whitespace
+transition: view-transition
+---
+
+# The export, one tracer bullet at a time
+
+<TracerSlices :step="0" />
+
+<!--
+19:15 to 20:45
+
+- Slice one ships with fixture data. The product owner clicks Export on day one and tells you the columns are wrong before anyone writes a query.
+
+
+(Build step. The empty space fills on the last step of this sequence.)
+-->
+
+---
+part: Slice
+class: ns allow-whitespace
+transition: view-transition
+---
+
+# The export, one tracer bullet at a time
+
+<TracerSlices :step="1" />
+
+<!--
+(Step 1 of 2)
+
+Each later slice replaces a stub or widens the path, and each ends with a check a person can run. Slice two is where the tenant boundary lives, so it gets its own check. That's the one we'll break in the verify part.
+
+
+(Build step. The empty space fills on the last step of this sequence.)
+-->
+
+---
+part: Slice
+class: ns
+---
+
+# The export, one tracer bullet at a time
+
+<TracerSlices :step="2" />
+
+<!--
+(Step 2 of 2)
+
+Matt Pocock's rule, from his to-tickets skill: each slice cuts a narrow but complete path through every layer, is demoable or verifiable on its own, and fits in one fresh agent context. https://github.com/mattpocock/skills/blob/main/skills/engineering/to-tickets/SKILL.md
+
+- A review unit isn't a deployment unit. Keep the export behind a flag until slice two lands.
 -->
 
 ---
@@ -720,7 +823,7 @@ transition: view-transition
 <SizeRisk :step="0" />
 
 <!--
-17:30 to 19:00
+20:45 to 22:15
 
 - Both minimaps use the same scale, one row per line. The rename is huge. The auth change is a speck.
 
@@ -742,103 +845,7 @@ transition: view-transition
 (Step 1 of 2)
 
 The rename needs a mechanical check. The ten lines need a person and a boundary test, because they change who can delete what.
-
-
-(Build step. The empty space fills on the last step of this sequence.)
--->
-
----
-part: Slice
-class: ns
----
-
-# Size is not risk
-
-<SizeRisk :step="2" />
-
-<!--
-(Step 2 of 2)
-
-Line count predicts review time. It doesn't predict blast radius.
--->
-
----
-part: Slice
-class: ns allow-whitespace
-transition: view-transition
----
-
-# One giant PR becomes a stack you can review
-
-<StackSplit :step="0" />
-
-<!--
-19:00 to 20:30
-
-- An agent happily produces 1,000 lines in one go.
-
-
-(Build step. The empty space fills on the last step of this sequence.)
--->
-
----
-part: Slice
-class: ns allow-whitespace
-transition: view-transition
----
-
-# One giant PR becomes a stack you can review
-
-<StackSplit :step="1" />
-
-<!--
-(Step 1 of 2)
-
-GitHub's example splits it into four layers: data types, search API, chat grounding, UI. CI runs on every layer.
-
-
-(Build step. The empty space fills on the last step of this sequence.)
--->
-
----
-part: Slice
-class: ns
----
-
-# One giant PR becomes a stack you can review
-
-<StackSplit :step="2" />
-
-<!--
-(Step 2 of 2)
-
-Read it top-down to understand the goal. Review it bottom-up, because each layer depends on the one below.
-
-- Caveat: splitting after generation makes review smaller. It doesn't undo a bad design decision.
-- Source: https://github.blog/engineering/turn-one-giant-ai-generated-pull-request-to-a-reviewable-stack/
--->
-
----
-part: Slice
-class: ns allow-whitespace
-transition: view-transition
----
-
-# Slice by behaviour, then prove each slice
-
-<div class="ns-slices">
-  <div class="sl"><span class="n">1</span><b>My team's export, behind a flag</b><p>Team A downloads its two rows.</p></div>
-  <div class="sl"><span class="n">2</span><b>Enforce the boundary</b><p>A forged <code>teamId</code> returns the same two rows.</p></div>
-  <div class="sl"><span class="n">3</span><b>UI and an export signal</b><p>The button works in a browser. Exports are counted per team.</p></div>
-</div>
-<Show :step="0" :at="1" class="ns-quote"><p>"A single human still owns the output."</p><span>Dillon Mulroy, who reads every generated line and keeps PRs at 300 to 800 lines</span></Show>
-
-<!--
-20:30 to 22:15
-
-- Don't slice by layer (database, service, UI). Slice by behaviour, so each slice has something you can exercise.
-- Each slice has an acceptance condition you can check.
-- A review unit isn't a deployment unit. The whole feature still needs an integration check.
+- The rename is the one exception to tracer bullets. Matt Pocock's skill sequences a wide refactor as expand, migrate in batches, contract, so the build stays green throughout.
 
 
 (Build step. The empty space fills on the last step of this sequence.)
@@ -850,20 +857,15 @@ class: ns
 transition: gate | gate-back
 ---
 
-# Slice by behaviour, then prove each slice
+# Size is not risk
 
-<div class="ns-slices">
-  <div class="sl"><span class="n">1</span><b>My team's export, behind a flag</b><p>Team A downloads its two rows.</p></div>
-  <div class="sl"><span class="n">2</span><b>Enforce the boundary</b><p>A forged <code>teamId</code> returns the same two rows.</p></div>
-  <div class="sl"><span class="n">3</span><b>UI and an export signal</b><p>The button works in a browser. Exports are counted per team.</p></div>
-</div>
-<Show :step="1" :at="1" class="ns-quote"><p>"A single human still owns the output."</p><span>Dillon Mulroy, who reads every generated line and keeps PRs at 300 to 800 lines</span></Show>
+<SizeRisk :step="2" />
 
 <!--
-(Step 1 of 1)
+(Step 2 of 2)
 
-Dillon Mulroy on The Weekly Dev's Brew. 300 to 800 lines is his practice, not a safety threshold. https://www.wordman.dev/podcast/dillon-mulroy-i-enjoy-coding-less-than-ever/
-- A ten-line authorization change can deserve more attention than a big mechanical edit.
+Line count predicts review time. It doesn't predict blast radius.
+- Dillon Mulroy keeps PRs at 300 to 800 lines and reads every generated line. That's his practice, not a safety threshold. https://www.wordman.dev/podcast/dillon-mulroy-i-enjoy-coding-less-than-ever/
 -->
 
 ---
@@ -1052,7 +1054,7 @@ layout: none
 <SectionGate :current="4" title="Show the loop, including the stop" question="How many reviews before it can merge?" />
 
 <!--
-33:00. Review, about 10 minutes including a 3-minute demo.
+33:00. Review, about 10 and a half minutes including a 3-minute demo.
 -->
 
 ---
@@ -1066,7 +1068,7 @@ transition: view-transition
 <ReviewLoops :step="0" />
 
 <!--
-33:00 to 34:15
+33:00 to 34:00
 
 - The inner loop runs on my machine before any PR exists: edit, tests, a browser check, a local reviewer agent. Seconds per turn.
 
@@ -1105,7 +1107,65 @@ class: ns
 <!--
 (Step 2 of 2)
 
-Most findings should die inside. Every finding that reaches the PR costs someone else's time.
+Most findings should die inside. Every finding that reaches the PR costs someone else's time. Next slide: what the local reviewer looks like.
+-->
+
+---
+part: Review
+class: ns allow-whitespace
+transition: view-transition
+---
+
+# After every slice, send in the adversaries
+
+<LocalAdversaries :step="0" />
+
+<!--
+34:00 to 35:30
+
+- This is the local reviewer. When a slice is done, before the next one starts, I ask the agent to review what it just built as an adversary. It runs as a subagent, so it starts with a fresh context and doesn't inherit the builder's assumptions.
+- One adversary is a fine start. Here the functional one finds the forged teamId leak.
+
+
+(Build step. The empty space fills on the last step of this sequence.)
+-->
+
+---
+part: Review
+class: ns allow-whitespace
+transition: view-transition
+---
+
+# After every slice, send in the adversaries
+
+<LocalAdversaries :step="1" />
+
+<!--
+(Step 1 of 2)
+
+For riskier slices, run several in parallel, one lens each: functional (does it do what the plan says, including the failure case?), non-functional (errors, limits, performance, logs) and security (who can do something they shouldn't?). Add project-specific ones when you have them, like accessibility or data migration. The security one finds a CSV formula injection: a title starting with = runs as a formula in Excel.
+
+
+(Build step. The empty space fills on the last step of this sequence.)
+-->
+
+---
+part: Review
+class: ns
+---
+
+# After every slice, send in the adversaries
+
+<LocalAdversaries :step="2" />
+
+<!--
+(Step 2 of 2)
+
+The main agent fixes the findings, reruns the checks, and only then starts slice three. Findings that need a decision come to me instead.
+
+- The prompt, roughly: "Review the last slice as three adversarial subagents in parallel: functional, non-functional and security. Report only findings with a reproducible request or a failing check. Fix them before starting the next slice."
+- Same topology as my PR reviewer (a primary agent, parallel specialist lenses, a synthesis step), just run locally and earlier. https://www.huuhka.net/building-your-own-pr-reviewer-with-coding-agents/ and https://www.huuhka.net/primary-vs-subagents-in-llm-harnesses/
+- CSV injection is a real class of bug: OWASP documents it. https://owasp.org/www-community/attacks/CSV_Injection
 -->
 
 ---
@@ -1119,9 +1179,9 @@ transition: view-transition
 <ReviewerPipeline :step="0" />
 
 <!--
-34:15 to 35:15
+35:30 to 36:30
 
-- I've built a few PR reviewers. The model call is one stage.
+- That was the local reviewer. On the PR side, I've built a few reviewer bots. The model call is one stage.
 
 
 (Build step. The empty space fills on the last step of this sequence.)
@@ -1175,7 +1235,7 @@ transition: view-transition
 <SecondOpinion :step="0" />
 
 <!--
-35:15 to 36:45
+36:30 to 37:45
 
 
 (Build step. The empty space fills on the last step of this sequence.)
@@ -1246,7 +1306,7 @@ transition: view-transition
 <ReviewBudget :step="0" />
 
 <!--
-36:45 to 38:45. The controls work. Change reviewers, rounds or the lens live if there's time.
+37:45 to 39:30. The controls work. Change reviewers, rounds or the lens live if there's time.
 
 - One reviewer, one round. It finds some real issues and some noise.
 
@@ -1321,21 +1381,21 @@ transition: view-transition
 <div class="ns-rules">
   <Show :step="0" :at="1" class="col">
     <h3>A finding earns a fix when</h3>
-    <p>It names a mechanism, a reproducible request or a failing check.</p>
-    <p>It is above the severity bar you set for this change.</p>
-    <p>The change's risk warrants that reviewer at all.</p>
+    <p>It comes with a repro or a failing check.</p>
+    <p>It's above the severity bar for this change.</p>
+    <p>The change is risky enough for that reviewer.</p>
   </Show>
   <Show :step="0" :at="2" class="col end">
     <h3>The loop ends when</h3>
     <p>A round finds nothing above the bar.</p>
-    <p>The budget of rounds, minutes or money runs out. A person decides.</p>
+    <p>The budget runs out. A person decides.</p>
     <p>Reviewers disagree. A person decides.</p>
-    <p>A new commit lands. Every earlier approval and CI result is stale.</p>
+    <p>A new commit lands. Old approvals are stale.</p>
   </Show>
 </div>
 
 <!--
-38:45 to 39:45
+39:30 to 40:15
 
 
 (Build step. The empty space fills on the last step of this sequence.)
@@ -1352,16 +1412,16 @@ transition: view-transition
 <div class="ns-rules">
   <Show :step="1" :at="1" class="col">
     <h3>A finding earns a fix when</h3>
-    <p>It names a mechanism, a reproducible request or a failing check.</p>
-    <p>It is above the severity bar you set for this change.</p>
-    <p>The change's risk warrants that reviewer at all.</p>
+    <p>It comes with a repro or a failing check.</p>
+    <p>It's above the severity bar for this change.</p>
+    <p>The change is risky enough for that reviewer.</p>
   </Show>
   <Show :step="1" :at="2" class="col end">
     <h3>The loop ends when</h3>
     <p>A round finds nothing above the bar.</p>
-    <p>The budget of rounds, minutes or money runs out. A person decides.</p>
+    <p>The budget runs out. A person decides.</p>
     <p>Reviewers disagree. A person decides.</p>
-    <p>A new commit lands. Every earlier approval and CI result is stale.</p>
+    <p>A new commit lands. Old approvals are stale.</p>
   </Show>
 </div>
 
@@ -1384,23 +1444,23 @@ class: ns
 <div class="ns-rules">
   <Show :step="2" :at="1" class="col">
     <h3>A finding earns a fix when</h3>
-    <p>It names a mechanism, a reproducible request or a failing check.</p>
-    <p>It is above the severity bar you set for this change.</p>
-    <p>The change's risk warrants that reviewer at all.</p>
+    <p>It comes with a repro or a failing check.</p>
+    <p>It's above the severity bar for this change.</p>
+    <p>The change is risky enough for that reviewer.</p>
   </Show>
   <Show :step="2" :at="2" class="col end">
     <h3>The loop ends when</h3>
     <p>A round finds nothing above the bar.</p>
-    <p>The budget of rounds, minutes or money runs out. A person decides.</p>
+    <p>The budget runs out. A person decides.</p>
     <p>Reviewers disagree. A person decides.</p>
-    <p>A new commit lands. Every earlier approval and CI result is stale.</p>
+    <p>A new commit lands. Old approvals are stale.</p>
   </Show>
 </div>
 
 <!--
 (Step 2 of 2)
 
-What ends the loop. Note that the budget and a disagreement end in a person, not another retry. And a new commit invalidates old evidence.
+What ends the loop. The budget is rounds, minutes or money. The budget and a disagreement end in a person, not another retry. A new commit makes every earlier approval and CI result stale.
 
 - Polylane got their production review from about 7 minutes to 94 seconds with a 30-step budget and a fresh review for each new commit. Budgets aren't just about cost. https://polylane.com/blog/how-we-prevent-slop-from-hitting-prod/
 - Allow at most two fixes in the demo.
@@ -1411,13 +1471,13 @@ layout: none
 transition: gate | gate-back
 ---
 
-<DemoSlide title="A review loop that stops" :minutes="3" prompt="Review this diff against plan.md. Report only findings with a reproducible request or a failing check. Fix at most twice, then stop and list what is left." />
+<DemoSlide title="A review loop that stops" :minutes="3" prompt="Review the last slice as three adversarial subagents in parallel: functional, non-functional and security. Report only findings with a reproducible request or a failing check. Fix at most twice, then stop and list what is left." />
 
 <!--
-39:45 to 42:45. Live demo, 3 minutes.
+40:15 to 43:15. Live demo, 3 minutes.
 
-1. Run the local review loop on the fixed branch with one extra seeded issue.
-2. Round one: it reports a real finding and some noise. Show which ones earn a fix.
+1. Run the prompt on the fixed branch with one extra seeded issue, the formula injection.
+2. Show the three subagents starting in parallel. Round one: a real finding and some noise. Show which ones earn a fix.
 3. Round two: nothing above the bar. It stops and summarises.
 4. Push a new commit. Show that the earlier review is now stale.
 
@@ -1431,7 +1491,7 @@ layout: none
 <SectionGate :current="5" title="What could change our minds?" question="When could stronger checks replace some human reading?" />
 
 <!--
-42:45. Production and the counterargument, about 5 minutes including the Jev aside.
+43:15. Production and the counterargument, about 5 minutes including the Jev aside.
 -->
 
 ---
@@ -1440,12 +1500,12 @@ class: ns allow-whitespace
 transition: view-transition
 ---
 
-# Some teams already read less by hand
+# Some teams already skip reading every line
 
 <AutomationDial :step="0" />
 
 <!--
-42:45 to 44:15. Give this a fair hearing.
+43:15 to 44:45. Give this a fair hearing.
 
 
 (Build step. The empty space fills on the last step of this sequence.)
@@ -1457,7 +1517,7 @@ class: ns allow-whitespace
 transition: view-transition
 ---
 
-# Some teams already read less by hand
+# Some teams already skip reading every line
 
 <AutomationDial :step="1" />
 
@@ -1476,7 +1536,7 @@ class: ns allow-whitespace
 transition: view-transition
 ---
 
-# Some teams already read less by hand
+# Some teams already skip reading every line
 
 <AutomationDial :step="2" />
 
@@ -1494,14 +1554,14 @@ part: Production
 class: ns
 ---
 
-# Some teams already read less by hand
+# Some teams already skip reading every line
 
 <AutomationDial :step="3" />
 
 <!--
 (Step 3 of 3)
 
-The common thread: less reading by hand always came with more checking by machine.
+The common thread: every team that reads less of the code added more automated checks.
 
 - Sources: https://www.intercom.com/blog/ai-is-approving-our-pull-requests-heres-how-we-made-it-safe/ https://openai.com/index/harness-engineering/ https://engineering.atspotify.com/2026/9/ai-changed-how-spotify-builds-what-we-learned-and-fixed-about-quality-at-higher-velocity
 - These are company reports, not controlled comparisons.
@@ -1518,7 +1578,7 @@ transition: view-transition
 <VolumeChart :step="0" />
 
 <!--
-44:15 to 45:15
+44:45 to 45:45
 
 
 (Build step. The empty space fills on the last step of this sequence.)
@@ -1567,12 +1627,12 @@ class: ns allow-whitespace
 transition: view-transition
 ---
 
-# Check the diff against production, not just the tests
+# Check the diff against production
 
 <Trajectory :step="0" />
 
 <!--
-45:15 to 46:45
+45:45 to 47:15
 
 - Polylane connects a PR diff to the cloud resources it can affect, then reads their telemetry and a 24-hour forecast.
 
@@ -1586,7 +1646,7 @@ class: ns allow-whitespace
 transition: view-transition
 ---
 
-# Check the diff against production, not just the tests
+# Check the diff against production
 
 <Trajectory :step="1" />
 
@@ -1605,7 +1665,7 @@ class: ns allow-whitespace
 transition: view-transition
 ---
 
-# Check the diff against production, not just the tests
+# Check the diff against production
 
 <Trajectory :step="2" />
 
@@ -1623,7 +1683,7 @@ part: Production
 class: ns
 ---
 
-# Check the diff against production, not just the tests
+# Check the diff against production
 
 <Trajectory :step="3" />
 
@@ -1632,7 +1692,7 @@ class: ns
 
 Plausible ones pass. Missing evidence isn't proof of safety, it's a policy choice. Decide who owns a plausible failure before it happens.
 
-- Their numbers, self-reported: median review time from about 7 minutes to 94 seconds after a 30-step budget and a fresh run per commit.
+- Their numbers, self-reported, no longer on the slide: median review time from about 7 minutes to 94 seconds after a 30-step budget and a fresh run per commit.
 - A rollback isn't always safe, for example after a data migration.
 -->
 
@@ -1647,7 +1707,7 @@ transition: view-transition
 <JevBars :step="0" />
 
 <!--
-46:45 to 47:15. Thirty seconds, keep it moving.
+47:15 to 47:45. Thirty seconds, keep it moving.
 
 - Not every step in an agent pipeline needs an LLM. Polylane replaced LLM calls with Jev, a typed decision model, for yes/no, choice and score questions.
 
@@ -1684,7 +1744,7 @@ class: ns
 <PrCard mode="evidence" />
 
 <!--
-47:15 to 48:15
+47:45 to 48:45
 
 - Back to the PR from the start. The diff barely changed, one line.
 - What changed is what we can show: the fact from research, the decision from the plan, a check that fails without the filter, a review that stopped for a stated reason, and a production signal we'll watch.
@@ -1709,12 +1769,12 @@ transition: view-transition
       <div class="dim">empty-bottom: Make the main exhibit taller so it reaches the citation line.</div>
       <div class="dim">Do not add more text to fill space.</div>
     </div>
-    <p>Agents kept leaving the bottom third of my slides empty. Now a script fails the commit and tells the agent how to fix it.</p>
+    <p>Agents kept leaving slides half empty. Now the commit fails and says how to fix it.</p>
   </Show>
 </div>
 
 <!--
-48:15 to 49:45
+48:45 to 50:00
 
 - Ask the room: what's the comment you type most often in reviews? That's your first check.
 
@@ -1739,7 +1799,7 @@ class: ns
       <div class="dim">empty-bottom: Make the main exhibit taller so it reaches the citation line.</div>
       <div class="dim">Do not add more text to fill space.</div>
     </div>
-    <p>Agents kept leaving the bottom third of my slides empty. Now a script fails the commit and tells the agent how to fix it.</p>
+    <p>Agents kept leaving slides half empty. Now the commit fails and says how to fix it.</p>
   </Show>
 </div>
 
@@ -1763,7 +1823,7 @@ layout: none
 </div>
 
 <!--
-49:45 to 52:00, then questions.
+50:00 to 52:00, then questions.
 
 - Leave the closing question on screen during Q&A.
 - The sources slide follows as backup.
@@ -1778,7 +1838,7 @@ class: ns
 
 <div class="ns-sources">
   <p><b>Pasi Huuhka</b> Research, plan, implement · How I develop with LLMs, early 2026 · Building your own PR reviewer</p>
-  <p><b>GitHub Next</b> Chopin · <b>GitHub</b> Spec Kit July 2026 · Turning a giant AI PR into a stack</p>
+  <p><b>GitHub Next</b> Chopin · <b>GitHub</b> Spec Kit July 2026 · <b>Matt Pocock</b> Skills for real engineers</p>
   <p><b>Honeycomb</b> Embracing the code review bottleneck · 30 to 70 PRs a day</p>
   <p><b>Spotify</b> AI changed how Spotify builds · <b>Intercom</b> AI is approving our pull requests</p>
   <p><b>Uber</b> Running a software factory efficiently · <b>OpenAI</b> Harness engineering</p>

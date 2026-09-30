@@ -9,7 +9,7 @@ withDefaults(defineProps<{ step?: number }>(), { step: 0 })
 <template>
   <div class="arg">
     <section class="doc">
-      <header><span class="ns-mono">plan.md</span><span class="req">Request: "Add CSV export for team tasks."</span></header>
+      <header><span class="ns-mono">plan.md</span></header>
       <ol>
         <li>Add <code>GET /tasks/export</code> that returns CSV.</li>
         <li class="target" :class="{ struck: step >= 2, flagged: step >= 1 }">Accept a <code>teamId</code> query parameter to filter.</li>
@@ -18,11 +18,9 @@ withDefaults(defineProps<{ step?: number }>(), { step: 0 })
           <li class="new">Example: Team A exports exactly its 2 rows.</li>
           <li class="new">Example: a forged <code>teamId</code> still returns those 2 rows.</li>
         </div></div>
-        <li>Reuse the task serializer.</li>
-        <li>Test the header, rows and escaping.</li>
         <div class="ins" :class="{ on: step >= 3 }"><div>
-          <li class="new out">Out of scope: background jobs, streaming, spreadsheet formatting.</li>
-          <li class="new ev">Evidence: a check with two seeded teams that fails without the filter.</li>
+          <li class="new out">Out of scope: jobs, streaming, formatting.</li>
+          <li class="new ev">Evidence: a two-team check that fails without the filter.</li>
         </div></div>
       </ol>
     </section>
@@ -34,7 +32,7 @@ withDefaults(defineProps<{ step?: number }>(), { step: 0 })
       </div>
       <div class="note agent" :class="{ on: step >= 2 }">
         <b>Planning agent</b>
-        <p>Then the export leaks their tasks. Changed to the session's team only.</p>
+        <p>It leaks their tasks. Session team only now.</p>
       </div>
       <div class="note stamp" :class="{ on: step >= 3 }">
         <b>Decision recorded</b>
@@ -67,7 +65,7 @@ withDefaults(defineProps<{ step?: number }>(), { step: 0 })
   gap: 18px;
   padding: 14px 22px;
   border-bottom: 1px solid var(--ns-line);
-  font-size: 16px;
+  font-size: var(--ns-label);
   color: var(--z-grey-600);
 }
 
@@ -87,8 +85,8 @@ li {
   position: relative;
   margin: 0;
   max-width: none;
-  padding: 7px 10px;
-  font-size: 20px;
+  padding: 9px 12px;
+  font-size: 23px;
   line-height: 1.35;
   transition: background 500ms var(--ns-ease), color 500ms var(--ns-ease);
 }
@@ -173,13 +171,13 @@ code {
 }
 
 .note b {
-  font-size: 15px;
+  font-size: var(--ns-label);
   letter-spacing: 0.02em;
 }
 
 .note p {
   margin: 4px 0 0;
-  font-size: 20px;
+  font-size: 22px;
   line-height: 1.32;
   max-width: none;
 }

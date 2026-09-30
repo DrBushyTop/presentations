@@ -96,7 +96,7 @@ h1 {
 .bar span {
   margin-left: 10px;
   color: #8a8a8a;
-  font-size: 15px;
+  font-size: var(--ns-label);
 }
 
 .screen {

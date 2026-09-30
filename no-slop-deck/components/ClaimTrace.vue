@@ -59,7 +59,7 @@ watch(active, (on) => { if (on) { measure(); setTimeout(measure, 700) } })
           <em class="chip bad" :class="{ on: step >= 2 }">False for export</em>
         </li>
       </ol>
-      <footer :class="{ on: step >= 3 }">One claim checked by hand changed the plan.</footer>
+      <footer :class="{ on: step >= 3 }">Checking one claim yourself changed the plan.</footer>
     </section>
 
     <section class="code ns-mono">
@@ -90,8 +90,8 @@ watch(active, (on) => { if (on) { measure(); setTimeout(measure, 700) } })
 .trace {
   position: relative;
   display: grid;
-  grid-template-columns: 430px 1fr;
-  gap: 110px;
+  grid-template-columns: 420px 1fr;
+  gap: 84px;
   height: 500px;
 }
 
@@ -144,7 +144,7 @@ watch(active, (on) => { if (on) { measure(); setTimeout(measure, 700) } })
   display: inline-block;
   margin-top: 8px;
   font-style: normal;
-  font-size: 15px;
+  font-size: var(--ns-label);
   font-weight: 700;
   padding: 3px 10px;
   color: #fff;
@@ -198,7 +198,7 @@ watch(active, (on) => { if (on) { measure(); setTimeout(measure, 700) } })
 }
 
 .ln {
-  font-size: 16px;
+  font-size: 17.5px;
   line-height: 1.9;
   padding: 0 18px;
   white-space: pre;

@@ -1,17 +1,17 @@
 <!--
-  The fair counterargument: teams already review less by hand.
+  The fair counterargument: some teams no longer read every line.
   1 people who keep reading · 2 teams that automate approval · 3 what they share
 -->
 <script setup lang="ts">
 withDefaults(defineProps<{ step?: number }>(), { step: 0 })
 
 const teams = [
-  { who: 'Dillon Mulroy', what: 'Reads every generated line. Keeps PRs at 300 to 800 lines.', x: 0.05, up: true, g: 1 },
-  { who: 'Spotify', what: 'Merged changes doubled. Kept its size thresholds anyway.', x: 0.22, up: false, g: 1 },
-  { who: 'Honeycomb', what: 'Team plan reviews for big tickets. Relaxed for small ones.', x: 0.41, up: true, g: 1 },
-  { who: 'Uber', what: 'Scores review bots on precision, recall, cost and noise.', x: 0.62, up: false, g: 2 },
-  { who: 'Intercom', what: '19% of PRs approved by AI. Narrow changes only.', x: 0.77, up: true, g: 2 },
-  { who: 'OpenAI', what: 'Human review optional. Linters and structural tests hold the line.', x: 0.95, up: false, g: 2 },
+  { who: 'Dillon Mulroy', what: 'Reads every line. PRs of 300 to 800 lines.', x: 0.05, up: true, g: 1 },
+  { who: 'Spotify', what: 'Twice the changes. Kept PR size limits.', x: 0.22, up: false, g: 1 },
+  { who: 'Honeycomb', what: 'Team reviews plans for big tickets.', x: 0.41, up: true, g: 1 },
+  { who: 'Uber', what: 'Measures review bots on precision and noise.', x: 0.62, up: false, g: 2 },
+  { who: 'Intercom', what: '19% of PRs approved by AI. Narrow ones only.', x: 0.77, up: true, g: 2 },
+  { who: 'OpenAI', what: 'Human review optional. Linters enforce structure.', x: 0.95, up: false, g: 2 },
 ]
 const W = 1136
 const CW = 270
@@ -22,8 +22,8 @@ const left = (x: number) => Math.min(Math.max(x * W - CW / 2, 0), W - CW)
   <div class="dial">
     <div class="axis" />
     <div class="ends">
-      <span>More reading by hand</span>
-      <span>More approval by machine</span>
+      <span>People read every line</span>
+      <span>Machines approve some changes</span>
     </div>
     <div
       v-for="t in teams" :key="t.who" class="team" :class="{ up: t.up, on: step >= t.g }"
@@ -33,7 +33,7 @@ const left = (x: number) => Math.min(Math.max(x * W - CW / 2, 0), W - CW)
       <span>{{ t.what }}</span>
     </div>
     <div v-for="t in teams" :key="t.who + 'd'" class="pin" :class="{ on: step >= t.g, g2: t.g === 2 }" :style="{ left: t.x * W + 'px' }" />
-    <p class="take" :class="{ on: step >= 3 }">Every team that reads less by hand checks more by machine.</p>
+    <p class="take" :class="{ on: step >= 3 }">Teams that read less of the code add more automated checks.</p>
   </div>
 </template>
 
@@ -59,7 +59,7 @@ const left = (x: number) => Math.min(Math.max(x * W - CW / 2, 0), W - CW)
   top: 398px;
   display: flex;
   justify-content: space-between;
-  font-size: 17px;
+  font-size: var(--ns-label);
   font-weight: 700;
   color: var(--z-grey-600);
 }
@@ -114,7 +114,7 @@ const left = (x: number) => Math.min(Math.max(x * W - CW / 2, 0), W - CW)
 }
 
 .team span {
-  font-size: 18px;
+  font-size: 20px;
   line-height: 1.3;
   color: var(--z-ink-800);
 }

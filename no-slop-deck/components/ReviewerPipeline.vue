@@ -9,7 +9,7 @@ const stages = [
   { name: 'Event', note: 'PR opened or updated' },
   { name: 'Decide', note: 'Run at all? Which commits?' },
   { name: 'Context', note: 'Diff, files, plan' },
-  { name: 'Model', note: 'Review', ai: true },
+  { name: 'Model', note: 'One judgement', ai: true },
   { name: 'Validate', note: 'Parse, drop weak findings' },
   { name: 'Post', note: 'Comments on the PR' },
   { name: 'Record', note: 'Run state, for the next run' },
@@ -29,20 +29,14 @@ const stages = [
       <div class="brace left" />
       <div class="brace right" />
       <div class="cols">
-        <div>
-          <b>Ordinary code owns</b>
-          <p>Triggers, commit range, retries, deduplication, timeouts, posting, and when to stop.</p>
-        </div>
-        <div class="model">
-          <b>The model owns</b>
-          <p>One judgement: what is wrong with this diff, in a structured format the code can check.</p>
-        </div>
+        <b>Ordinary code owns everything else</b>
+        <p>Triggers, commit range, retries, deduplication, timeouts, posting, and when to stop.</p>
       </div>
     </div>
 
     <div class="fix" :class="{ on: step >= 2 }">
       <span class="ns-mono">/fix</span>
-      <p>The same shape runs a fix: gather the comment and the diff, make one bounded change, and push a commit for review.</p>
+      <p>Same shape: one bounded fix, pushed for review.</p>
     </div>
   </div>
 </template>
@@ -51,7 +45,7 @@ const stages = [
 .pipe {
   height: 500px;
   display: grid;
-  grid-template-rows: 160px 1fr auto;
+  grid-template-rows: 210px 1fr auto;
   gap: 26px;
 }
 
@@ -76,13 +70,13 @@ const stages = [
 }
 
 .st span {
-  font-size: 16px;
+  font-size: 19px;
   line-height: 1.3;
   color: var(--z-ink-800);
 }
 
 .st.ai {
-  flex: 0 0 104px;
+  flex: 0 0 118px;
   background: var(--ns-red);
   border-color: var(--ns-red);
   color: #fff;
@@ -111,13 +105,14 @@ const stages = [
   border-top: 0;
 }
 
-.brace.left { left: 0; width: calc(3 * (100% - 104px - 48px) / 6 + 16px); }
-.brace.right { right: 0; width: calc(3 * (100% - 104px - 48px) / 6 + 16px); }
+.brace.left { left: 0; width: calc(3 * (100% - 118px - 48px) / 6 + 16px); }
+.brace.right { right: 0; width: calc(3 * (100% - 118px - 48px) / 6 + 16px); }
 
 .cols {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
 }
 
 .cols b {
@@ -126,14 +121,10 @@ const stages = [
 }
 
 .cols p {
-  font-size: 21px;
+  font-size: 23px;
   line-height: 1.38;
-  margin: 8px 0 0;
+  margin: 8px auto 0;
   max-width: none;
-}
-
-.model b {
-  color: var(--ns-red);
 }
 
 .fix {

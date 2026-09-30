@@ -125,7 +125,7 @@ const running = computed(() => active.value)
 
 .lbl.in {
   fill: var(--ns-teal);
-  font-size: 16px;
+  font-size: var(--ns-label);
 }
 
 .tok.fast {
