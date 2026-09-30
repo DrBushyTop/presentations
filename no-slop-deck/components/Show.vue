@@ -1,6 +1,5 @@
 <!--
-  Reveal wrapper driven by a step number instead of v-click, so the same markup
-  works in the click deck (step = $clicks) and the split deck (step = constant).
+  Reveal wrapper driven by a step number (usually $clicks) instead of v-click.
 -->
 <script setup lang="ts">
 import { computed } from 'vue'

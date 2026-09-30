@@ -21,7 +21,7 @@ const sizes = [
 <template>
   <div class="rpi">
     <div class="corner">
-      <div class="zone-key"><i /> Aim: 40 to 60% of the context</div>
+      <div class="zone-key"><i /> Stay under 40 to 60% of the context</div>
     </div>
     <div v-for="(p, i) in phases" :key="p.name" class="phase" :class="{ on: step >= 1 }" :style="{ '--i': i }">
       <div class="name">{{ p.name }}</div>

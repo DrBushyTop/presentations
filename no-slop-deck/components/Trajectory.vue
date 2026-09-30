@@ -1,20 +1,21 @@
 <!--
-  Polylane's production review: from a diff to failure trajectories with
-  evidence, each confirmed, plausible or refuted. Example rows are ours.
+  Polylane's failure trajectories: causal chains from the diff to a metric,
+  each confirmed, plausible or refuted against production. The rows follow
+  the index migration example; the verdict rule is from their post.
   0 the chain · 1 trajectories · 2 verdicts · 3 the policy question
 -->
 <script setup lang="ts">
 withDefaults(defineProps<{ step?: number }>(), { step: 0 })
 
 const chain = [
-  { k: 'Diff', v: 'routes/export.ts' },
-  { k: 'Affected resources', v: 'export API · tasks DB · report worker' },
-  { k: 'Telemetry', v: 'Latency, CPU, errors, 24 h forecast' },
+  { k: 'Diff', v: 'PR #1207, a migration' },
+  { k: 'Affected resources', v: 'checkout-api · orders-db' },
+  { k: 'Telemetry', v: 'Writes/s, latency, errors, forecast' },
 ]
 const rows = [
-  { t: 'Export query scans every tenant, DB CPU spikes', s: 'confirmed', verdict: 'Fails the check' },
-  { t: 'A very large export times out the worker', s: 'plausible', verdict: 'Passes. Nobody proved it either way.' },
-  { t: 'New CSV columns break the nightly report', s: 'refuted', verdict: 'Dropped, with evidence' },
+  { t: 'The index build locks the writes checkout needs', s: 'confirmed', verdict: 'Fails the check' },
+  { t: 'Search reads the column before the backfill ends', s: 'plausible', verdict: 'Passes. Nobody proved it either way.' },
+  { t: 'The new column breaks the nightly report', s: 'refuted', verdict: 'Dropped, with evidence' },
 ]
 </script>
 
@@ -34,7 +35,8 @@ const rows = [
       </div>
     </div>
     <div class="policy" :class="{ on: step >= 3 }">
-      <b>Missing evidence is a policy decision.</b>
+      <code class="ns-mono">trajectories.some(t => t.status === "confirmed") ? "fail" : "pass"</code>
+      <b>So plausible passes. Missing evidence is a policy decision.</b>
     </div>
   </div>
 </template>
@@ -184,8 +186,8 @@ const rows = [
 
 .policy {
   display: flex;
-  gap: 22px;
-  align-items: baseline;
+  flex-direction: column;
+  gap: 10px;
   transition: opacity 600ms var(--ns-ease);
 }
 
@@ -193,8 +195,16 @@ const rows = [
   opacity: 0;
 }
 
+.policy code {
+  align-self: flex-start;
+  padding: 8px 14px;
+  background: var(--z-ink);
+  color: var(--ns-frozen);
+  font-size: var(--ns-code);
+}
+
 .policy b {
-  font-size: 30px;
+  font-size: 27px;
 }
 
 .policy span {

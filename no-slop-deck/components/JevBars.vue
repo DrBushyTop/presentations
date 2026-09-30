@@ -17,11 +17,11 @@ const metrics = [
     <div class="uses">
       <b>Where they use it</b>
       <ul>
+        <li>Ranking cloud resources by priority</li>
+        <li>Classifying incidents, closed PRs and autofix urgency</li>
         <li>Routing replies</li>
-        <li>Classifying incidents and closed PRs</li>
-        <li>Ranking autofix urgency</li>
       </ul>
-      <p>Not for writing code, and not for investigation.</p>
+      <p>Any step that picks from a fixed set of answers.</p>
     </div>
     <div class="metrics">
       <div v-for="m in metrics" :key="m.k" class="m">
@@ -69,7 +69,7 @@ const metrics = [
 .uses p {
   margin-top: 28px;
   font-size: 20px;
-  color: var(--ns-red);
+  color: var(--ns-teal);
   font-weight: 700;
 }
 

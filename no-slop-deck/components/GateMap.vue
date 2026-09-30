@@ -14,7 +14,7 @@ const gates = [
   { name: 'Slice', q: 'What can a person check today?' },
   { name: 'Verify', q: 'Which claim did we test?' },
   { name: 'Review', q: 'When do we stop?' },
-  { name: 'Production', q: 'What would change our minds?' },
+  { name: 'Production', q: 'What stops a bad rollout?' },
 ]
 </script>
 

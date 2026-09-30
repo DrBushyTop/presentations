@@ -6,7 +6,7 @@
 withDefaults(defineProps<{ step?: number }>(), { step: 0 })
 
 const groups = [
-  { who: 'Honeycomb', what: 'Merges on a peak weekday', bars: [{ l: 'Before', v: 30 }, { l: 'Mid 2026', v: 74 }] },
+  { who: 'Honeycomb', what: 'Merges on a peak weekday', bars: [{ l: 'Early 2025', v: 30 }, { l: 'April 2026', v: 74 }] },
   { who: 'Honeycomb', what: 'Incidents per quarter', bars: [{ l: '2024', v: 18.5 }, { l: 'Q1 2026', v: 32 }, { l: 'Q2 2026', v: 53 }] },
   { who: 'Spotify', what: 'Merged changes in August', bars: [{ l: '2025', v: 8100 }, { l: '2026', v: 17000 }] },
 ]

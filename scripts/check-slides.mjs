@@ -31,7 +31,7 @@ import { chromium } from 'playwright-chromium'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const baselinePath = join(root, 'scripts', 'slide-check-baseline.json')
-const allDecks = ['coding-agents', 'workshop-intro', 'database-modernization', 'agent-building-blocks', 'no-slop-deck', 'no-slop-deck/split.md']
+const allDecks = ['coding-agents', 'workshop-intro', 'database-modernization', 'agent-building-blocks', 'no-slop-deck']
 const deckDir = (deck) => (deck.endsWith('.md') ? dirname(deck) : deck)
 const deckEntry = (deck) => (deck.endsWith('.md') ? deck.slice(deckDir(deck).length + 1) : 'slides.md')
 

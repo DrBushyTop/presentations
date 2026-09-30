@@ -21,7 +21,7 @@ const evidence = [
   { icon: 'check', tone: 'ok', label: 'Forged teamId returns 0 foreign rows', meta: 'boundary check' },
   { icon: 'check', tone: 'ok', label: 'Check fails without the predicate', meta: 'negative control' },
   { icon: 'check', tone: 'ok', label: 'Review stopped: round 2, nothing above the bar', meta: 'stop rule' },
-  { icon: 'clock', tone: 'watch', label: 'Exports per team, with correlation id', meta: 'production' },
+  { icon: 'clock', tone: 'watch', label: 'Behind a flag. I watch exports per team.', meta: 'rollout' },
 ] as const
 
 const rows = computed(() => (props.mode === 'hook' ? hookChecks : evidence))

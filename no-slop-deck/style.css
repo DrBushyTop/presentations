@@ -106,18 +106,6 @@
   opacity: 0;
 }
 
-/* Split deck: every build step is its own slide, joined by the View
-   Transition API. Named elements morph; everything else cross-fades. */
-::view-transition-group(*) {
-  animation-duration: 560ms;
-  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-::view-transition-old(root),
-::view-transition-new(root) {
-  animation-duration: 360ms;
-}
-
 @media (prefers-reduced-motion: reduce) {
   .shift-enter-from,
   .shift-leave-to,
@@ -129,10 +117,6 @@
   .gate-back-leave-to {
     transform: none;
     filter: none;
-  }
-
-  ::view-transition-group(*) {
-    animation-duration: 1ms;
   }
 }
 
@@ -323,67 +307,6 @@
   max-width: 34ch;
 }
 
-/* ---------- Wrong twice ---------- */
-
-.ns-wrong {
-  height: 470px;
-  display: grid;
-  grid-template-rows: 1fr 1fr auto;
-  gap: 18px;
-}
-
-.w-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 18px;
-}
-
-.w-claim,
-.w-fix {
-  padding: 20px 24px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 6px;
-}
-
-.w-claim {
-  background: var(--ns-soft);
-}
-
-.w-claim p {
-  text-decoration: line-through;
-  text-decoration-color: var(--ns-red);
-  text-decoration-thickness: 3px;
-}
-
-.w-fix {
-  background: var(--ns-teal);
-  color: #fff;
-}
-
-.w-claim span,
-.w-fix span {
-  font-size: 16px;
-  font-weight: 700;
-  opacity: 0.8;
-}
-
-.w-claim p,
-.w-fix p {
-  margin: 0;
-  font-size: 25px;
-  line-height: 1.28;
-  font-weight: 650;
-  max-width: none;
-}
-
-.w-take {
-  font-size: 25px;
-  font-weight: 800;
-  padding-top: 6px;
-}
-
 /* ---------- Ask first ---------- */
 
 .ns-ask {
@@ -514,8 +437,14 @@
   margin: 0;
 }
 
-.ns-monday .term {
+.ns-monday .cols {
   flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.ns-monday .term {
   background: var(--z-ink);
   color: #fff;
   display: flex;

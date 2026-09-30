@@ -1,15 +1,15 @@
 <!--
   The fair counterargument: some teams no longer read every line.
-  1 people who keep reading · 2 teams that automate approval · 3 what they share
+  1 people still approve every change · 2 machines approve some · 3 what they share
 -->
 <script setup lang="ts">
 withDefaults(defineProps<{ step?: number }>(), { step: 0 })
 
 const teams = [
   { who: 'Dillon Mulroy', what: 'Reads every line. PRs of 300 to 800 lines.', x: 0.05, up: true, g: 1 },
-  { who: 'Spotify', what: 'Twice the changes. Kept PR size limits.', x: 0.22, up: false, g: 1 },
-  { who: 'Honeycomb', what: 'Team reviews plans for big tickets.', x: 0.41, up: true, g: 1 },
-  { who: 'Uber', what: 'Measures review bots on precision and noise.', x: 0.62, up: false, g: 2 },
+  { who: 'Honeycomb', what: 'Reviews plans as a team. Auto-approves 0%.', x: 0.24, up: false, g: 1 },
+  { who: 'Uber', what: 'People approve. Review bots tested on known bugs.', x: 0.43, up: true, g: 1 },
+  { who: 'Spotify', what: 'Most automated changes merge after checks.', x: 0.6, up: false, g: 2 },
   { who: 'Intercom', what: '19% of PRs approved by AI. Narrow ones only.', x: 0.77, up: true, g: 2 },
   { who: 'OpenAI', what: 'Human review optional. Linters enforce structure.', x: 0.95, up: false, g: 2 },
 ]
@@ -33,7 +33,7 @@ const left = (x: number) => Math.min(Math.max(x * W - CW / 2, 0), W - CW)
       <span>{{ t.what }}</span>
     </div>
     <div v-for="t in teams" :key="t.who + 'd'" class="pin" :class="{ on: step >= t.g, g2: t.g === 2 }" :style="{ left: t.x * W + 'px' }" />
-    <p class="take" :class="{ on: step >= 3 }">Teams that read less of the code add more automated checks.</p>
+    <p class="take" :class="{ on: step >= 3 }">Teams that read less add automated checks and make recovery cheap.</p>
   </div>
 </template>
 
