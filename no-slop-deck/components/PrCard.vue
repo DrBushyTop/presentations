@@ -237,11 +237,16 @@ const rows = computed(() => (props.mode === 'hook' ? hookChecks : evidence))
   background: var(--z-ink);
   color: #fff;
   overflow: hidden;
-  transition: height 600ms var(--ns-ease), background 600ms var(--ns-ease);
+  transition: background 600ms var(--ns-ease);
 }
 
 .prompt:not(.on) {
-  height: 0;
+  background: transparent;
+}
+
+.prompt:not(.on) .vote {
+  opacity: 0;
+  transform: translateY(100%);
 }
 
 .prompt.on:has(.question.on) {

@@ -22,13 +22,16 @@ const ys = [16.7, 50, 83.3]
     <ol class="slices">
       <li class="done"><Icon name="check" /><span><b>Slice 1</b>Done</span></li>
       <li class="now"><Icon name="dot" /><span><b>Slice 2</b>Just built</span></li>
-      <li class="next" :class="{ open: step >= 2 }"><Icon :name="step >= 2 ? 'arrow' : 'clock'" /><span><b>Slice 3</b>{{ step >= 2 ? 'Can start' : 'Waits for fixes' }}</span></li>
+      <li class="next" :class="{ open: step >= 2 }">
+        <span class="swap ic"><Icon name="clock" :class="{ on: step < 2 }" /><Icon name="arrow" :class="{ on: step >= 2 }" /></span>
+        <span><b>Slice 3</b><span class="swap"><i :class="{ on: step < 2 }">Waits for fixes</i><i :class="{ on: step >= 2 }">Can start</i></span></span>
+      </li>
     </ol>
 
     <div class="main">
       <small>Main agent</small>
       <b>Slice 2 is done. Send in the reviewers.</b>
-      <span class="ns-mono">{{ step >= 1 ? '3 subagents, in parallel' : '1 subagent' }}</span>
+      <span class="ns-mono swap"><i :class="{ on: step < 1 }">1 subagent</i><i :class="{ on: step >= 1 }">3 subagents, in parallel</i></span>
     </div>
 
     <svg class="fan" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
@@ -42,8 +45,8 @@ const ys = [16.7, 50, 83.3]
       <section v-for="(a, i) in adversaries" :key="a.lens" class="card" :class="{ on: i === 0 || step >= 1 }" :style="{ '--i': i }">
         <header><b>{{ a.lens }}</b><span class="st" :class="'is-' + status(a, step).toLowerCase()">{{ status(a, step) }}</span></header>
         <div class="finding" :class="{ ok: a.pass || step >= 2 }">
-          <Icon :name="a.pass || step >= 2 ? 'check' : 'alert'" />
-          <span>{{ step >= 2 && a.fix ? a.fix : a.f }}</span>
+          <span class="swap ic"><Icon name="alert" :class="{ on: !(a.pass || step >= 2) }" /><Icon name="check" :class="{ on: a.pass || step >= 2 }" /></span>
+          <span class="swap"><i :class="{ on: !(step >= 2 && a.fix) }">{{ a.f }}</i><i v-if="a.fix" :class="{ on: step >= 2 }">{{ a.fix }}</i></span>
         </div>
       </section>
     </div>
@@ -53,6 +56,22 @@ const ys = [16.7, 50, 83.3]
 </template>
 
 <style scoped>
+/* Text that changes between clicks: both versions share one grid cell and
+   crossfade, so boxes keep the height of the longer one and nothing jumps. */
+.swap {
+  display: grid;
+}
+
+.swap > * {
+  grid-area: 1 / 1;
+  font-style: normal;
+  transition: opacity 450ms var(--ns-ease);
+}
+
+.swap > :not(.on) {
+  opacity: 0;
+}
+
 .adv {
   height: 510px;
   display: grid;
@@ -97,6 +116,11 @@ const ys = [16.7, 50, 83.3]
   display: flex;
   flex-direction: column;
   color: var(--z-grey-600);
+}
+
+.slices .swap {
+  display: grid;
+  color: inherit;
 }
 
 .slices b {
@@ -210,7 +234,6 @@ const ys = [16.7, 50, 83.3]
 
 .card:not(.on) {
   opacity: 0.1;
-  transform: translateY(10px);
 }
 
 .card header {
@@ -240,6 +263,14 @@ const ys = [16.7, 50, 83.3]
   font-size: 21px;
   font-weight: 700;
   transition: background 500ms var(--ns-ease), color 500ms var(--ns-ease);
+}
+
+.finding > .swap:last-child {
+  flex: 1;
+}
+
+.finding .swap > * {
+  align-self: center;
 }
 
 .finding.ok {
