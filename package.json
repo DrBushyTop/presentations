@@ -32,6 +32,8 @@
     "export-pptx:database-modernization": "cd database-modernization && slidev export slides.md --format pptx",
     "export-pptx:agent-building-blocks": "cd agent-building-blocks && slidev export slides.md --format pptx",
     "export-pptx:workshop-intro": "cd workshop-intro && slidev export slides.md --format pptx",
+    "build:no-slop-engineer": "node no-slop-engineer/build.mjs",
+    "start:no-slop-engineer": "npm run build:no-slop-engineer && node no-slop-engineer/serve.mjs",
     "prepare": "git config core.hooksPath .githooks",
     "check:slides": "node scripts/check-slides.mjs",
     "check:slides:baseline": "node scripts/check-slides.mjs --update-baseline"

@@ -30,6 +30,13 @@ npm run dev:workshop-intro
 `npm run build` builds every deck. Use `npm run export` or
 `npm run export-pptx` to select one for export.
 
+## No slop engineer planning page
+
+`no-slop-engineer/` contains an interactive outline workbench with structure options,
+case studies, timings, demo plans and a standalone source notebook. Run it with
+`npm run start:no-slop-engineer`. See [its README](no-slop-engineer/README.md)
+for the M1 Tailscale link and serving details.
+
 ## Shared presentation code
 
 - `themes/zure/` is the reusable Zure theme. It includes typography, layouts,
