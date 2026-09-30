@@ -10,12 +10,18 @@ withDefaults(defineProps<{ step?: number }>(), { step: 0 })
   <div class="same">
     <div class="row top">
       <div class="node bad-o"><small>Assumption</small><b><code>teamId</code> may come from the query</b></div>
-      <div class="arrow split"><span /><span /></div>
+      <svg class="curve" viewBox="0 0 70 150" aria-hidden="true">
+        <path d="M6,75 C34,75 30,34.5 60,34.5" /><path d="M52,27.5 L61,34.5 L52,41.5" />
+        <path d="M6,75 C34,75 30,115.5 60,115.5" /><path d="M52,108.5 L61,115.5 L52,122.5" />
+      </svg>
       <div class="pair">
         <div class="node plain"><small>Agent writes</small><b>the export</b></div>
         <div class="node plain"><small>Agent writes</small><b>the tests</b></div>
       </div>
-      <div class="arrow join"><span /><span /></div>
+      <svg class="curve" viewBox="0 0 70 150" aria-hidden="true">
+        <path d="M8,34.5 C38,34.5 34,75 62,75" /><path d="M8,115.5 C38,115.5 34,75 62,75" />
+        <path d="M54,68 L63,75 L54,82" />
+      </svg>
       <div class="node green"><small>Result</small><b>24 passed</b><span>They agree. Nothing independent was checked.</span></div>
     </div>
 
@@ -57,9 +63,29 @@ withDefaults(defineProps<{ step?: number }>(), { step: 0 })
 }
 
 .pair {
+  height: 150px;
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+.pair .node {
+  flex: 1;
+  justify-content: center;
+}
+
+.curve {
+  width: 70px;
+  height: 150px;
+  overflow: visible;
+}
+
+.curve path {
+  fill: none;
+  stroke: var(--z-ink);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .node {
@@ -126,10 +152,6 @@ code {
   transform: rotate(45deg);
 }
 
-.split span:nth-child(1) { transform: rotate(-36deg); transform-origin: left center; }
-.split span:nth-child(2) { transform: rotate(36deg); transform-origin: left center; }
-.join span:nth-child(1) { transform: rotate(36deg); transform-origin: right center; }
-.join span:nth-child(2) { transform: rotate(-36deg); transform-origin: right center; }
 
 .take {
   margin: 0;
