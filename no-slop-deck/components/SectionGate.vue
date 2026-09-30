@@ -1,9 +1,9 @@
 <!--
-  Part divider. A corridor of doorways in 3D: the current gate is nearest and
-  lit, the ones still ahead recede behind it. When the slide opens, the camera
-  walks forward through the previous gate. The rail at the top keeps the
-  whole sequence in view. Outside the live slide (overview, print) it shows
-  the final state without motion.
+  Part divider. The part's own material streams down through a gate line:
+  above it, unchecked and dim; below it, each line has either passed or been
+  held, with the reason. The same stream is drawn twice and clipped at the
+  line, so a line changes state exactly as it crosses. Outside the live slide
+  (overview, print) it shows a still frame.
 -->
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
@@ -27,16 +27,15 @@ watch(active, (on) => {
   requestAnimationFrame(() => requestAnimationFrame(() => { go.value = true }))
 }, { immediate: true })
 
-// Doors from the previous gate (which the camera passes) to the last one.
-const doors = computed(() =>
-  gates
-    .map((g, i) => ({ ...g, i, d: i - props.current }))
-    .filter(g => g.d >= -1),
-)
+const gate = computed(() => gates[props.current])
+// Enough copies to cover the panel plus one loop.
+const lines = computed(() => Array.from({ length: 4 }, () => gate.value.stream).flat())
+const ROW = 46
+const loop = computed(() => `${gate.value.stream.length * ROW}px`)
 </script>
 
 <template>
-  <div class="ns-dark gate-slide" :class="{ go: go || still, still }">
+  <div class="ns-dark gate-slide" :class="{ go: go || still, still, moving: go && !still }">
     <ol class="rail" aria-label="Parts of the talk">
       <li
         v-for="(g, i) in gates" :key="g.name"
@@ -52,27 +51,28 @@ const doors = computed(() =>
       <p>{{ question }}</p>
     </div>
 
-    <div class="stage" aria-hidden="true">
-      <div class="rig">
-        <div class="floor" />
-        <div
-          v-for="d in doors" :key="d.name" class="door"
-          :class="{ now: d.d === 0, behind: d.d < 0 }"
-          :style="{ '--d': d.d, '--fade': Math.max(0.4, 1 - Math.max(d.d, 0) * 0.12) }"
-        >
-          <span v-if="d.d === 0">{{ d.name }}</span>
-        </div>
+    <div class="panel" aria-hidden="true" :style="{ '--loop': loop, '--row': ROW + 'px' }">
+      <div class="half above">
+        <ul class="stream">
+          <li v-for="(l, i) in lines" :key="i"><span class="mark">›</span><span class="t">{{ l.t }}</span></li>
+        </ul>
       </div>
-      <div class="spill" />
+      <div class="half below">
+        <ul class="stream">
+          <li v-for="(l, i) in lines" :key="i" :class="{ held: l.held }">
+            <Icon class="mark" :name="l.held ? 'x' : 'check'" />
+            <span class="t">{{ l.t }}</span>
+            <em v-if="l.held">{{ l.held }}</em>
+          </li>
+        </ul>
+      </div>
+
+      <div class="gate"><i class="bar" /></div>
     </div>
   </div>
 </template>
 
 <style scoped>
-.gate-slide {
-  --gap: 540px;
-}
-
 /* ---------- Rail ---------- */
 
 .rail {
@@ -118,13 +118,13 @@ const doors = computed(() =>
   left: 72px;
   bottom: 76px;
   z-index: 2;
-  width: 600px;
+  width: 610px;
 }
 
 h1 {
   font-family: var(--z-font-display);
-  font-size: 88px;
-  line-height: 0.95;
+  font-size: 80px;
+  line-height: 0.96;
   font-weight: 800;
   letter-spacing: -0.04em;
   color: #fff;
@@ -142,108 +142,134 @@ p {
   text-wrap: balance;
 }
 
-/* ---------- Corridor ---------- */
+/* ---------- Stream through the gate ---------- */
 
-.stage {
+.panel {
+  --line: 56%;
   position: absolute;
   top: 0;
   right: 0;
   bottom: 0;
-  width: 620px;
-  perspective: 1000px;
-  perspective-origin: 20% 44%;
+  width: 560px;
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 18%, #000 84%, transparent);
+  mask-image: linear-gradient(to bottom, transparent, #000 18%, #000 84%, transparent);
+}
+
+.half {
+  position: absolute;
+  inset: 0;
   overflow: hidden;
 }
 
-.rig {
-  position: absolute;
-  left: 170px;
-  top: 150px;
-  width: 300px;
-  height: 460px;
-  transform-style: preserve-3d;
-  transform: translateZ(0);
+.above {
+  clip-path: inset(0 0 calc(100% - var(--line)) 0);
 }
 
-.go .rig {
-  transition: transform 1600ms var(--ns-ease) 650ms;
+.below {
+  clip-path: inset(var(--line) 0 0 0);
 }
 
-.gate-slide:not(.go) .rig {
-  transform: translateZ(calc(var(--gap) * -1));
+.stream {
+  margin: 0;
+  padding: 0 0 0 28px;
+  list-style: none;
+  transform: translateY(calc(var(--loop) * -1));
 }
 
-.door {
-  position: absolute;
-  inset: 0;
-  border: 6px solid #3d3d3d;
-  border-bottom: 0;
-  opacity: var(--fade);
-  transform: translateZ(calc(var(--d) * var(--gap) * -1));
-  transition: opacity 900ms var(--ns-ease) 900ms, border-color 900ms var(--ns-ease) 900ms, box-shadow 900ms var(--ns-ease) 900ms, background 900ms var(--ns-ease) 900ms;
+.moving .stream {
+  animation: flow 11s linear infinite;
 }
 
-.door span {
-  position: absolute;
-  top: 20px;
-  left: 22px;
-  font-family: var(--z-font-display);
-  font-size: 26px;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  color: #6a6a6a;
+@keyframes flow {
+  from { transform: translateY(calc(var(--loop) * -1)); }
+  to { transform: translateY(0); }
 }
 
-.door.now {
-  border-color: var(--ns-frozen);
-  background: linear-gradient(to top, rgba(5, 195, 222, 0.3), rgba(5, 195, 222, 0.04) 70%);
-  box-shadow: 0 30px 90px -20px rgba(5, 195, 222, 0.45);
+.stream li {
+  height: var(--row);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-family: var(--ns-mono);
+  font-size: 19px;
+  white-space: nowrap;
 }
 
-.door.now span {
+.stream li::before {
+  display: none !important;
+}
+
+.mark {
+  flex: none;
+  width: 20px;
+  text-align: center;
+}
+
+.above li {
+  color: #5f5f5f;
+}
+
+.below li {
+  color: #f2f2f2;
+}
+
+.below .mark {
+  color: var(--ns-frozen);
+  font-size: 20px;
+}
+
+.below li.held {
+  color: #ff8a78;
+}
+
+.below li.held .mark {
+  color: var(--z-red-400);
+}
+
+.below li.held .t {
+  text-decoration: line-through;
+  text-decoration-thickness: 2px;
+}
+
+.below em {
+  font-family: var(--z-font-text);
+  font-style: normal;
+  font-size: 16px;
+  font-weight: 700;
+  padding: 2px 8px;
+  background: var(--ns-red);
   color: #fff;
 }
 
-.gate-slide:not(.go) .door.now {
-  border-color: #3d3d3d;
-  background: transparent;
-  box-shadow: none;
-}
-
-/* The gate we just came through: framed at first, then passed. */
-.door.behind {
-  border-color: var(--z-teal);
-}
-
-.go .door.behind {
-  opacity: 0;
-}
-
-.floor {
+.gate {
   position: absolute;
-  left: -140px;
-  top: 100%;
-  width: 580px;
-  height: 4400px;
-  transform-origin: top center;
-  transform: rotateX(-90deg) translateY(-700px);
-  background:
-    radial-gradient(ellipse 50% 14% at 50% 16%, rgba(5, 195, 222, 0.3), transparent 70%),
-    repeating-linear-gradient(to bottom, transparent 0 268px, #353535 268px 271px),
-    linear-gradient(to right, transparent 138px, #333 138px 141px, transparent 141px 439px, #333 439px 442px, transparent 442px);
-  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 8%, #000 30%, transparent 85%);
-  mask-image: linear-gradient(to bottom, transparent, #000 8%, #000 30%, transparent 85%);
-}
-
-.spill {
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(ellipse 60% 45% at 52% 88%, rgba(5, 195, 222, 0.16), transparent 70%);
+  left: 0;
+  right: 0;
+  top: var(--line);
+  transform: translateY(-50%);
   pointer-events: none;
-  transition: opacity 1200ms var(--ns-ease) 1100ms;
 }
 
-.gate-slide:not(.go) .spill {
+.bar {
+  display: block;
+  width: 100%;
+  height: 3px;
+  background: var(--ns-frozen);
+  box-shadow: 0 10px 40px 4px rgba(5, 195, 222, 0.35);
+  transform-origin: left;
+  transition: transform 1100ms var(--ns-ease) 350ms;
+}
+
+.gate-slide:not(.go) .bar {
+  transform: scaleX(0);
+}
+
+.half {
+  transition: opacity 900ms var(--ns-ease) 200ms;
+}
+
+.gate-slide:not(.go) .half {
   opacity: 0;
 }
 
@@ -261,8 +287,8 @@ p {
   filter: blur(6px);
 }
 
-.go h1 { transition-delay: 900ms; }
-.go p { transition-delay: 1150ms; }
+.go h1 { transition-delay: 600ms; }
+.go p { transition-delay: 850ms; }
 
 .still,
 .still * {
@@ -270,10 +296,8 @@ p {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .rig,
-  .gate-slide:not(.go) .rig {
-    transition: none;
-    transform: none;
+  .moving .stream {
+    animation: none;
   }
 
   .gate-slide:not(.go) h1,
