@@ -1,18 +1,20 @@
 // The six gates of the talk. The agenda map and every part divider read this.
-// `stream` is what flows through the gate on the part divider: lines that
-// pass, and lines the gate holds, with the reason.
+// `dur` is the part's length from the speaker notes. `stream` holds lines the
+// gate checks. The divider's log shows the first three that pass, so keep
+// those free of later reveals.
 type Line = { t: string, held?: string }
 
-export const gates: { name: string, q: string, stream: Line[] }[] = [
+export const gates: { name: string, q: string, dur: string, stream: Line[] }[] = [
   {
     name: 'Research',
+    dur: '5m',
     q: 'What do we actually know?',
     stream: [
       { t: 'listTasks scopes by session.teamId' },
+      { t: 'The CSV helper escapes commas' },
+      { t: 'A task belongs to exactly one team' },
       { t: 'findTasks takes any where clause' },
       { t: 'Export can reuse findTasks as is', held: 'unverified' },
-      { t: 'A task belongs to exactly one team' },
-      { t: 'The CSV helper escapes commas' },
       { t: 'Every route reads the session team', held: 'assumption' },
       { t: 'Due dates are stored in UTC' },
       { t: 'Admins can list every team' },
@@ -20,20 +22,22 @@ export const gates: { name: string, q: string, stream: Line[] }[] = [
   },
   {
     name: 'Plan',
+    dur: '7m 30s',
     q: 'Which decision is still open?',
     stream: [
       { t: 'Add GET /tasks/export as CSV' },
       { t: 'Reuse the task serializer' },
+      { t: 'Out of scope: jobs, streaming' },
       { t: 'Accept teamId to filter', held: 'nobody decided' },
       { t: 'Team comes from the session only' },
       { t: 'Forged teamId still gets 2 rows' },
-      { t: 'Out of scope: jobs, streaming' },
       { t: 'Add a format option', held: 'not asked for' },
       { t: 'Evidence: a two-team check' },
     ],
   },
   {
     name: 'Slice',
+    dur: '4m 45s',
     q: 'How do we cut the work?',
     stream: [
       { t: '1: Export button on fixture data' },
@@ -48,20 +52,22 @@ export const gates: { name: string, q: string, stream: Line[] }[] = [
   },
   {
     name: 'Verify',
+    dur: '6m 45s',
     q: 'Which claim did we test?',
     stream: [
       { t: 'exports the CSV header' },
       { t: "exports my team's tasks" },
+      { t: 'escapes commas in titles' },
       { t: '24 passed, 0 failed', held: 'which claim?' },
       { t: 'forged teamId: 0 foreign rows' },
       { t: 'fails with the filter removed' },
       { t: 'snapshot matches output', held: 'same assumption' },
       { t: 'Team A gets exactly 2 rows' },
-      { t: 'escapes commas in titles' },
     ],
   },
   {
     name: 'Review',
+    dur: '11m 45s',
     q: 'When do we stop?',
     stream: [
       { t: 'CSV cell runs a formula' },
@@ -76,6 +82,7 @@ export const gates: { name: string, q: string, stream: Line[] }[] = [
   },
   {
     name: 'Production',
+    dur: '14m',
     q: 'What stops a bad rollout?',
     stream: [
       { t: 'flag on: team-a' },
