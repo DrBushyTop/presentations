@@ -1,6 +1,7 @@
 <!--
-  A plan that loses an argument.
-  1 the challenge · 2 the plan changes · 3 exclusions and the evidence it needs
+  A good plan, grilled. The agent asks, I answer and push back, the plan
+  changes by one line and the decision is written down.
+  1 the grilling · 2 the small change · 3 the decision file
 -->
 <script setup lang="ts">
 withDefaults(defineProps<{ step?: number }>(), { step: 0 })
@@ -9,7 +10,7 @@ withDefaults(defineProps<{ step?: number }>(), { step: 0 })
 <template>
   <div class="arg">
     <section class="doc">
-      <header><span class="ns-mono">plan.md</span></header>
+      <header><span class="ns-mono">plan.md</span><span class="req" :class="{ on: step >= 2 }">Most of it stands. One line changed.</span></header>
       <ol>
         <li>Add <code>GET /tasks/export</code> that returns CSV.</li>
         <li class="target" :class="{ struck: step >= 2, flagged: step >= 1 }">Accept a <code>teamId</code> query parameter to filter.</li>
@@ -26,17 +27,17 @@ withDefaults(defineProps<{ step?: number }>(), { step: 0 })
     </section>
 
     <aside class="margin">
+      <div class="note agent" :class="{ on: step >= 1 }">
+        <b>Agent asks</b>
+        <p>Where does the team come from on export?</p>
+      </div>
       <div class="note me" :class="{ on: step >= 1 }">
         <b>Me</b>
-        <p>What if <code>teamId</code> belongs to another team?</p>
-      </div>
-      <div class="note agent" :class="{ on: step >= 2 }">
-        <b>Planning agent</b>
-        <p>It leaks their tasks. Session team only now.</p>
+        <p>The session. What if <code>teamId</code> is another team's?</p>
       </div>
       <div class="note stamp" :class="{ on: step >= 3 }">
-        <b>Decision recorded</b>
-        <p>It needs a check that can fail.</p>
+        <b>Written down</b>
+        <p class="ns-mono">docs/decisions/<br>0007-export-scope.md</p>
       </div>
     </aside>
   </div>
@@ -70,8 +71,13 @@ withDefaults(defineProps<{ step?: number }>(), { step: 0 })
 }
 
 .req {
-  font-weight: 600;
-  color: var(--z-ink);
+  font-weight: 700;
+  color: var(--ns-teal);
+  transition: opacity 500ms var(--ns-ease);
+}
+
+.req:not(.on) {
+  opacity: 0;
 }
 
 ol {
@@ -204,5 +210,6 @@ code {
 
 .stamp p {
   color: var(--z-ink);
+  font-size: 19px;
 }
 </style>

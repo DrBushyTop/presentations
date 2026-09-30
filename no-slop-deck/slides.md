@@ -207,7 +207,7 @@ If the run stalls, go back two slides. The claim-trace slide covers the same gro
 layout: none
 ---
 
-<SectionGate :current="1" title="Make the plan lose an argument" question="What must stay true when the happy path fails?" />
+<SectionGate :current="1" title="Grill the plan, keep the answers" question="Which decision has nobody made yet?" />
 
 <!--
 10:45. Plan, about 8 and a half minutes including a 3-minute demo.
@@ -219,7 +219,7 @@ class: ns
 clicks: 3
 ---
 
-# The plan is where I do most of the thinking
+# Let the agent grill you on the plan
 
 <PlanArgument :step="$clicks" />
 
@@ -227,16 +227,17 @@ clicks: 3
 10:45 to 12:45
 
 - The plan is the cheapest place to change your mind. Nothing is built yet.
-- The agent's first plan is reasonable. It also accepts a teamId parameter, because that's how filtering usually works.
+- The agent's first plan is usually a good baseline. This one is too. It also accepts a teamId parameter, because that's how filtering usually works. Nobody decided that. It just appeared.
 
-[click] I argue with it. What if teamId belongs to another team?
+[click] So I don't rewrite the plan. I ask the agent to grill me: one question at a time, until every open decision has an answer. Here it asks where the team comes from on export. I push back the other way too: what if teamId belongs to another team?
 
-[click] The plan changes. One decision and two concrete examples, including the failure case.
+[click] The plan barely changes. One line goes. One decision and two concrete examples come in, including the failure case.
 
-[click] Exclusions matter as much. And the decision needs evidence, a check that can fail.
+[click] The answer doesn't stay in the chat. It's written to a decision file the next agent will find, with the evidence it needs: a check that can fail. That's the file on the Monday slide.
 - The plan also reuses the serializer and tests header, rows and escaping. Those lines are off the slide to keep it readable.
 
-- Say: "A markdown file is only useful if somebody challenges it."
+- Say: "The plan is usually fine. The grilling finds the one decision nobody made."
+- Matt Pocock's grill-me skill: the agent interviews you "relentlessly about a plan or design until every branch of the design tree is resolved". grill-with-docs does the same and updates GLOSSARY.md and ADRs as it goes. He calls these his most popular skills and uses them for every change. https://github.com/mattpocock/skills
 - Quote from my early-2026 workflow post. https://www.huuhka.net/how-i-currently-develop-with-llm-models-early-2026/
 - GitHub Next's Chopin names this failure: an "agent silently decided something without a human realising it". Accepting teamId is exactly that kind of decision. https://githubnext.com/projects/chopin/
 -->
@@ -307,17 +308,17 @@ layout: none
 transition: gate | gate-back
 ---
 
-<DemoSlide title="Argue with the plan" :minutes="3" prompt="Propose the smallest export change. State the tenant invariant, one negative example, what is out of scope, and how each slice will be verified." />
+<DemoSlide title="Grill the plan" :minutes="3" prompt="Propose the smallest export change. Then grill me: one question at a time, until every open decision is resolved. Write each decision to docs/decisions with a check that can fail." />
 
 <!--
 16:00 to 19:00. Live demo, 3 minutes.
 
 1. Run the planning prompt with research.md as input.
-2. Read the plan aloud. Find where it accepts teamId from the query.
-3. Push back in the chat. Watch it add the invariant and the forged-id example.
-4. Show the exclusions and the verification section.
+2. Skim the plan. Most of it is fine. Point at the line that accepts teamId from the query.
+3. Answer the agent's questions out loud. When it gets to the team, push back with the forged-id case.
+4. Show the one-line change in the plan and the new decision file with its check.
 
-Fallback: the plan-argument slide shows the same edit.
+Fallback: the grilling slide shows the same change.
 -->
 
 ---
