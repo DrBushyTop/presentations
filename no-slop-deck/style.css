@@ -437,14 +437,8 @@
   margin: 0;
 }
 
-.ns-monday .cols {
-  flex: 1;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 24px;
-}
-
 .ns-monday .term {
+  flex: 1;
   background: var(--z-ink);
   color: #fff;
   display: flex;

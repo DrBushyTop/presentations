@@ -108,7 +108,7 @@ clicks: 2
 ---
 part: Would you ship this?
 class: ns
-clicks: 2
+clicks: 3
 transition: gate | gate-back
 ---
 
@@ -121,9 +121,11 @@ transition: gate | gate-back
 
 - This is the map for the rest of the hour. Each gate asks one question.
 
-[click] Three before any code exists: research, plan, slice. These are the cheapest places to catch a mistake.
+[click] Three before any code exists: research, plan, and deciding how to slice the work. Deciding the slices, not building them. These are the cheapest places to catch a mistake.
 
-[click] Three after the diff: verify, review, production.
+[click] Then a loop for every slice: build it, verify it, review it, and go round again for the next one. It's not a waterfall. Verify and review happen many times a day.
+
+[click] Production once it merges.
 
 - Scale this to the task. A typo fix doesn't go through six gates. A change to who can see what does.
 -->
@@ -135,13 +137,16 @@ layout: none
 <SectionGate :current="0" title="Find the fact that changes the plan" question="What do we actually know, and what are we assuming?" />
 
 <!--
-5:00. Research, about 6 minutes including a 3-minute demo.
+5:00. Research, about 5 minutes including a 3-minute demo.
+
+- Say: "Let's go back to the request and see what should have happened. Export the team's tasks as CSV. No code yet."
 -->
 
 ---
 part: Research
 class: ns
 clicks: 2
+transition: gate | gate-back
 ---
 
 # Research, plan, implement. Scale it to the task.
@@ -161,9 +166,29 @@ clicks: 2
 -->
 
 ---
+layout: none
+---
+
+<DemoSlide title="Trace the path" :minutes="3" prompt="Trace how the task list derives the current team. Show where the scoping lives, and whether a new endpoint that reuses the query keeps it. Separate facts from assumptions." />
+
+<!--
+6:15 to 9:15. Live demo, 3 minutes.
+
+- Ask first: "Can the export reuse the list query?" Most people will say yes.
+
+1. Run the research prompt against the demo repo. There is no export code yet.
+2. Open research.md. Pick the claim that the export can reuse the query and stay scoped.
+3. Open lib/tasks.ts yourself. findTasks takes whatever where it's given. The team filter lives in the route.
+4. Mark the claim false. Mark "every route takes the team from the session" as an assumption.
+
+If the run stalls, move on. The next slide shows the result.
+-->
+
+---
 part: Research
 class: ns
 clicks: 3
+transition: gate | gate-back
 ---
 
 # Follow one claim back to the code
@@ -171,36 +196,18 @@ clicks: 3
 <ClaimTrace :step="$clicks" />
 
 <!--
-6:15 to 7:45
+9:15 to 10:15. Recap of the demo, keep it short.
 
-- The research agent wrote three confident claims. They all read well.
+- Three claims from research.md. They all read well.
 
-[click] Claim one checks out. The list endpoint scopes by the session's team.
+[click] Claim one checks out. The list route scopes by the session's team.
 
-[click] Claim three is false on the new path. The export takes the team id from the query string if one is present.
+[click] Claim two is false. The shared query has no team filter of its own. The route adds it. Reuse the query without the route and you lose the scoping.
 
-[click] Claim two was never checked. It's an assumption, so label it as one.
+[click] Claim three was never checked. It's an assumption, so label it as one.
 
+- That's the fact that changes the plan: a new endpoint has to add the scoping itself.
 - Say: "Research should reduce uncertainty about this change, not produce a nice document."
-- Pick one claim the plan depends on and open the file yourself.
--->
-
----
-layout: none
-transition: gate | gate-back
----
-
-<DemoSlide title="Trace the path" :minutes="3" prompt="Trace how the task list derives the current team. Show where the query is scoped and where an export could bypass it. Separate facts from assumptions." />
-
-<!--
-7:45 to 10:45. Live demo, 3 minutes.
-
-1. Run the research prompt against the demo repo.
-2. Open research.md. Pick the claim about team scoping.
-3. Jump to routes/export.ts yourself and show the query fallback.
-4. Mark it as a fact, and mark "reuse the list query" as an assumption.
-
-If the run stalls, go back two slides. The claim-trace slide covers the same ground.
 -->
 
 ---
@@ -210,42 +217,14 @@ layout: none
 <SectionGate :current="1" title="Grill the plan, keep the answers" question="Which decision has nobody made yet?" />
 
 <!--
-10:45. Plan, about 8 and a half minutes including a 3-minute demo.
--->
-
----
-part: Plan
-class: ns
-clicks: 3
----
-
-# Let the agent grill you on the plan
-
-<PlanArgument :step="$clicks" />
-
-<!--
-10:45 to 12:45
-
-- The plan is the cheapest place to change your mind. Nothing is built yet.
-- The agent's first plan is usually a good baseline. This one is too. It also accepts a teamId parameter, because that's how filtering usually works. Nobody decided that. It just appeared.
-
-[click] So I don't rewrite the plan. I ask the agent to grill me: one question at a time, until every open decision has an answer. Here it asks where the team comes from on export. I push back the other way too: what if teamId belongs to another team?
-
-[click] The plan barely changes. One line goes. One decision and two concrete examples come in, including the failure case.
-
-[click] The answer doesn't stay in the chat. It's written to a decision file the next agent will find, with the evidence it needs: a check that can fail. That's the file on the Monday slide.
-- The plan also reuses the serializer and tests header, rows and escaping. Those lines are off the slide to keep it readable.
-
-- Say: "The plan is usually fine. The grilling finds the one decision nobody made."
-- Matt Pocock's grill-me skill: the agent interviews you "relentlessly about a plan or design until every branch of the design tree is resolved". grill-with-docs does the same and updates GLOSSARY.md and ADRs as it goes. He calls these his most popular skills and uses them for every change. https://github.com/mattpocock/skills
-- Quote from my early-2026 workflow post. https://www.huuhka.net/how-i-currently-develop-with-llm-models-early-2026/
-- GitHub Next's Chopin names this failure: an "agent silently decided something without a human realising it". Accepting teamId is exactly that kind of decision. https://githubnext.com/projects/chopin/
+10:15. Plan, about 7 and a half minutes including a 3-minute demo.
 -->
 
 ---
 part: Plan
 class: ns
 clicks: 2
+transition: gate | gate-back
 ---
 
 # Say what you expect before the agent answers
@@ -268,8 +247,9 @@ clicks: 2
 </div>
 
 <!--
-12:45 to 14:30
+10:15 to 12:00
 
+- Research told us the export has to add the scoping itself. Now the plan. Before any agent answers, you answer.
 - Ask the room first. Wait the full 20 seconds. Take two answers.
 - The point: you form an expectation before the agent gives you its default. Otherwise you anchor on its answer.
 
@@ -280,9 +260,57 @@ clicks: 2
 -->
 
 ---
+layout: none
+---
+
+<DemoSlide title="Grill the plan" :minutes="3" prompt="Propose the smallest export change. Then grill me: one question at a time, until every open decision is resolved. Write each decision to docs/decisions with a check that can fail." />
+
+<!--
+12:00 to 15:00. Live demo, 3 minutes.
+
+- The room just answered the question. Now watch whether the agent asks it.
+
+1. Run the planning prompt with research.md as input.
+2. Skim the plan. Most of it is fine. Point at the line that accepts teamId from the query.
+3. Answer the agent's questions out loud. When it gets to the team, push back with the forged-id case.
+4. Show the one-line change in the plan and the new decision file with its check.
+
+Fallback: move on. The next slide shows the result.
+-->
+
+---
 part: Plan
 class: ns
 clicks: 3
+---
+
+# Let the agent grill you on the plan
+
+<PlanArgument :step="$clicks" />
+
+<!--
+15:00 to 16:15. Recap of the demo.
+
+- The agent's first plan was a good baseline. It also accepted a teamId parameter, because that's how filtering usually works. Nobody decided that. It just appeared.
+
+[click] The grilling: the agent asks where the team comes from on export. I answer, and push back with the forged teamId.
+
+[click] The plan barely changes. One line goes. One decision and two examples come in, including the failure case.
+
+[click] The answer doesn't stay in the chat. It goes into a decision file the next agent will find, with a check that can fail.
+
+- Say: "The plan is usually fine. The grilling finds the one decision nobody made."
+- Matt Pocock's grill-me skill: the agent interviews you "relentlessly about a plan or design until every branch of the design tree is resolved". grill-with-docs does the same and updates GLOSSARY.md and ADRs as it goes. He calls these his most popular skills and uses them for every change. https://github.com/mattpocock/skills
+- Where decision files live: OpenAI's harness team keeps AGENTS.md at "roughly 100 lines", a map "with pointers to deeper sources of truth", and treats docs/ as the system of record. A recurring "doc-gardening" agent "scans for stale or obsolete documentation" and opens fix-up PRs. https://openai.com/index/harness-engineering/
+- GitHub Next's Chopin names the failure this prevents: an "agent silently decided something without a human realising it". https://githubnext.com/projects/chopin/
+- Quote from my early-2026 workflow post on arguing with the plan. https://www.huuhka.net/how-i-currently-develop-with-llm-models-early-2026/
+-->
+
+---
+part: Plan
+class: ns
+clicks: 3
+transition: gate | gate-back
 ---
 
 # Could someone else explain it and debug it?
@@ -290,9 +318,9 @@ clicks: 3
 <TeamUnderstanding :step="$clicks" />
 
 <!--
-14:30 to 16:00
+16:15 to 17:45
 
-- Asking what you expect keeps you from anchoring. This is the team version of the same problem.
+- Answering first keeps you from anchoring. This is the team version of the same problem.
 - Honeycomb's Tenant team first split into producers and reviewers: reviewers didn't produce, producers picked up more tasks. Their words: "knowledge concentration got amplified. We were each rapidly over-specializing in some portions of our stack."
 
 [click] Their fix was to review the plan and the prompt given to the agent, as a team. "It started feeling like everyone was more aware of what was happening." Plans could be borrowed later for caveats. They don't do the strict version for everything now. https://www.honeycomb.io/blog/embracing-code-review-bottleneck
@@ -305,30 +333,12 @@ clicks: 3
 
 ---
 layout: none
-transition: gate | gate-back
----
-
-<DemoSlide title="Grill the plan" :minutes="3" prompt="Propose the smallest export change. Then grill me: one question at a time, until every open decision is resolved. Write each decision to docs/decisions with a check that can fail." />
-
-<!--
-16:00 to 19:00. Live demo, 3 minutes.
-
-1. Run the planning prompt with research.md as input.
-2. Skim the plan. Most of it is fine. Point at the line that accepts teamId from the query.
-3. Answer the agent's questions out loud. When it gets to the team, push back with the forged-id case.
-4. Show the one-line change in the plan and the new decision file with its check.
-
-Fallback: the grilling slide shows the same change.
--->
-
----
-layout: none
 ---
 
 <SectionGate :current="2" title="Put something working in front of a person" question="What can someone see and check today?" />
 
 <!--
-19:00. Slice, about 5 minutes. No demo.
+17:45. Slice, about 5 minutes. No demo.
 -->
 
 ---
@@ -342,7 +352,7 @@ clicks: 2
 <TracerBullet :step="$clicks" />
 
 <!--
-19:00 to 20:45
+17:45 to 19:30
 
 - The usual split is by layer: data first, then the API, then the UI. Nobody sees anything work until day four. That's when you find out the columns are wrong, or the whole idea is.
 
@@ -365,7 +375,7 @@ clicks: 2
 <TracerSlices :step="$clicks" />
 
 <!--
-20:45 to 22:15
+19:30 to 21:00
 
 - Slice one ships with fixture data. The product owner clicks Export on day one and tells you the columns are wrong before anyone writes a query.
 
@@ -388,7 +398,7 @@ transition: gate | gate-back
 <SizeRisk :step="$clicks" />
 
 <!--
-22:15 to 23:45
+21:00 to 22:30
 
 - Both minimaps use the same scale, one row per line. The rename is huge. The auth change is a speck.
 
@@ -406,7 +416,7 @@ layout: none
 <SectionGate :current="3" title="Green is a starting point" question="Which claim did we actually test?" />
 
 <!--
-23:45. Verify, about 11 minutes including a 5-minute demo.
+22:30. Verify, about 7 minutes. The export slide is the demo.
 -->
 
 ---
@@ -420,7 +430,7 @@ clicks: 4
 <ExportLab :step="$clicks" />
 
 <!--
-23:45 to 27:45. The tests on this slide really run, in the browser, against the code shown. Click line 3 to cycle versions and the request to forge a teamId.
+22:30 to 27:30. This is the Verify demo. The tests on this slide really run, in the browser, against the code shown. Click line 3 to cycle versions and the request to forge a teamId.
 
 - Back to our PR. Seeded defect, labelled. Three tests, all green. The CSV looks right.
 
@@ -433,6 +443,8 @@ clicks: 4
 [click] Now the part people skip. Delete the filter entirely. Both boundary checks fail. That's the evidence the check can catch the bug. A check that can't fail proves nothing.
 
 - The happy-path tests passed in every version. They were never testing the claim that mattered.
+- Take your time here. Let people suggest what to click.
+- Optional, only if there's time and the repo is ready: the same sequence in a terminal. Check out the seeded commit, run the tests, curl as Team A with ?teamId=team-b and show the canary row, add the boundary check, fix, remove the predicate. The slide already proves it, so skip this if in doubt.
 -->
 
 ---
@@ -447,7 +459,7 @@ transition: gate | gate-back
 <SameAssumption :step="$clicks" />
 
 <!--
-27:45 to 29:30
+27:30 to 29:15
 
 - If the same agent writes the code and the tests from the same assumption, they agree. 24 green tests, nothing independent checked.
 
@@ -463,31 +475,12 @@ transition: gate | gate-back
 
 ---
 layout: none
-transition: gate | gate-back
----
-
-<DemoSlide title="Break it, fix it, break it again" :minutes="5" prompt="Review the export against the stated invariant. Give a reproducible request and the expected result for any finding. Do not accept test count as evidence." />
-
-<!--
-29:30 to 34:30. Live demo, 5 minutes.
-
-1. Check out the seeded commit. Run the tests: green.
-2. Run the review prompt. It should propose the forged teamId request.
-3. Reproduce it yourself with curl as Team A. Show the canary row.
-4. Add the boundary check. Watch it fail. Apply the fix. Green.
-5. Remove the predicate. The check fails. Put it back.
-
-Fallback: the export lab slide runs the same sequence live in the browser.
--->
-
----
-layout: none
 ---
 
 <SectionGate :current="4" title="Show the loop, including the stop" question="How many reviews before it can merge?" />
 
 <!--
-34:30. Review, about 12 minutes including a 3-minute demo.
+29:15. Review, about 12 minutes including a 3-minute demo.
 -->
 
 ---
@@ -501,7 +494,7 @@ clicks: 2
 <ReviewLoops :step="$clicks" />
 
 <!--
-34:30 to 35:30
+29:15 to 30:15
 
 - The inner loop runs on my machine before any PR exists: edit, tests, a browser check, a local reviewer agent. Seconds per turn.
 
@@ -521,7 +514,7 @@ clicks: 2
 <LocalAdversaries :step="$clicks" />
 
 <!--
-35:30 to 37:00
+30:15 to 31:45
 
 - This is the local reviewer. When a slice is done, before the next one starts, I ask the agent to review what it just built as an adversary. It runs as a subagent, so it starts with a fresh context. It still gets the plan file, or the functional lens has nothing to check against.
 - A fresh context isn't independence. The main agent writes the reviewer's prompt, and its framing can leak in. Keep the prompt to the plan and the diff, not the builder's explanation. For the slices that matter, form your own findings before reading the agent's, as Aidan Harding does.
@@ -548,7 +541,7 @@ clicks: 2
 <ReviewerPipeline :step="$clicks" />
 
 <!--
-37:00 to 38:00
+31:45 to 32:45
 
 - That was the local reviewer. On the PR side, I've built a few reviewer bots. The model call is one stage.
 
@@ -571,7 +564,7 @@ clicks: 3
 <SecondOpinion :step="$clicks" />
 
 <!--
-38:00 to 39:15
+32:45 to 34:00
 
 [click] Reviewers from other model families. The model that wrote the code shares its own blind spots. Another family, or a provider's review bot, may catch what it missed. This picture is illustrative. I found no credible public data on overlap between providers, so measure your own.
 - The reviewers I use: GitHub Copilot code review, my own reviewer bot, and a different model family run locally.
@@ -592,7 +585,7 @@ clicks: 2
 <ReviewerBench :step="$clicks" />
 
 <!--
-39:15 to 40:45
+34:00 to 35:30
 
 - "Measure your own" from the last slide, made concrete. This is how Uber benchmarks its review bot, uReview.
 - Their words: "We built its benchmark from real pull requests with known bugs and graded them easy, medium, and hard. We score precision, recall, and F1 against those bugs, plus cost per review, latency, timeouts, and noise." https://www.uber.com/gb/en/blog/efficient-software-factory/
@@ -615,7 +608,7 @@ clicks: 3
 <ReviewBudget :step="$clicks" />
 
 <!--
-40:45 to 42:30. The controls work. Change reviewers, rounds or the lens live if there's time.
+35:30 to 37:15. The controls work. Change reviewers, rounds or the lens live if there's time.
 
 - One reviewer, one round. It finds some real issues and some noise.
 
@@ -654,7 +647,7 @@ clicks: 2
 </div>
 
 <!--
-42:30 to 43:15
+37:15 to 38:00
 
 [click] What earns a fix. "Consider handling errors" doesn't. A reproducible request does.
 
@@ -672,7 +665,7 @@ transition: gate | gate-back
 <DemoSlide title="A review loop that stops" :minutes="3" prompt="Review the last slice against plan.md as three adversarial subagents in parallel: functional, non-functional and security. Report only findings with a reproducible request or a failing check. Fix at most twice, then stop and list what is left." />
 
 <!--
-43:15 to 46:15. Live demo, 3 minutes.
+38:00 to 41:00. Live demo, 3 minutes.
 
 1. Run the prompt on the fixed branch with one extra seeded issue, the formula injection.
 2. Show the three subagents starting in parallel. Round one: a real finding and some noise. Show which ones earn a fix.
@@ -689,7 +682,7 @@ layout: none
 <SectionGate :current="5" title="What happens after merge?" question="Who watches the rollout, what stops it, and how do we recover?" />
 
 <!--
-46:15. Production. As built this part runs about 14 and a half minutes: the counterargument, containing a bad change, the Polylane case study (7 slides) and the Jev aside. Cut it back to about 5 minutes in rehearsal. The notes from here on give durations, not clock times.
+41:00. Production. As built this part runs about 14 and a half minutes: the counterargument, containing a bad change, the Polylane case study (7 slides) and the Jev aside. Cut it back to about 5 minutes in rehearsal. The notes from here on give durations, not clock times.
 -->
 
 ---
@@ -970,35 +963,23 @@ About 1 minute.
 ---
 part: Close
 class: ns
-clicks: 2
+clicks: 1
 ---
 
 # On Monday, turn one repeated correction into a check
 
 <div class="ns-monday">
   <p class="lead">Pick the review comment you keep writing. Make the repository say it for you.</p>
-  <div class="cols">
-    <Show :step="$clicks" :at="1" class="term">
-      <div class="bar"><span class="ns-mono">npm run check:slides</span><em>this deck</em></div>
-      <div class="out ns-mono">
-        <div class="bad">✗ slide 12 [empty-bottom] 47% empty</div>
-        <div class="bad">✗ slide 19 [tiny-text] 12px</div>
-        <div class="dim">Make the main exhibit taller.</div>
-        <div class="dim">Do not add text to fill space.</div>
-      </div>
-      <p>The commit fails and says how to fix it.</p>
-    </Show>
-    <Show :step="$clicks" :at="2" class="term map">
-      <div class="bar"><span class="ns-mono">AGENTS.md</span><em>about 100 lines, a map</em></div>
-      <div class="out ns-mono">
-        <div>→ docs/architecture.md</div>
-        <div>→ docs/decisions/0007-export-scope.md</div>
-        <div>→ plans/export-csv.md</div>
-        <div class="dim">doc-gardening agent: 1 stale doc, PR opened</div>
-      </div>
-      <p>Write the decision where the next agent looks.</p>
-    </Show>
-  </div>
+  <Show :step="$clicks" :at="1" class="term">
+    <div class="bar"><span class="ns-mono">npm run check:slides</span><em>this deck</em></div>
+    <div class="out ns-mono">
+      <div class="bad">✗ no-slop-deck slide 12 [empty-bottom] content ends at 402px, 47% of the band empty</div>
+      <div class="bad">✗ no-slop-deck slide 19 [tiny-text] 12px "Illustrative model"</div>
+      <div class="dim">empty-bottom: Make the main exhibit taller so it reaches the citation line.</div>
+      <div class="dim">Do not add more text to fill space.</div>
+    </div>
+    <p>Agents kept leaving slides half empty. Now the commit fails and says how to fix it.</p>
+  </Show>
 </div>
 
 <!--
@@ -1007,10 +988,8 @@ About 1.5 minutes.
 - Ask the room: what's the comment you type most often in reviews? That's your first check.
 
 [click] My example is from this deck's repository. Agents kept making the same layout mistakes, so a pre-commit script renders every slide and fails with a rule name and a fix. The agent reads the fix and corrects itself.
-- The lines are shortened from the script's real output. The two failures are examples.
+- The lines shown are the script's real format. The two failures are examples.
 - OpenAI's harness team does the same with custom lints: "we write the error messages to inject remediation instructions into agent context." https://openai.com/index/harness-engineering/
-
-[click] The other half: decisions the next agent can find. OpenAI keeps AGENTS.md at "roughly 100 lines", a map "with pointers to deeper sources of truth", and treats docs/ as the system of record. A recurring "doc-gardening" agent "scans for stale or obsolete documentation" and opens fix-up PRs. The export's tenant decision belongs in a file like 0007-export-scope.md, not only in a chat.
 - Keep a person as the owner of each decision. Checks carry the ones you've already made.
 -->
 

@@ -1,6 +1,8 @@
 <!--
-  The six gates a change passes through. The agenda uses the light variant;
-  every part divider uses the dark variant with the current gate lit.
+  The six gates a change passes through. The agenda uses the light variant:
+  1 before any code (deciding the slices included) · 2 the loop for every
+  slice · 3 production after merge. Every part divider uses the dark variant
+  with the current gate lit.
 -->
 <script setup lang="ts">
 import { useIsActive } from '../lib/active'
@@ -11,7 +13,7 @@ withDefaults(defineProps<{ step?: number, current?: number, variant?: 'light' | 
 const gates = [
   { name: 'Research', q: 'What do we actually know?' },
   { name: 'Plan', q: 'Which decision is still open?' },
-  { name: 'Slice', q: 'What can a person check today?' },
+  { name: 'Slice', q: 'How do we cut the work?' },
   { name: 'Verify', q: 'Which claim did we test?' },
   { name: 'Review', q: 'When do we stop?' },
   { name: 'Production', q: 'What stops a bad rollout?' },
@@ -21,14 +23,24 @@ const gates = [
 <template>
   <div class="map" :class="`is-${variant}`">
     <div class="groups" v-if="variant === 'light'">
-      <div class="grp" :class="{ on: step >= 1 }">Before the diff</div>
-      <div class="grp" :class="{ on: step >= 2 }">After the diff</div>
+      <div class="grp g1" :class="{ on: step >= 1 }">Before any code</div>
+      <div class="grp g2" :class="{ on: step >= 2 }">For every slice: build it, then</div>
+      <div class="grp g3" :class="{ on: step >= 3 }">After merge</div>
     </div>
+    <svg v-if="variant === 'light'" class="loop" :class="{ on: step >= 2 }" viewBox="0 0 1136 56" aria-hidden="true">
+      <defs>
+        <marker id="gm-arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 Z" />
+        </marker>
+      </defs>
+      <path d="M856,54 C856,6 664,6 664,48" marker-end="url(#gm-arrow)" />
+      <text x="760" y="16" text-anchor="middle">next slice</text>
+    </svg>
     <div class="floor">
       <div
         v-for="(g, i) in gates" :key="g.name" class="gate"
         :class="{
-          on: variant === 'dark' || step >= (i < 3 ? 1 : 2),
+          on: variant === 'dark' || step >= (i < 3 ? 1 : i < 5 ? 2 : 3),
           past: variant === 'dark' && i < current,
           now: i === current,
         }"
@@ -49,9 +61,45 @@ const gates = [
 
 .groups {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(6, 1fr);
   gap: 18px;
-  margin-bottom: 14px;
+}
+
+.g1 { grid-column: 1 / span 3; }
+.g2 { grid-column: 4 / span 2; color: var(--ns-teal) !important; border-color: var(--ns-teal) !important; }
+.g3 { grid-column: 6; }
+
+.loop {
+  display: block;
+  width: 100%;
+  height: 56px;
+  overflow: visible;
+  transition: opacity 500ms var(--ns-ease);
+}
+
+.loop:not(.on) {
+  opacity: 0;
+}
+
+.loop path {
+  fill: none;
+  stroke: var(--ns-teal);
+  stroke-width: 4;
+}
+
+.loop marker path {
+  fill: var(--ns-teal);
+  stroke: none;
+}
+
+.loop text {
+  font-family: var(--z-font-text);
+  font-size: var(--ns-label);
+  font-weight: 700;
+  fill: var(--ns-teal);
+  paint-order: stroke;
+  stroke: #fff;
+  stroke-width: 8px;
 }
 
 .grp {
@@ -86,7 +134,7 @@ const gates = [
 
 .frame {
   position: relative;
-  height: 330px;
+  height: 285px;
   border: 5px solid var(--z-ink);
   border-bottom: 0;
   display: flex;

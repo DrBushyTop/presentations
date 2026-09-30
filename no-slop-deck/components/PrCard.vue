@@ -16,7 +16,7 @@ const hookChecks = [
 ] as const
 
 const evidence = [
-  { icon: 'check', tone: 'ok', label: 'Fact: export bypassed the list scoping', meta: 'research' },
+  { icon: 'check', tone: 'ok', label: 'Fact: scoping lives in the route, not the query', meta: 'research' },
   { icon: 'check', tone: 'ok', label: 'Decision: caller\'s team only', meta: 'plan' },
   { icon: 'check', tone: 'ok', label: 'Forged teamId returns 0 foreign rows', meta: 'boundary check' },
   { icon: 'check', tone: 'ok', label: 'Check fails without the predicate', meta: 'negative control' },

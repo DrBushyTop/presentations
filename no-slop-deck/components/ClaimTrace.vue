@@ -1,6 +1,7 @@
 <!--
-  Follow a research claim back to the code.
-  1 claim one checks out · 2 claim three is false on the new path · 3 sort the rest
+  Follow a research claim back to the code. Research looks only at code that
+  exists today: the list route and the shared query. No export yet.
+  1 the list is scoped · 2 but the scoping is in the route, not the query · 3 sort the rest
 -->
 <script setup lang="ts">
 import { nextTick, onMounted, ref, watch } from 'vue'
@@ -50,16 +51,16 @@ watch(active, (on) => { if (on) { measure(); setTimeout(measure, 700) } })
           <span>The task list is scoped to the caller's team.</span>
           <em class="chip ok" :class="{ on: step >= 1 }">Checked</em>
         </li>
+        <li ref="c3" :class="{ bad: step >= 2 }">
+          <span>An export can reuse the list query and stay scoped.</span>
+          <em class="chip bad" :class="{ on: step >= 2 }">False: the route scopes it</em>
+        </li>
         <li :class="{ maybe: step >= 3 }">
-          <span>Export can reuse the list query.</span>
+          <span>Every route takes the team from the session.</span>
           <em class="chip maybe" :class="{ on: step >= 3 }">Assumption</em>
         </li>
-        <li ref="c3" :class="{ bad: step >= 2 }">
-          <span>The team id always comes from the session.</span>
-          <em class="chip bad" :class="{ on: step >= 2 }">False for export</em>
-        </li>
       </ol>
-      <footer :class="{ on: step >= 3 }">Checking one claim yourself changed the plan.</footer>
+      <footer :class="{ on: step >= 3 }">A new endpoint has to add the scoping itself.</footer>
     </section>
 
     <section class="code ns-mono">
@@ -67,15 +68,15 @@ watch(active, (on) => { if (on) { measure(); setTimeout(measure, 700) } })
         <header>routes/tasks.ts</header>
         <div class="ln">export async function listTasks(req) {</div>
         <div class="ln">  const session = await requireSession(req)</div>
-        <div ref="l1" class="ln hit" :class="{ on: step >= 1, good: true }">  where: { teamId: session.teamId },</div>
-        <div class="ln">  ...</div>
+        <div ref="l1" class="ln hit" :class="{ on: step >= 1, good: true }">  return findTasks({ teamId: session.teamId })</div>
+        <div class="ln">}</div>
       </div>
       <div class="file">
-        <header>routes/export.ts <span>new</span></header>
-        <div class="ln">export async function exportTasks(req) {</div>
-        <div class="ln">  const session = await requireSession(req)</div>
-        <div ref="l3" class="ln hit" :class="{ on: step >= 2, bad: true }">  const teamId = req.query.teamId ?? session.teamId</div>
-        <div class="ln">  where: { teamId },</div>
+        <header>lib/tasks.ts <span>shared query</span></header>
+        <div class="ln">export function findTasks(where) {</div>
+        <div ref="l3" class="ln hit" :class="{ on: step >= 2, bad: true }">  return db.tasks.findMany({ where })</div>
+        <div class="ln">}</div>
+        <div class="ln dim">// no team filter of its own</div>
       </div>
     </section>
 
@@ -203,6 +204,10 @@ watch(active, (on) => { if (on) { measure(); setTimeout(measure, 700) } })
   padding: 0 18px;
   white-space: pre;
   transition: background 400ms var(--ns-ease), color 400ms var(--ns-ease);
+}
+
+.ln.dim {
+  color: #7a7a7a;
 }
 
 .ln.hit.on.good {
