@@ -149,8 +149,12 @@ const log = computed(() => gates[props.current].stream.filter(l => !l.held).slic
 .copy {
   position: absolute;
   left: 72px;
-  bottom: 76px;
+  top: 52px;
+  bottom: 64px;
   width: 560px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 h1 {
