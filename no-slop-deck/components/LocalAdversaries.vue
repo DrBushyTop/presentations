@@ -1,17 +1,19 @@
 <!--
   Local review after every slice: the main agent sends adversarial subagents
   at the slice it just built, one lens each, and fixes what they find before
-  the next slice starts.
+  the next slice starts. It continues from the fixed export: the functional
+  lens confirms the boundary checks, the other lenses find what we never named.
   0 one adversary · 1 three in parallel · 2 fix, then the next slice
 -->
 <script setup lang="ts">
 withDefaults(defineProps<{ step?: number }>(), { step: 0 })
 
 const adversaries = [
-  { lens: 'Functional', f: 'A forged teamId returns Team B\'s rows.' },
-  { lens: 'Non-functional', f: 'Every row loads into memory before streaming.' },
-  { lens: 'Security', f: 'A title starting with = runs as a spreadsheet formula.' },
+  { lens: 'Functional', pass: true, f: 'Boundary checks pass. A forged teamId gets only my rows.', fix: '' },
+  { lens: 'Non-functional', pass: false, f: 'Every row loads into memory before streaming.', fix: 'Rows stream in batches of 500.' },
+  { lens: 'Security', pass: false, f: 'A title starting with = runs as a spreadsheet formula.', fix: 'Cells starting with = + - @ are escaped.' },
 ]
+const status = (a: typeof adversaries[number], step: number) => (a.pass ? 'Passed' : step >= 2 ? 'Fixed' : 'Found')
 const ys = [16.7, 50, 83.3]
 </script>
 
@@ -38,10 +40,10 @@ const ys = [16.7, 50, 83.3]
 
     <div class="list">
       <section v-for="(a, i) in adversaries" :key="a.lens" class="card" :class="{ on: i === 0 || step >= 1 }" :style="{ '--i': i }">
-        <header><b>{{ a.lens }}</b></header>
-        <div class="finding">
-          <Icon :name="step >= 2 ? 'check' : 'alert'" />
-          <span>{{ a.f }}</span>
+        <header><b>{{ a.lens }}</b><span class="st" :class="'is-' + status(a, step).toLowerCase()">{{ status(a, step) }}</span></header>
+        <div class="finding" :class="{ ok: a.pass || step >= 2 }">
+          <Icon :name="a.pass || step >= 2 ? 'check' : 'alert'" />
+          <span>{{ step >= 2 && a.fix ? a.fix : a.f }}</span>
         </div>
       </section>
     </div>
@@ -240,10 +242,22 @@ const ys = [16.7, 50, 83.3]
   transition: background 500ms var(--ns-ease), color 500ms var(--ns-ease);
 }
 
-.is-fixed .finding {
+.finding.ok {
   background: #e3f4f6;
   color: var(--ns-teal);
 }
+
+.card header .st {
+  margin-left: auto;
+  font-size: var(--ns-label);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.st.is-found { color: var(--ns-red); }
+.st.is-passed,
+.st.is-fixed { color: var(--ns-teal); }
 
 
 

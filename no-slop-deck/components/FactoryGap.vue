@@ -1,6 +1,6 @@
 <!--
-  Polylane's opening point, redrawn: every check in the software factory
-  reads the diff; none of them knows the production system it lands on.
+  Polylane's opening point, redrawn: our checks run on the code, but none of
+  them knows the production conditions it lands on.
   0 the pipeline · 1 what each stage looks at · 2 the question to answer
 -->
 <script setup lang="ts">
@@ -15,20 +15,20 @@ const stages = ['Agent writes the code', 'Types and tests', 'Linter and formatte
       <template v-for="(s, i) in stages" :key="s">
         <div class="st" :style="{ '--i': i }">
           <b>{{ s }}</b>
-          <span class="reads" :class="{ on: step >= 1 }">reads the diff</span>
+          <span class="reads" :class="{ on: step >= 1 }">sees the code</span>
         </div>
         <div class="arr" />
       </template>
       <div class="q">
         <b>Is this okay for prod?</b>
-        <span class="reads none" :class="{ on: step >= 1 }">nothing checks this</span>
+        <span class="reads none" :class="{ on: step >= 1 }">needs production data</span>
       </div>
       <div class="arr" />
       <div class="st deploy"><b>Deploy</b></div>
     </div>
 
     <div class="brace" :class="{ on: step >= 1 }">
-      <div class="b-diff"><span>Everything we have looks at the code</span></div>
+      <div class="b-diff"><span>Tests run it. None of them know the traffic.</span></div>
       <div class="b-prod"><span>It lands on production traffic</span></div>
     </div>
 

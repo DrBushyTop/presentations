@@ -56,7 +56,8 @@ clicks: 2
 - A normal-looking PR. Green tests, lint, build, a review bot, one approval.
 - Give the room 20 seconds to read the diff.
 
-[click] Hands up if you'd merge it. Most hands go up. That's fine, it looks fine.
+[click] Hands up if you'd merge it. If most hands go up, that's fine, it looks fine.
+- If hands stay down, or someone calls out req.query.teamId: "Some of you spotted the boundary. What check would convince the rest of us?" Same talk from here, just with the room ahead of me.
 
 [click] One question nobody on this PR asked: which team's tasks can this export return? Don't answer yet. We'll come back to it in the verification part.
 
@@ -518,108 +519,18 @@ clicks: 2
 
 - This is the local reviewer. When a slice is done, before the next one starts, I ask the agent to review what it just built as an adversary. It runs as a subagent, so it starts with a fresh context. It still gets the plan file, or the functional lens has nothing to check against.
 - A fresh context isn't independence. The main agent writes the reviewer's prompt, and its framing can leak in. Keep the prompt to the plan and the diff, not the builder's explanation. For the slices that matter, form your own findings before reading the agent's, as Aidan Harding does.
-- One adversary is a fine start. Here the functional one finds the forged teamId leak.
+- This is slice 2 again, after the fix from the verify part.
+- One adversary is a fine start. The functional one reruns the boundary checks from the plan and they pass. Good, but that's the requirement we already named.
 
 [click] For riskier slices, run several in parallel, one lens each: functional (does it do what the plan says, including the failure case?), non-functional (errors, limits, performance, logs) and security (who can do something they shouldn't?). Add project-specific ones when you have them, like accessibility or data migration. The security one finds a CSV formula injection: a title starting with = runs as a formula in Excel.
 
-[click] The main agent fixes the findings, reruns the checks, and only then starts slice three. Findings that need a decision come to me instead.
+[click] The main agent fixes the findings, reruns the checks, and only then starts slice three. The cards now say what changed. Findings that need a decision come to me instead.
+- The point: verify proved the requirement we named. Review is for the risks nobody named.
 
 - The prompt, roughly: "Review the last slice against plan.md as three adversarial subagents in parallel: functional, non-functional and security. Report only findings with a reproducible request or a failing check. Fix them before starting the next slice."
 - Same topology as my PR reviewer (a primary agent, parallel specialist lenses, a synthesis step), just run locally and earlier. https://www.huuhka.net/building-your-own-pr-reviewer-with-coding-agents/
 - If asked about role agents: I don't make a standing "security agent" by default, and Dillon Mulroy calls role subagents trash. These are short-lived reviews with one question each, and they return findings with a file and line. https://www.huuhka.net/primary-vs-subagents-in-llm-harnesses/
 - CSV injection is a real class of bug: OWASP documents it. https://owasp.org/www-community/attacks/CSV_Injection
--->
-
----
-part: Review
-class: ns
-clicks: 2
----
-
-# The AI part is surprisingly small
-
-<ReviewerPipeline :step="$clicks" />
-
-<!--
-31:45 to 32:45
-
-- That was the local reviewer. On the PR side, I've built a few reviewer bots. The model call is one stage.
-
-[click] Ordinary code owns triggers, commit range, retries, deduplication, timeouts, posting, and the stop. The model owns one judgement, returned as structured output the code can validate.
-
-[click] The same shape runs a /fix command, and it's the shape a babysitter uses.
-
-- Reviews get wordy. Without severity and format limits, the bot creates toil, especially if branch policy requires every comment to be resolved.
-- Source: https://www.huuhka.net/building-your-own-pr-reviewer-with-coding-agents/
--->
-
----
-part: Review
-class: ns
-clicks: 3
----
-
-# The PR is where you buy a second opinion
-
-<SecondOpinion :step="$clicks" />
-
-<!--
-32:45 to 34:00
-
-[click] Reviewers from other model families. The model that wrote the code shares its own blind spots. Another family, or a provider's review bot, may catch what it missed. This picture is illustrative. I found no credible public data on overlap between providers, so measure your own.
-- The reviewers I use: GitHub Copilot code review, my own reviewer bot, and a different model family run locally.
-
-[click] The babysitter: a local agent run that watches the PR, reads comments and CI, makes one bounded fix, pushes, and waits. I'm building a babysit skill for this. It'll get a demo when it's ready.
-
-[click] Where it goes wrong: reviewers undoing each other, acting on a CI result from an older commit, commits landing after approval that nobody reviewed, and prompt injection. An agent that acts on PR comments will act on a malicious one.
--->
-
----
-part: Review
-class: ns
-clicks: 2
----
-
-# Test your reviewers on bugs you already found
-
-<ReviewerBench :step="$clicks" />
-
-<!--
-34:00 to 35:30
-
-- "Measure your own" from the last slide, made concrete. This is how Uber benchmarks its review bot, uReview.
-- Their words: "We built its benchmark from real pull requests with known bugs and graded them easy, medium, and hard. We score precision, recall, and F1 against those bugs, plus cost per review, latency, timeouts, and noise." https://www.uber.com/gb/en/blog/efficient-software-factory/
-
-[click] Run the reviewer you use today. Count what it caught, what it missed, false alarms, minutes and cost.
-
-[click] Rerun it when the model or the review prompt changes. Uber: "The frontier shifts every few weeks." Switching models improved their F1 and cut cost per PR. Rerunning after a prompt change is my addition.
-
-- The PRs and results on screen are illustrative. Start with ten bugs your team already fixed. You don't need thousands.
--->
-
----
-part: Review
-class: ns
-clicks: 3
----
-
-# How many reviews before it can merge?
-
-<ReviewBudget :step="$clicks" />
-
-<!--
-35:30 to 37:15. The controls work. Change reviewers, rounds or the lens live if there's time.
-
-- One reviewer, one round. It finds some real issues and some noise.
-
-[click] Three reviewers from different providers. More real issues in round one, and a lot more noise to triage.
-
-[click] Keep going to five rounds. Real findings drop fast. Noise doesn't. The stop marker is where a round finds less than half a real issue.
-
-[click] The same run in money. For a manager, the model runs are the cheap part. People's time is the expensive part. Developers feel it as attention, managers see it as salary.
-
-- The model is illustrative. Assumptions: 6 real issues, each reviewer catches a remaining one with p 0.35 (extra reviewers only partly independent), each fix adds 0.12 new issues, 2.5 noise findings per reviewer per round, 3 minutes to triage a finding, 8 to review a fix, €90 an hour, €0.60 per model run, 300 PRs a month.
-- Uber benchmarks its review bots on precision, recall, F1, cost per review, latency and noise. That's the right shape of measurement. https://www.uber.com/gb/en/blog/efficient-software-factory/
 -->
 
 ---
@@ -647,25 +558,26 @@ clicks: 2
 </div>
 
 <!--
-37:15 to 38:00
+31:45 to 32:30
+
+- The local loop needs a stop before we run it. Write it down first.
 
 [click] What earns a fix. "Consider handling errors" doesn't. A reproducible request does.
 
 [click] What ends the loop. The budget is rounds, minutes or money. The budget and a disagreement end in a person, not another retry. A new commit makes every earlier approval and CI result stale.
 
 - Polylane's first prototype took nearly 7 minutes at the median. After a 30-step budget, a fresh review for each new commit and other changes, their review turn's median is 94 seconds. Budgets aren't just about cost. https://polylane.com/blog/how-we-prevent-slop-from-hitting-prod/
-- Allow at most two fixes in the demo.
+- Allow at most two fixes in the demo, which comes next.
 -->
 
 ---
 layout: none
-transition: gate | gate-back
 ---
 
 <DemoSlide title="A review loop that stops" :minutes="3" prompt="Review the last slice against plan.md as three adversarial subagents in parallel: functional, non-functional and security. Report only findings with a reproducible request or a failing check. Fix at most twice, then stop and list what is left." />
 
 <!--
-38:00 to 41:00. Live demo, 3 minutes.
+32:30 to 35:30. Live demo, 3 minutes.
 
 1. Run the prompt on the fixed branch with one extra seeded issue, the formula injection.
 2. Show the three subagents starting in parallel. Round one: a real finding and some noise. Show which ones earn a fix.
@@ -673,6 +585,100 @@ transition: gate | gate-back
 4. Push a new commit. Show that the earlier review is now stale.
 
 The babysit skill isn't ready yet. Mention it, don't demo it.
+-->
+
+---
+part: Review
+class: ns
+clicks: 2
+---
+
+# The AI part is surprisingly small
+
+<ReviewerPipeline :step="$clicks" />
+
+<!--
+35:30 to 36:30
+
+- That was one full local loop, including the stop. Now the PR side. I've built a few reviewer bots. The model call is one stage.
+
+[click] Ordinary code owns triggers, commit range, retries, deduplication, timeouts, posting, and the stop. The model owns one judgement, returned as structured output the code can validate.
+
+[click] The same shape runs a /fix command, and it's the shape a babysitter uses.
+
+- Reviews get wordy. Without severity and format limits, the bot creates toil, especially if branch policy requires every comment to be resolved.
+- Source: https://www.huuhka.net/building-your-own-pr-reviewer-with-coding-agents/
+-->
+
+---
+part: Review
+class: ns
+clicks: 3
+---
+
+# The PR is where you buy a second opinion
+
+<SecondOpinion :step="$clicks" />
+
+<!--
+36:30 to 37:45
+
+[click] Reviewers from other model families. The model that wrote the code shares its own blind spots. Another family, or a provider's review bot, may catch what it missed. This picture is illustrative. I found no credible public data on overlap between providers, so measure your own.
+- The reviewers I use: GitHub Copilot code review, my own reviewer bot, and a different model family run locally.
+
+[click] The babysitter: a local agent run that watches the PR, reads comments and CI, makes one bounded fix, pushes, and waits. I'm building a babysit skill for this. It'll get a demo when it's ready.
+
+[click] Where it goes wrong: reviewers undoing each other, acting on a CI result from an older commit, commits landing after approval that nobody reviewed, and prompt injection. An agent that acts on PR comments will act on a malicious one.
+-->
+
+---
+part: Review
+class: ns
+clicks: 2
+---
+
+# Test your reviewers on bugs you already found
+
+<ReviewerBench :step="$clicks" />
+
+<!--
+37:45 to 39:15
+
+- "Measure your own" from the last slide, made concrete. This is how Uber benchmarks its review bot, uReview.
+- Their words: "We built its benchmark from real pull requests with known bugs and graded them easy, medium, and hard. We score precision, recall, and F1 against those bugs, plus cost per review, latency, timeouts, and noise." https://www.uber.com/gb/en/blog/efficient-software-factory/
+
+[click] Run the reviewer you use today. Count what it caught, what it missed, false alarms, minutes and cost.
+
+[click] Rerun it when the model or the review prompt changes. Uber: "The frontier shifts every few weeks." Switching models improved their F1 and cut cost per PR. Rerunning after a prompt change is my addition.
+
+- The PRs and results on screen are illustrative. Start with ten bugs your team already fixed. You don't need thousands.
+-->
+
+---
+part: Review
+class: ns
+clicks: 3
+transition: gate | gate-back
+---
+
+# How many reviews before it can merge?
+
+<ReviewBudget :step="$clicks" />
+
+<!--
+39:15 to 41:00. The controls work. Change reviewers, rounds or the lens live if there's time.
+
+- One reviewer, one round. It finds some real issues and some noise.
+
+[click] Three reviewers from different providers. More real issues in round one, and a lot more noise to triage.
+
+[click] Keep going to five rounds. Real findings drop fast. Noise doesn't. The stop marker is where a round finds less than half a real issue.
+
+[click] The same run in money. For a manager, the model runs are the cheap part. People's time is the expensive part. Developers feel it as attention, managers see it as salary.
+
+- Same stop rule as the local loop. Here the budget is other people's attention.
+- The model is illustrative. Assumptions: 6 real issues, each reviewer catches a remaining one with p 0.35 (extra reviewers only partly independent), each fix adds 0.12 new issues, 2.5 noise findings per reviewer per round, 3 minutes to triage a finding, 8 to review a fix, €90 an hour, €0.60 per model run, 300 PRs a month.
+- Uber benchmarks its review bots on precision, recall, F1, cost per review, latency and noise. That's the right shape of measurement. https://www.uber.com/gb/en/blog/efficient-software-factory/
 -->
 
 ---
@@ -763,16 +769,18 @@ class: ns
 clicks: 2
 ---
 
-# Every check we have looks at the diff
+# Our checks don't know production conditions
 
 <FactoryGap :step="$clicks" />
 
 <!--
-About 1 minute. Start of the Polylane case study. Containment handles what gets through. This part tries to catch more before merge.
+About 1 minute. Start of the Polylane case study.
 
-- The software factory: an agent writes the code, types and tests run, a linter, a code review. All of it reads the diff.
+- Say: "We've decided how to contain a failure. Can we use what we know about production to catch it before merge?"
 
-[click] None of it knows anything about the production system the diff lands on: the traffic, the locks, the queues.
+- The software factory: an agent writes the code, types and tests run, a linter, a code review. Tests even execute it, as we saw.
+
+[click] None of it knows the production conditions it lands on: the traffic, the locks, the queues.
 
 [click] Polylane's framing of the one question worth answering at PR time. They skip style, naming and coverage and answer only this, with a go or no-go comment on the PR.
 
