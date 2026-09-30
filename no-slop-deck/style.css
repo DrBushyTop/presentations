@@ -1,0 +1,682 @@
+/*
+  The no slop engineer. Deck-local layer on top of the Zure theme.
+
+  Colour carries one meaning across the whole deck:
+    red     slop, failure, an unchecked claim
+    teal    evidence on white (frozen blue on black)
+    yellow  plausible but unconfirmed, only on black
+  Everything else is ink, white and the grey ramp from the theme.
+*/
+
+:root {
+  --ns-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --ns-ease-in: cubic-bezier(0.55, 0, 0.35, 1);
+  --ns-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  --ns-ink: var(--z-ink);
+  --ns-red: var(--z-red);
+  --ns-teal: var(--z-teal);
+  --ns-frozen: var(--z-frozen);
+  --ns-yellow: var(--z-yellow);
+  --ns-line: var(--z-grey-200);
+  --ns-soft: var(--z-grey-100);
+  --ns-dark-2: #262626;
+  --ns-dark-3: #333333;
+  --slidev-transition-duration: 620ms;
+}
+
+::selection {
+  background: var(--z-teal-100);
+  color: var(--z-ink);
+}
+
+/* ---------- Slide transitions ----------
+   shift  moves within a part: the slide turns a few degrees and recedes.
+   gate   separates parts: the old slide swings open on its left hinge like
+          a door, and the next part comes forward out of the dark behind it.
+   The perspective lives on the slideshow so both slides share one camera. */
+
+#slideshow {
+  perspective: 2400px;
+  perspective-origin: 50% 45%;
+}
+
+.shift-enter-active,
+.shift-leave-active,
+.shift-back-enter-active,
+.shift-back-leave-active {
+  transition:
+    transform 640ms var(--ns-ease),
+    opacity 520ms var(--ns-ease),
+    filter 640ms var(--ns-ease);
+  backface-visibility: hidden;
+}
+
+.shift-enter-from,
+.shift-back-leave-to {
+  transform: translate3d(10%, 0, -220px) rotateY(-10deg);
+  opacity: 0;
+  filter: blur(6px);
+}
+
+.shift-leave-to,
+.shift-back-enter-from {
+  transform: translate3d(-10%, 0, -220px) rotateY(10deg);
+  opacity: 0;
+  filter: blur(6px);
+}
+
+.gate-enter-active,
+.gate-leave-active,
+.gate-back-enter-active,
+.gate-back-leave-active {
+  transition:
+    transform 1000ms var(--ns-ease-in),
+    opacity 1000ms var(--ns-ease-in),
+    filter 1000ms var(--ns-ease-in);
+  backface-visibility: hidden;
+}
+
+.gate-leave-active,
+.gate-back-enter-active {
+  transform-origin: 0% 50%;
+  z-index: 3;
+  box-shadow: 40px 0 80px rgba(0, 0, 0, 0.45);
+}
+
+.gate-leave-to,
+.gate-back-enter-from {
+  transform: rotateY(-78deg);
+  filter: brightness(0.55);
+  opacity: 0.2;
+}
+
+.gate-enter-active,
+.gate-back-leave-active {
+  transition-duration: 1100ms;
+  transition-timing-function: var(--ns-ease);
+}
+
+.gate-enter-from,
+.gate-back-leave-to {
+  transform: translate3d(0, 0, -520px);
+  filter: brightness(0.3) blur(8px);
+  opacity: 0;
+}
+
+/* Split deck: every build step is its own slide, joined by the View
+   Transition API. Named elements morph; everything else cross-fades. */
+::view-transition-group(*) {
+  animation-duration: 560ms;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 360ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shift-enter-from,
+  .shift-leave-to,
+  .shift-back-enter-from,
+  .shift-back-leave-to,
+  .gate-leave-to,
+  .gate-back-enter-from,
+  .gate-enter-from,
+  .gate-back-leave-to {
+    transform: none;
+    filter: none;
+  }
+
+  ::view-transition-group(*) {
+    animation-duration: 1ms;
+  }
+}
+
+/* ---------- Reveal ---------- */
+
+.ns-show {
+  transition:
+    opacity 560ms var(--ns-ease),
+    transform 700ms var(--ns-ease),
+    filter 560ms var(--ns-ease),
+    clip-path 800ms var(--ns-ease);
+}
+
+.ns-show:not(.on) {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.ns-fx-rise:not(.on) {
+  transform: translateY(18px);
+  filter: blur(5px);
+}
+
+.ns-fx-left:not(.on) {
+  transform: translateX(-28px);
+  filter: blur(5px);
+}
+
+.ns-fx-wipe:not(.on) {
+  opacity: 1;
+  clip-path: inset(0 100% 0 0);
+}
+
+.ns-fx-wipe.on {
+  clip-path: inset(0 0 0 0);
+}
+
+.ns-fx-focus:not(.on) {
+  transform: scale(1.06);
+  filter: blur(10px);
+}
+
+/* ---------- Shared type ---------- */
+
+.slidev-layout.ns {
+  padding: 50px 72px 76px;
+  min-height: 100%;
+}
+
+.slidev-layout.ns h1 {
+  font-size: 42px;
+  max-width: 30ch;
+  margin-bottom: 26px;
+  text-wrap: balance;
+}
+
+.ns-mono {
+  font-family: var(--ns-mono);
+  font-feature-settings: 'calt' 0;
+}
+
+.ns-kicker-line {
+  font-size: 22px;
+  line-height: 1.4;
+  color: var(--z-ink-800);
+  max-width: 58ch;
+}
+
+.ns-red {
+  color: var(--ns-red);
+}
+
+.ns-teal {
+  color: var(--ns-teal);
+}
+
+.ns-take {
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+/* Full-canvas dark surface for statements, demos and parts. */
+.ns-dark {
+  position: absolute;
+  inset: 0;
+  background: var(--z-ink);
+  color: #fff;
+  font-family: var(--z-font-text);
+  overflow: hidden;
+}
+
+.ns-dark ::selection {
+  background: var(--ns-frozen);
+  color: var(--z-ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ns-show {
+    transition: opacity 200ms linear;
+    transform: none !important;
+    filter: none !important;
+  }
+}
+
+/* ---------- Cover ---------- */
+
+.ns-cover {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  background: #fff;
+  font-family: var(--z-font-text);
+}
+
+.ns-cover-text {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 0 40px 84px 72px;
+}
+
+.ns-cover h1 {
+  font-family: var(--z-font-display);
+  font-size: 104px;
+  line-height: 0.92;
+  font-weight: 800;
+  letter-spacing: -0.045em;
+  color: var(--z-ink);
+  margin: 0 0 34px;
+}
+
+.ns-cover h1 span {
+  color: var(--ns-red);
+}
+
+.ns-cover .sub {
+  font-size: 26px;
+  line-height: 1.3;
+  color: var(--z-ink-800);
+  max-width: 22ch;
+  margin: 0 0 28px;
+}
+
+.ns-cover .meta {
+  font-size: 18px;
+  color: var(--z-grey-600);
+  margin: 0;
+}
+
+.ns-cover-art {
+  position: relative;
+}
+
+/* ---------- Statement ---------- */
+
+.ns-statement {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 110px;
+  gap: 44px;
+}
+
+.ns-statement .big {
+  font-size: 66px;
+  line-height: 1.06;
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  max-width: 21ch;
+  margin: 0;
+  text-wrap: balance;
+}
+
+.ns-statement .big em {
+  font-style: normal;
+  color: var(--z-red-400);
+}
+
+.ns-statement .small {
+  font-size: 32px;
+  line-height: 1.3;
+  color: var(--ns-frozen);
+  font-weight: 600;
+  max-width: 34ch;
+}
+
+/* ---------- Wrong twice ---------- */
+
+.ns-wrong {
+  height: 470px;
+  display: grid;
+  grid-template-rows: 1fr 1fr auto;
+  gap: 18px;
+}
+
+.w-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+.w-claim,
+.w-fix {
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
+}
+
+.w-claim {
+  background: var(--ns-soft);
+}
+
+.w-claim p {
+  text-decoration: line-through;
+  text-decoration-color: var(--ns-red);
+  text-decoration-thickness: 3px;
+}
+
+.w-fix {
+  background: var(--ns-teal);
+  color: #fff;
+}
+
+.w-claim span,
+.w-fix span {
+  font-size: 16px;
+  font-weight: 700;
+  opacity: 0.8;
+}
+
+.w-claim p,
+.w-fix p {
+  margin: 0;
+  font-size: 25px;
+  line-height: 1.28;
+  font-weight: 650;
+  max-width: none;
+}
+
+.w-take {
+  font-size: 25px;
+  font-weight: 800;
+  padding-top: 6px;
+}
+
+/* ---------- Ask first ---------- */
+
+.ns-ask {
+  height: 480px;
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 40px;
+}
+
+.ask-q {
+  background: var(--z-ink);
+  color: #fff;
+  padding: 36px 36px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.ask-q p {
+  font-size: 40px;
+  line-height: 1.15;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin: 0;
+  max-width: none;
+}
+
+.ask-q code {
+  font-family: var(--ns-mono);
+  font-size: 0.8em;
+  color: var(--ns-frozen);
+}
+
+.ask-q span {
+  font-size: 22px;
+  color: var(--ns-frozen);
+  font-weight: 600;
+}
+
+.ask-ev {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.ask-ev .ev {
+  border-top: 3px solid var(--z-ink);
+  padding-top: 12px;
+}
+
+.ask-ev .ev b {
+  font-size: 24px;
+}
+
+.ask-ev .ev p {
+  font-size: 21px;
+  line-height: 1.36;
+  margin: 6px 0 0;
+  max-width: none;
+}
+
+.ask-ev .ev.tools {
+  margin-top: auto;
+  border: 0;
+  background: var(--ns-soft);
+  padding: 16px 18px;
+}
+
+.ask-ev .ev.tools p {
+  margin: 0;
+  font-size: 19px;
+}
+
+/* ---------- Behaviour slices ---------- */
+
+.ns-slices {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  height: 340px;
+}
+
+.ns-slices .sl {
+  position: relative;
+  border-top: 6px solid var(--z-ink);
+  background: var(--ns-soft);
+  padding: 20px 22px;
+  display: flex;
+  flex-direction: column;
+}
+
+.ns-slices .sl:nth-child(2) {
+  border-color: var(--ns-red);
+}
+
+.ns-slices .n {
+  font-size: 54px;
+  font-weight: 200;
+  line-height: 1;
+  color: var(--ns-teal);
+}
+
+.ns-slices b {
+  font-size: 25px;
+  line-height: 1.2;
+  margin-top: 14px;
+}
+
+.ns-slices p {
+  margin: auto 0 0;
+  font-size: 20px;
+  line-height: 1.35;
+  max-width: none;
+  padding-top: 12px;
+  border-top: 1px solid var(--ns-line);
+}
+
+.ns-slices code {
+  font-family: var(--ns-mono);
+  font-size: 0.85em;
+}
+
+.ns-quote {
+  margin-top: 40px;
+  display: flex;
+  align-items: baseline;
+  gap: 24px;
+}
+
+.ns-quote p {
+  margin: 0;
+  font-size: 36px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+}
+
+.ns-quote span {
+  font-size: 18px;
+  line-height: 1.35;
+  color: var(--z-grey-600);
+}
+
+/* ---------- Stop rules ---------- */
+
+.ns-rules {
+  height: 480px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+}
+
+.ns-rules .col {
+  display: flex;
+  flex-direction: column;
+}
+
+.ns-rules h3 {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--z-ink);
+  margin: 0 0 8px;
+  padding-bottom: 12px;
+  border-bottom: 4px solid var(--ns-teal);
+}
+
+.ns-rules .end h3 {
+  border-color: var(--ns-red);
+}
+
+.ns-rules p {
+  margin: 0;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  font-size: 23px;
+  line-height: 1.3;
+  font-weight: 600;
+  max-width: none;
+  border-bottom: 1px solid var(--ns-line);
+}
+
+/* ---------- Monday ---------- */
+
+.ns-monday {
+  height: 480px;
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+}
+
+.ns-monday .lead {
+  font-size: 30px;
+  line-height: 1.25;
+  font-weight: 700;
+  max-width: 36ch;
+  margin: 0;
+}
+
+.ns-monday .term {
+  flex: 1;
+  background: var(--z-ink);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+}
+
+.ns-monday .bar {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 20px;
+  border-bottom: 1px solid #333;
+  font-size: 16px;
+  color: #bdbdbd;
+}
+
+.ns-monday .bar em {
+  font-style: normal;
+}
+
+.ns-monday .out {
+  margin: 0;
+  padding: 16px 20px;
+  font-size: 16px;
+  line-height: 1.8;
+  white-space: pre-wrap;
+}
+
+.ns-monday .bad {
+  color: #ff9d8f;
+}
+
+.ns-monday .dim {
+  color: #9a9a9a;
+}
+
+.ns-monday .term > p {
+  margin: auto 0 0;
+  padding: 16px 20px;
+  font-size: 21px;
+  line-height: 1.35;
+  background: var(--ns-teal);
+  max-width: none;
+}
+
+/* ---------- Thanks ---------- */
+
+.ns-thanks {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 110px;
+}
+
+.ns-thanks h1 {
+  font-size: 110px;
+  line-height: 0.95;
+  letter-spacing: -0.045em;
+  font-weight: 800;
+  margin: 0 0 30px;
+  color: #fff;
+}
+
+.ns-thanks .who {
+  font-size: 30px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.ns-thanks .links {
+  font-size: 20px;
+  color: #bdbdbd;
+  margin: 10px 0 0;
+}
+
+.ns-thanks .q {
+  margin: 70px 0 0;
+  font-size: 34px;
+  font-weight: 700;
+  color: var(--ns-frozen);
+}
+
+/* ---------- Sources ---------- */
+
+.ns-sources {
+  column-count: 2;
+  column-gap: 44px;
+  height: 480px;
+}
+
+.ns-sources p {
+  break-inside: avoid;
+  margin: 0 0 26px;
+  font-size: 23px;
+  line-height: 1.4;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--ns-line);
+  max-width: none;
+}

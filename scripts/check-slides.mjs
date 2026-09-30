@@ -4,6 +4,8 @@
 
   Usage:
     node scripts/check-slides.mjs [deck ...]      check the named decks
+                                                  (a deck is a directory with slides.md,
+                                                  or dir/entry.md for another entry file)
     node scripts/check-slides.mjs --staged        check decks touched by the staged diff
     node scripts/check-slides.mjs --update-baseline [deck ...]
 
@@ -29,7 +31,9 @@ import { chromium } from 'playwright-chromium'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const baselinePath = join(root, 'scripts', 'slide-check-baseline.json')
-const allDecks = ['coding-agents', 'workshop-intro', 'database-modernization', 'agent-building-blocks']
+const allDecks = ['coding-agents', 'workshop-intro', 'database-modernization', 'agent-building-blocks', 'no-slop-deck', 'no-slop-deck/split.md']
+const deckDir = (deck) => (deck.endsWith('.md') ? dirname(deck) : deck)
+const deckEntry = (deck) => (deck.endsWith('.md') ? deck.slice(deckDir(deck).length + 1) : 'slides.md')
 
 const args = process.argv.slice(2)
 const updateBaseline = args.includes('--update-baseline')
@@ -39,7 +43,7 @@ if (args.includes('--staged')) {
   const files = execSync('git diff --cached --name-only', { cwd: root, encoding: 'utf8' })
     .split('\n').filter(Boolean)
   const themeChanged = files.some((f) => f.startsWith('themes/') || f === 'scripts/check-slides.mjs')
-  decks = themeChanged ? allDecks : allDecks.filter((d) => files.some((f) => f.startsWith(`${d}/`)))
+  decks = themeChanged ? allDecks : allDecks.filter((d) => files.some((f) => f.startsWith(`${deckDir(d)}/`)))
   if (!decks.length) process.exit(0)
 }
 if (!decks.length) decks = allDecks
@@ -67,8 +71,8 @@ function freePort() {
 }
 
 async function startServer(deck, port) {
-  const child = spawn('npx', ['slidev', 'slides.md', '--port', String(port)], {
-    cwd: join(root, deck),
+  const child = spawn('npx', ['slidev', deckEntry(deck), '--port', String(port)], {
+    cwd: join(root, deckDir(deck)),
     stdio: ['ignore', 'pipe', 'pipe'],
   })
   await new Promise((resolve, reject) => {
@@ -213,14 +217,35 @@ for (const deck of decks) {
   const port = await freePort()
   const server = await startServer(deck, port)
   try {
-    const page = await browser.newPage({ viewport: { width: 1280, height: 720 } })
+    let page = await browser.newPage({ viewport: { width: 1280, height: 720 } })
     await page.goto(`http://localhost:${port}/1?embedded=true`, { waitUntil: 'networkidle' })
     const total = await page.evaluate(() => window.__slidev__?.nav?.total ?? 0)
     const found = {}
-    for (let n = 1; n <= total; n++) {
+    // Chromium stops mounting large dev decks after a few dozen full reloads
+    // in one tab, so start a fresh tab every 25 slides and after a failure.
+    const freshPage = async () => {
+      await page.close()
+      page = await browser.newPage({ viewport: { width: 1280, height: 720 } })
+    }
+    const render = async (n) => {
       await page.goto(`http://localhost:${port}/${n}?embedded=true&clicks=999`, { waitUntil: 'networkidle' })
       await page.waitForTimeout(500)
-      const problems = await page.evaluate(measure, RULES)
+      await page.waitForSelector('#slide-content', { timeout: 5000 })
+      return page.evaluate(measure, RULES)
+    }
+    for (let n = 1; n <= total; n++) {
+      if (n % 25 === 0) await freshPage()
+      let problems
+      try {
+        problems = await render(n)
+      } catch {
+        await freshPage()
+        try {
+          problems = await render(n)
+        } catch (error) {
+          throw new Error(`${deck} slide ${n} did not render: ${error.message.split('\n')[0]}`)
+        }
+      }
       if (problems.length) found[n] = problems.map((p) => p.rule).filter((r, i, a) => a.indexOf(r) === i)
       const known = new Set(baseline[deck]?.[n] ?? [])
       const fresh = problems.filter((p) => !known.has(p.rule))
