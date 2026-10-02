@@ -49,13 +49,13 @@ const rows = computed(() => (props.mode === 'hook' ? hookChecks : evidence))
 
       <div class="diff ns-mono" aria-label="Diff of routes/export.ts">
         <div class="file">routes/export.ts</div>
-        <div class="dl add"><i>+</i>export async function exportTasks(req) {</div>
-        <div class="dl add"><i>+</i>  const session = await requireSession(req)</div>
-        <div class="dl add" :class="{ lit: mode === 'evidence' }"><i>+</i>  const teamId = <template v-if="mode === 'hook'">req.query.teamId ?? </template>session.teamId</div>
-        <div class="dl add"><i>+</i>  const rows = await db.tasks.findMany({</div>
-        <div class="dl add"><i>+</i>    where: { teamId },</div>
+        <div class="dl add"><i>+</i><span class="t-k">export async function</span> <span class="t-f">exportTasks</span>(<span class="t-v">req</span>) {</div>
+        <div class="dl add"><i>+</i>  <span class="t-k">const</span> <span class="t-v">session</span> = <span class="t-k">await</span> <span class="t-f">requireSession</span>(<span class="t-v">req</span>)</div>
+        <div class="dl add" :class="{ lit: mode === 'evidence' }"><i>+</i>  <span class="t-k">const</span> <span class="t-v">teamId</span> = <template v-if="mode === 'hook'"><span class="t-v">req</span>.<span class="t-p">query</span>.<span class="t-p">teamId</span> <span class="t-k">??</span>{{ ' ' }}</template><span class="t-v">session</span>.<span class="t-p">teamId</span></div>
+        <div class="dl add"><i>+</i>  <span class="t-k">const</span> <span class="t-v">rows</span> = <span class="t-k">await</span> <span class="t-v">db</span>.<span class="t-p">tasks</span>.<span class="t-f">findMany</span>({</div>
+        <div class="dl add"><i>+</i>    <span class="t-p">where</span>: { <span class="t-v">teamId</span> },</div>
         <div class="dl add"><i>+</i>  })</div>
-        <div class="dl add"><i>+</i>  return csv(rows, COLUMNS)</div>
+        <div class="dl add"><i>+</i>  <span class="t-k">return</span> <span class="t-f">csv</span>(<span class="t-v">rows</span>, <span class="t-c">COLUMNS</span>)</div>
         <div class="dl add"><i>+</i>}</div>
       </div>
     </div>
@@ -129,8 +129,12 @@ const rows = computed(() => (props.mode === 'hook' ? hookChecks : evidence))
 
 .body {
   display: grid;
-  grid-template-columns: 0.85fr 1.15fr;
+  grid-template-columns: 0.75fr 1.25fr;
   min-height: 0;
+}
+
+.evidence .body {
+  grid-template-columns: 0.9fr 1.1fr;
 }
 
 .checks {
@@ -204,7 +208,7 @@ const rows = computed(() => (props.mode === 'hook' ? hookChecks : evidence))
   background: var(--z-ink);
   color: #d6d6d6;
   padding: 18px 22px;
-  font-size: var(--ns-code);
+  font-size: 20px;
   line-height: 1.75;
   overflow: hidden;
 }
@@ -216,12 +220,22 @@ const rows = computed(() => (props.mode === 'hook' ? hookChecks : evidence))
 
 .dl {
   white-space: pre;
-  color: var(--z-teal-300);
+  margin: 0 -22px;
+  padding: 0 22px;
+  color: #9a9a9a;
+  background: rgba(3, 127, 145, 0.12);
 }
+
+/* Syntax colours, from the deck palette. */
+.t-k { color: #ff8a78; }
+.t-f { color: var(--ns-frozen); }
+.t-v { color: #f2f2f2; }
+.t-p { color: #9fd8df; }
+.t-c { color: var(--z-yellow); }
 
 .dl i {
   font-style: normal;
-  color: #6e6e6e;
+  color: var(--z-teal-300);
   display: inline-block;
   width: 1.4ch;
 }
