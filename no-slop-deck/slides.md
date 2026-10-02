@@ -38,6 +38,7 @@ layout: none
 - Let the stream run for a moment before speaking.
 - Say: "That's an agent writing code faster than any of us can read it. Everything it says sounds reasonable. Keep an eye on it, we'll come back to one of those lines."
 - I'm Pasi, from Zure. This talk is about the practices I use so that code I didn't type is still code I can explain.
+- The timings below are rehearsal notes from the earlier version. This expanded draft keeps the full Polylane section and adds material; rehearse before deciding what to cut.
 -->
 
 ---
@@ -120,9 +121,9 @@ transition: gate | gate-back
 <!--
 4:00 to 5:00
 
-- This is the map for the rest of the hour. Each gate asks one question.
+- This is the map for the talk. Each gate asks one question.
 
-[click] Three before any code exists: research, plan, and deciding how to slice the work. Deciding the slices, not building them. These are the cheapest places to catch a mistake.
+[click] Three before implementation: understand the current system, discuss the design, and decide how to slice the work. Use the phases that the task needs. A detailed implementation plan is optional.
 
 [click] Then a loop for every slice: build it, verify it, review it, and go round again for the next one. It's not a waterfall. Verify and review happen many times a day.
 
@@ -135,12 +136,13 @@ transition: gate | gate-back
 layout: none
 ---
 
-<SectionGate :current="0" title="Find the fact that changes the plan" question="What do we actually know, and what are we assuming?" />
+<SectionGate :current="0" title="Understand the current system" question="What does the code do today?" />
 
 <!--
-5:00. Research, about 5 minutes including a 3-minute demo.
+Research, including a prepared walkthrough of real artifacts.
 
 - Say: "Let's go back to the request and see what should have happened. Export the team's tasks as CSV. No code yet."
+- The divider log describes the baseline: session, list route and the missing export. Research maps what exists before design decides what should change. This is an explanatory diagram, not a recorded agent run.
 -->
 
 ---
@@ -150,39 +152,37 @@ clicks: 2
 transition: gate | gate-back
 ---
 
-# Research, plan, implement. Scale it to the task.
+# Use the shortest workflow that resolves the unknowns
 
 <RpiScale :step="$clicks" />
 
 <!--
-5:00 to 6:15
+About 1 minute. This is my current workflow, not a mandatory process.
 
-[click] Three phases, each starting with a fresh context and handing a markdown file to the next. Research maps how things work today. Plan decides what changes and how we'll verify it. Implement follows the plan.
-- The 40 to 60% context band is a ceiling, not a target, and it's my rule of thumb, not a law.
-- The phase prompts started from HumanLayer's research, plan, implement prompts.
-
-[click] Most of my work isn't the full sequence. Small change: talk to the agent directly. Medium: plan, then implement. Large, messy or risky: all three.
-
-- Source: my posts. https://www.huuhka.net/research-plan-implement/ and https://www.huuhka.net/how-i-currently-develop-with-llm-models-early-2026/
+- A clear task can go straight to implementation. If the decisions are unclear, the next step is a design conversation with grilling. Research comes first when we need a map of unfamiliar code.
+[click] Research describes the current system. Design decides what should change. The useful facts and decisions go into artifacts so the next context can find them.
+[click] A structure outline adds meaningful vertical phases. A detailed implementation plan is optional; in my normal workflow I usually skip that extra step. Grill with docs records decisions in CONTEXT.md as part of the discussion.
+- Fresh contexts help control accumulated assumptions. My old 40 to 60% context heuristic belongs in the explanation, not in a diagram that looks like a measured limit.
+- My earlier posts describe the RPI foundation. The workflow here includes my subsequent changes. https://www.huuhka.net/research-plan-implement/ https://www.huuhka.net/how-i-currently-develop-with-llm-models-early-2026/
+- HumanLayer's current documentation also separates research, design and vertical structure, and makes the detailed plan optional. https://docs.humanlayer.com/explanation/workflow-phases
 -->
 
 ---
 layout: none
 ---
 
-<DemoSlide title="Trace the path" :minutes="3" prompt="Trace how the task list derives the current team. Show where the scoping lives, and whether a new endpoint that reuses the query keeps it. Separate facts from assumptions." />
+<DemoSlide title="Map the current state" :minutes="3" prepared agent="Research walkthrough" prompt="How does the task list work today? Trace the session, the team filter and the shared query. Where are those boundaries in the code? Describe existing behavior with file references." />
 
 <!--
-6:15 to 9:15. Live demo, 3 minutes.
+Prepared walkthrough, about 3 minutes.
 
-- Ask first: "Can the export reuse the list query?" Most people will say yes.
-
-1. Run the research prompt against the demo repo. There is no export code yet.
-2. Open research.md. Pick the claim that the export can reuse the query and stay scoped.
-3. Open lib/tasks.ts yourself. findTasks takes whatever where it's given. The team filter lives in the route.
-4. Mark the claim false. Mark "every route takes the team from the session" as an assumption.
-
-If the run stalls, move on. The next slide shows the result.
+- Use the real research artifact Pasi generates against the demo-app baseline. The application has a task list and no export yet. Do not manufacture a mistaken research answer for this demonstration.
+1. Open the research questions and the completed current-state map.
+2. Show which files the agent located and how it traced the request through session, route and query.
+3. Follow one useful reference into the actual code. The route supplies the team scope; the shared query applies its input filters.
+4. Show how this compact map lets the design conversation start without rediscovering the system.
+- Current preparation status: the baseline app is being completed by another agent. Replace the walkthrough with the actual artifact when Pasi has run his own research skills.
+- Research is not a code review or a future design proposal. https://www.huuhka.net/research-plan-implement/ https://docs.humanlayer.com/explanation/workflow-phases
 -->
 
 ---
@@ -192,123 +192,130 @@ clicks: 3
 transition: gate | gate-back
 ---
 
-# Follow one claim back to the code
+# Research explains how the system works today
 
 <ClaimTrace :step="$clicks" />
 
 <!--
-9:15 to 10:15. Recap of the demo, keep it short.
+Recap of the prepared research example, about 1 minute.
 
-- Three claims from research.md. They all read well.
-
-[click] Claim one checks out. The list route scopes by the session's team.
-
-[click] Claim two is false. The shared query has no team filter of its own. The route adds it. Reuse the query without the route and you lose the scoping.
-
-[click] Claim three was never checked. It's an assumption, so label it as one.
-
-- That's the fact that changes the plan: a new endpoint has to add the scoping itself.
-- Say: "Research should reduce uncertainty about this change, not produce a nice document."
+[click] The server-side session identifies the user and their team.
+[click] The list route adds that team to the query filters. The shared query executes the supplied filters. These are two different responsibilities, and the research maps both.
+[click] The baseline has a list and no export. Design starts from these facts. Research does not quietly decide the new endpoint's behavior.
+- The diagram is an explanatory redraw of the baseline's path, not a claimed verbatim output from a completed research run. Replace or align the labels with the real artifact once Pasi has generated it.
+- Following a reference is about understanding an important fact. The example does not depend on research being wrong.
+- Sources: https://www.huuhka.net/research-plan-implement/ https://docs.humanlayer.com/explanation/workflow-phases
 -->
 
 ---
 layout: none
 ---
 
-<SectionGate :current="1" title="Grill the plan, keep the answers" question="Which decision has nobody made yet?" />
+<SectionGate :current="1" title="Grill the decisions, keep the answers" question="What are we actually building?" />
 
 <!--
-10:15. Plan, about 7 and a half minutes including a 3-minute demo.
+Design. Grilling is useful as soon as implementing directly would require guesses. It can be part of a lightweight discussion or a larger design phase. A separate detailed plan is not required.
+- The divider log shows the same workflow: ask about choices, use code to answer factual questions, and record the decisions in CONTEXT.md.
 -->
 
 ---
-part: Plan
+part: Design
 class: ns
 clicks: 2
 transition: gate | gate-back
 ---
 
-# Say what you expect before the agent answers
+# Form an expectation before reading the answer
 
 <div class="ns-ask">
   <div class="ask-q">
-    <p>What must stay true when someone sends a <code>teamId</code> that isn't theirs?</p>
-    <span>20 seconds. Say it out loud.</span>
+    <p>Team A asks for Team B's tasks. What should the export return?</p>
   </div>
   <div class="ask-ev">
     <Show :step="$clicks" :at="1" class="ev">
-      <b>Aidan Harding</b>
-      <p>"Ask before you tell."</p>
+      <b>Your expected result</b>
+      <p>Team A's rows. No Team B rows.</p>
     </Show>
     <Show :step="$clicks" :at="2" class="ev">
-      <b>Honeycomb, on team plan reviews</b>
-      <p>"Our velocity did not seem to go down."</p>
+      <b>Then inspect the agent's answer</b>
+      <p>Does it preserve that boundary? What check would prove it?</p>
     </Show>
   </div>
 </div>
 
 <!--
-10:15 to 12:00
+About 1 minute.
 
-- Research told us the export has to add the scoping itself. Now the plan. Before any agent answers, you answer.
-- Ask the room first. Wait the full 20 seconds. Take two answers.
-- The point: you form an expectation before the agent gives you its default. Otherwise you anchor on its answer.
-
-[click] Aidan Harding's learning skill tells the agent: "Ask before you tell." It asks for your view before giving its own. It also asks you to name what convinced you before you approve a load-bearing decision. https://aquiva.com/blog/putting-learning-in-the-loop
-
-[click] Honeycomb's Tenant team leaned into review with plan, review, implement and finish skills. Team plan reviews spread understanding and velocity held. They later relaxed the heavy version for simple work. https://www.honeycomb.io/blog/embracing-code-review-bottleneck
-- One line on tools, not on the slide: GitHub Next's Chopin and Spec Kit's assess extension (go, clarify or kill, before any spec exists) both move attention upstream. Don't demo them. https://githubnext.com/projects/chopin/
+- Ask for the audience's expectation before showing either the agent's suggestion or the expected result. Keep the pause natural; no timed exercise instruction on screen.
+[click] For this teaching case, the agreed boundary is that the caller gets only their own team's rows.
+[click] Now read the generated answer against that expectation. Agreement is not evidence that the boundary holds; ask for a check that could fail.
+- The previous version used two detached quotations. Aidan Harding's ask-before-you-tell practice explains the mechanism; Honeycomb's team example belongs on the shared-understanding slide.
+- Aidan's source: https://aquiva.com/blog/putting-learning-in-the-loop
 -->
 
 ---
 layout: none
 ---
 
-<DemoSlide title="Grill the plan" :minutes="3" prompt="Propose the smallest export change. Then grill me: one question at a time, until every open decision is resolved. Write each decision to docs/decisions with a check that can fail." />
+<DemoSlide title="Grill the design" :minutes="3" prepared agent="Design walkthrough" prompt="Let's resolve what the export should do. Grill me on the choices that would otherwise become guesses. Explore the code for factual answers, and record our agreed decisions with grill with docs." />
 
 <!--
-12:00 to 15:00. Live demo, 3 minutes.
+Prepared walkthrough, about 3 minutes.
 
-- The room just answered the question. Now watch whether the agent asks it.
-
-1. Run the planning prompt with research.md as input.
-2. Skim the plan. Most of it is fine. Point at the line that accepts teamId from the query.
-3. Answer the agent's questions out loud. When it gets to the team, push back with the forged-id case.
-4. Show the one-line change in the plan and the new decision file with its check.
-
-Fallback: move on. The next slide shows the result.
+- Use the real design conversation and CONTEXT.md that Pasi generates after the research run. Do not invent a flawed plan for the agent to repair.
+1. Start from the product request and the current-state map.
+2. Show one meaningful question with its options, the answer and why it changes the feature.
+3. Show another question about the output or scope so grilling reads as a design conversation rather than a security quiz.
+4. Open the durable record produced by grill with docs. The choices remain available outside the chat.
+- In my normal workflow, I often proceed from approved design and a vertical structure outline to implementation. A detailed plan can be skipped.
+- Preparation status: the real conversation and artifact will be added after Pasi runs his skills.
+- Sources: https://www.huuhka.net/how-i-currently-develop-with-llm-models-early-2026/ https://docs.humanlayer.com/explanation/workflow-phases https://github.com/mattpocock/skills
 -->
 
 ---
-part: Plan
+part: Design
 class: ns
 clicks: 3
 ---
 
-# Let the agent grill you on the plan
+# Grill the decisions before implementation
 
 <PlanArgument :step="$clicks" />
 
 <!--
-15:00 to 16:15. Recap of the demo.
+About 1 minute. Keep this at the level of the design discussion.
 
-- The agent's first plan was a good baseline. It also accepted a teamId parameter, because that's how filtering usually works. Nobody decided that. It just appeared.
-
-[click] The grilling: the agent asks where the team comes from on export. I answer, and push back with the forged teamId.
-
-[click] The plan barely changes. One line goes. One decision and two examples come in, including the failure case.
-
-[click] The answer doesn't stay in the chat. It goes into a decision file the next agent will find, with a check that can fail.
-
-- Say: "The plan is usually fine. The grilling finds the one decision nobody made."
-- Matt Pocock's grill-me skill: the agent interviews you "relentlessly about a plan or design until every branch of the design tree is resolved". grill-with-docs does the same and updates GLOSSARY.md and ADRs as it goes. He calls these his most popular skills and uses them for every change. https://github.com/mattpocock/skills
-- Where decision files live: OpenAI's harness team keeps AGENTS.md at "roughly 100 lines", a map "with pointers to deeper sources of truth", and treats docs/ as the system of record. A recurring "doc-gardening" agent "scans for stale or obsolete documentation" and opens fix-up PRs. https://openai.com/index/harness-engineering/
-- GitHub Next's Chopin names the failure this prevents: an "agent silently decided something without a human realising it". https://githubnext.com/projects/chopin/
-- Quote from my early-2026 workflow post on arguing with the plan. https://www.huuhka.net/how-i-currently-develop-with-llm-models-early-2026/
+- Start with a normal product request. The implementation agent should not silently choose the feature's meaning.
+[click] Ask who can use it, what the output contains and how far the first version goes. Explore the code for factual answers; ask the human about product choices.
+[click] These are example decision areas. Only the caller-team boundary is fixed for the teaching case here. The actual export filter, columns and limits will be resolved in Pasi's real design run.
+[click] Grill with docs records the answers in CONTEXT.md and any appropriate decision records. The durable record is the useful output, not a long interrogation transcript.
+- This is the next step above implementing directly when a task has unclear choices. It works within a design phase or as a short conversation. No separate plan file is required.
+- Matt Pocock's grilling skills are the source for the interview pattern. https://github.com/mattpocock/skills
+- GitHub Next identifies the same problem: decisions can disappear in private chat or be silently made by an agent. https://githubnext.com/projects/chopin/
 -->
 
 ---
-part: Plan
+part: Design
+class: ns
+clicks: 2
+---
+
+# Planning needs better tools
+
+<PlanningTools :step="$clicks" />
+
+<!--
+About 1 minute. Add material now; decide timing in rehearsal.
+
+- GitHub Next's Chopin is a research prototype for collaborative planning with people and agents. The diagram is an explanatory redraw, not a screenshot of the product.
+[click] A plan can be a place for research, decision-specific discussion and visual explanation. Chopin is exploring a shared MDX editor, comment threads and interactive diagrams, with decisions that teammates can trace.
+[click] HumanLayer invests in the workflow around those artifacts: objective research, a design discussion and an outline of vertical phases before implementation. The current default does not require a detailed code-level plan.
+- The point is that tool builders are putting attention into the work before implementation. Do not turn this into three live product demos or claim these prototypes are generally available.
+- Sources: https://githubnext.com/projects/chopin/ https://docs.humanlayer.com/explanation/workflow-phases https://docs.humanlayer.com/reference/skills-workflows
+-->
+
+---
+part: Design
 class: ns
 clicks: 3
 transition: gate | gate-back
@@ -423,6 +430,48 @@ layout: none
 ---
 part: Verify
 class: ns
+clicks: 2
+---
+
+# Catch repeatable mistakes locally
+
+<LocalChecks :step="$clicks" />
+
+<!--
+About 1 minute.
+
+- Types, ordinary linters and tests cover different questions. Add repository-specific lints when a rule is clear and repeated, such as a browser module importing server storage.
+[click] Run these checks in the local implementation loop. CI repeats them; a predictable violation should usually be fixed before anyone reviews the PR.
+[click] The failure message tells the agent which boundary it crossed and how to repair it. It then reruns the check. A failure that says only "bad import" wastes another turn.
+- This is an illustrative diagnostic. OpenAI's harness team explicitly describes custom lints whose error messages carry remediation instructions into the agent's context.
+- Mechanical checks can enforce structure. They cannot decide what this feature should mean, which is why we still need the behavioral example that follows.
+- Source: https://openai.com/index/harness-engineering/
+-->
+
+---
+part: Verify
+class: ns
+clicks: 2
+---
+
+# Make architecture rules executable
+
+<ArchitectureRules :step="$clicks" />
+
+<!--
+About 1 minute. This is the architecture example Pasi requested from OpenAI's harness blog.
+
+- Redrawn from the blog's stated dependency model. Each business domain uses Types, Config, Repo, Service, Runtime and UI. Dependencies are restricted to allowed forward edges. Providers is the explicit entry point for cross-cutting concerns.
+[click] A disallowed dependency is a lint or structural-test failure, with instructions for the fix. This can run on the developer's machine and again in CI.
+[click] The reusable idea is an explicit dependency policy that tools can enforce. The six-layer model is OpenAI's choice for that repository, not a universal architecture recommendation.
+- Arrows are imports: each layer may import the ones before it, the forward direction the article describes. The Service-to-UI import and the lint message are my illustration, not from the article.
+- Vertical slice delivery and dependency layers answer different questions. A slice is one usable behavior across the needed layers; the architecture defines which dependencies its code may take. A feature-oriented repo can enforce its own simpler boundaries with the same mechanism.
+- Source: https://openai.com/index/harness-engineering/
+-->
+
+---
+part: Verify
+class: ns
 clicks: 4
 ---
 
@@ -431,21 +480,16 @@ clicks: 4
 <ExportLab :step="$clicks" />
 
 <!--
-22:30 to 27:30. This is the Verify demo. The tests on this slide really run, in the browser, against the code shown. Click line 3 to cycle versions and the request to forge a teamId.
+Interactive verification example, about 5 minutes. This remains a labelled seeded teaching defect. The tests on the slide execute the export function shown.
 
-- Back to our PR. Seeded defect, labelled. Three tests, all green. The CSV looks right.
-
-[click] Same code, one query parameter. Signed in as Team A, asking for team-b. Team B's canary row is in my export. Still three green tests.
-
-[click] Add the checks from the plan: a forged teamId returns only my rows, and Team A gets exactly two rows. One fails.
-
-[click] Fix it: the team comes from the session only. Everything passes.
-
-[click] Now the part people skip. Delete the filter entirely. Both boundary checks fail. That's the evidence the check can catch the bug. A check that can't fail proves nothing.
-
-- The happy-path tests passed in every version. They were never testing the claim that mattered.
-- Take your time here. Let people suggest what to click.
-- Optional, only if there's time and the repo is ready: the same sequence in a terminal. Check out the seeded commit, run the tests, curl as Team A with ?teamId=team-b and show the canary row, add the boundary check, fix, remove the predicate. The slide already proves it, so skip this if in doubt.
+- 1. Normal request. Team A asks without a query team. The output includes A-101 and A-102. Three happy-path tests pass. One of them checks that Team A rows are present; it never excludes Team B.
+[click] 2. Forged request. Still signed in as Team A, now asking for team-b. B-201 and B-202 appear. The same three tests remain green because they run normal requests.
+[click] 3. Add boundary checks. The forged request must return exactly A-101 and A-102. The normal request must return exactly two rows. The first check fails on the seeded version.
+[click] 4. Fix. Derive the team from the session only. All five checks pass and the forged request returns Team A's rows.
+[click] 5. Remove the filter as a negative control. All four rows appear. The two boundary checks fail, proving these checks detect the lost predicate.
+- The scenario number and expected IDs remain visible. Distinguish the displayed request from the requests run inside the tests.
+- Clicking line 3 or the request lets us revisit versions. The paced five-stage walkthrough is the main path.
+- The slide is an executable explanation, not an assertion that an agent generated this defect in the real app.
 -->
 
 ---
@@ -455,23 +499,18 @@ clicks: 2
 transition: gate | gate-back
 ---
 
-# Code and tests from one wrong assumption agree
+# A passing test can repeat the same mistake
 
 <SameAssumption :step="$clicks" />
 
 <!--
-27:30 to 29:15
+About 1 minute. This continues the same three happy-path tests from the previous slide.
 
-- If the same agent writes the code and the tests from the same assumption, they agree. 24 green tests, nothing independent checked.
-
-[click] The fix is an expectation from somewhere else: the plan's decision. You write down what a forged teamId must return before reading the generated test.
-
-[click] Say it plainly. Write the expected result first.
-
-- Addy Osmani: "Tests are necessary. They are not sufficient." https://addyosmani.com/blog/comprehension-debt/
-- A second model agreeing is not independent evidence either. The expectation has to come from the decision.
-- Matt Pocock's tdd skill calls this the tautological test: "Expected values must come from an independent source of truth." https://github.com/mattpocock/skills
-- Aidan Harding's joint review keeps the two sides apart: he and the agent record findings separately and share nothing until both are done, so "your framing and ideas can distract the agent" doesn't happen. https://aquiva.com/blog/putting-learning-in-the-loop
+- The code accepts a query team. Tests written with the same assumption can validate format and expected presence while leaving the actual access boundary unchecked.
+[click] Start instead from the agreed behavior. A forged query still returns A-101 and A-102, and no Team B rows. The expected result comes from the decision, not from copying the implementation's output.
+[click] Write that expectation before inspecting the generated test. The new boundary test fails against the seeded code.
+- The diagram makes the shared-assumption problem explicit. It is not a claim that every test generated by the same model is useless, or that another model can never help.
+- Sources: https://github.com/mattpocock/skills https://aquiva.com/blog/putting-learning-in-the-loop https://addyosmani.com/blog/comprehension-debt/
 -->
 
 ---
@@ -495,13 +534,12 @@ clicks: 2
 <ReviewLoops :step="$clicks" />
 
 <!--
-29:15 to 30:15
+About 1 minute.
 
-- The inner loop runs on my machine before any PR exists: edit, tests, a browser check, a local reviewer agent. Seconds per turn.
-
-[click] The outer loop is the PR: CI, reviewers from other providers, a babysitter working the feedback, and a person who merges. Minutes per turn, and other people's attention.
-
-[click] Most findings should die inside. Every finding that reaches the PR costs someone else's time. Next slide: what the local reviewer looks like.
+- The inner loop runs on my machine before the PR: implement, run tests and lints, inspect the browser, then instruct reviewer subagents to examine the change. This is a normal prompt or workflow instruction, not a separate review service.
+[click] The PR loop adds CI and third-party review bots. A local babysitter watches the feedback, checks the current commit, makes a bounded fix and waits for new results.
+[click] Repeated, mechanical mistakes should be caught locally. PR review buys another view and catches risks the earlier checks missed.
+- Speed varies with the task and the agents. The distinction is where the feedback arrives and whose attention it uses, not a promise that every local review takes seconds.
 -->
 
 ---
@@ -510,27 +548,19 @@ class: ns
 clicks: 2
 ---
 
-# After every slice, send in the adversaries
+# One instruction adds local reviewer subagents
 
 <LocalAdversaries :step="$clicks" />
 
 <!--
-30:15 to 31:45
+About 1 minute. This is the local review illustration, not another live demo.
 
-- This is the local reviewer. When a slice is done, before the next one starts, I ask the agent to review what it just built as an adversary. It runs as a subagent, so it starts with a fresh context. It still gets the plan file, or the functional lens has nothing to check against.
-- A fresh context isn't independence. The main agent writes the reviewer's prompt, and its framing can leak in. Keep the prompt to the plan and the diff, not the builder's explanation. For the slices that matter, form your own findings before reading the agent's, as Aidan Harding does.
-- This is slice 2 again, after the fix from the verify part.
-- One adversary is a fine start. The functional one reruns the boundary checks from the plan and they pass. Good, but that's the requirement we already named.
-
-[click] For riskier slices, run several in parallel, one lens each: functional (does it do what the plan says, including the failure case?), non-functional (errors, limits, performance, logs) and security (who can do something they shouldn't?). Add project-specific ones when you have them, like accessibility or data migration. The security one finds a CSV formula injection: a title starting with = runs as a formula in Excel.
-
-[click] The main agent fixes the findings, reruns the checks, and only then starts slice three. The cards now say what changed. Findings that need a decision come to me instead.
-- The point: verify proved the requirement we named. Review is for the risks nobody named.
-
-- The prompt, roughly: "Review the last slice against plan.md as three adversarial subagents in parallel: functional, non-functional and security. Report only findings with a reproducible request or a failing check. Fix them before starting the next slice."
-- Same topology as my PR reviewer (a primary agent, parallel specialist lenses, a synthesis step), just run locally and earlier. https://www.huuhka.net/building-your-own-pr-reviewer-with-coding-agents/
-- If asked about role agents: I don't make a standing "security agent" by default, and Dillon Mulroy calls role subagents trash. These are short-lived reviews with one question each, and they return findings with a file and line. https://www.huuhka.net/primary-vs-subagents-in-llm-harnesses/
-- CSV injection is a real class of bug: OWASP documents it. https://owasp.org/www-community/attacks/CSV_Injection
+- After implementing a slice, ask the main agent to run an adversarial review subagent against the diff and the agreed design. One reviewer is a useful starting point.
+[click] For a riskier change, give several short-lived subagents different questions. Functional checks the agreed behavior. Non-functional checks limits and failures. Security checks authority and untrusted input. The lenses can run in parallel.
+[click] Findings return to the main agent. Reproduce the worthwhile ones, fix them, rerun local checks and proceed. Decisions that need the human come back to me.
+- Fresh context helps the reviewer inspect the change without the builder's whole conversation. It does not make the reviewer statistically independent. Pass the decisions and the diff, not a persuasive explanation of why the implementation is right.
+- The diagram shows the instruction and the loop. It does not claim these are observed findings from a finished demo-app run.
+- Source for the primary/subagent pattern: https://www.huuhka.net/primary-vs-subagents-in-llm-harnesses/ https://www.huuhka.net/building-your-own-pr-reviewer-with-coding-agents/
 -->
 
 ---
@@ -567,47 +597,25 @@ clicks: 2
 [click] What ends the loop. The budget is rounds, minutes or money. The budget and a disagreement end in a person, not another retry. A new commit makes every earlier approval and CI result stale.
 
 - Polylane's first prototype took nearly 7 minutes at the median. After a 30-step budget, a fresh review for each new commit and other changes, their review turn's median is 94 seconds. Budgets aren't just about cost. https://polylane.com/blog/how-we-prevent-slop-from-hitting-prod/
-- Allow at most two fixes in the demo, which comes next.
+- In the prepared PR examples that follow, point out the actual fix budget and stop decision. Keep the walkthrough to a few worthwhile findings.
 -->
 
 ---
 layout: none
 ---
 
-<DemoSlide title="A review loop that stops" :minutes="3" prompt="Review the last slice against plan.md as three adversarial subagents in parallel: functional, non-functional and security. Report only findings with a reproducible request or a failing check. Fix at most twice, then stop and list what is left." />
+<DemoSlide title="Review bots and a local babysitter" :minutes="3" prepared agent="T3 Code · two real PRs" prompt="Follow the review comments, the local fixes and the next CI run. Which findings deserve action? Which commit do the checks cover? Where does the babysitter stop?" />
 
 <!--
-32:30 to 35:30. Live demo, 3 minutes.
+Prepared walkthrough in T3 Code, about 3 minutes.
 
-1. Run the prompt on the fixed branch with one extra seeded issue, the formula injection.
-2. Show the three subagents starting in parallel. Round one: a real finding and some noise. Show which ones earn a fix.
-3. Round two: nothing above the bar. It stops and summarises.
-4. Push a new commit. Show that the earlier review is now stale.
-
-The babysit skill isn't ready yet. Mention it, don't demo it.
--->
-
----
-part: Review
-class: ns
-clicks: 2
----
-
-# The AI part is surprisingly small
-
-<ReviewerPipeline :step="$clicks" />
-
-<!--
-35:30 to 36:30
-
-- That was one full local loop, including the stop. Now the PR side. I've built a few reviewer bots. The model call is one stage.
-
-[click] Ordinary code owns triggers, commit range, retries, deduplication, timeouts, posting, and the stop. The model owns one judgement, returned as structured output the code can validate.
-
-[click] The same shape runs a /fix command, and it's the shape a babysitter uses.
-
-- Reviews get wordy. Without severity and format limits, the bot creates toil, especially if branch policy requires every comment to be resolved.
-- Source: https://www.huuhka.net/building-your-own-pr-reviewer-with-coding-agents/
+- Choose two real PRs after Pasi has prepared them. Show the actual third-party review agents, their overlap or disagreement, and the local babysitter handling worthwhile findings.
+1. PR one: show the different bots' actual comments. Pick a useful finding and some overlap or noise.
+2. PR two: show the babysitter's local fix, push, current commit and next results. A new commit requires new evidence.
+3. Show a stop or escalation rather than an endless request for more review.
+- Keep the local implementation/subagent loop on the earlier diagram. These PRs demonstrate the outer loop.
+- Preparation status: real PRs and recordings/screenshots still need to be selected. The babysit skill was previously under construction; show it only once the real workflow is ready. Do not imply a working integration we have not observed.
+- Source for the bot architecture and bounded fixes: https://www.huuhka.net/building-your-own-pr-reviewer-with-coding-agents/
 -->
 
 ---
@@ -629,6 +637,29 @@ clicks: 3
 [click] The babysitter: a local agent run that watches the PR, reads comments and CI, makes one bounded fix, pushes, and waits. I'm building a babysit skill for this. It'll get a demo when it's ready.
 
 [click] Where it goes wrong: reviewers undoing each other, acting on a CI result from an older commit, commits landing after approval that nobody reviewed, and prompt injection. An agent that acts on PR comments will act on a malicious one.
+-->
+
+---
+part: Review
+class: ns
+clicks: 2
+---
+
+# The AI part is surprisingly small
+
+<ReviewerPipeline :step="$clicks" />
+
+<!--
+35:30 to 36:30
+
+- The PR examples show the agents, but the surrounding code owns most of the workflow. I've built a few reviewer bots. The model call is one stage.
+
+[click] Ordinary code owns triggers, commit range, retries, deduplication, timeouts, posting, and the stop. The model owns one judgement, returned as structured output the code can validate.
+
+[click] The same shape runs a /fix command, and it's the shape a babysitter uses.
+
+- Reviews get wordy. Without severity and format limits, the bot creates toil, especially if branch policy requires every comment to be resolved.
+- Source: https://www.huuhka.net/building-your-own-pr-reviewer-with-coding-agents/
 -->
 
 ---
@@ -688,7 +719,7 @@ layout: none
 <SectionGate :current="5" title="What happens after merge?" question="Who watches the rollout, what stops it, and how do we recover?" />
 
 <!--
-41:00. Production. As built this part runs about 14 and a half minutes: the counterargument, containing a bad change, the Polylane case study (7 slides) and the Jev aside. Cut it back to about 5 minutes in rehearsal. The notes from here on give durations, not clock times.
+Production. Keep the counterargument, containing a bad change, the full Polylane case study and the Jev aside in this draft. Rehearsal will determine the cuts. The notes from here on give provisional durations, not clock times.
 -->
 
 ---
@@ -735,6 +766,27 @@ About 1 minute.
 
 - Peak merges are a peak metric. The calendar average is about half.
 - https://www.honeycomb.io/blog/30-70-prs-day-how-we-managed-not-wreck-systems
+-->
+
+---
+part: Production
+class: ns
+clicks: 2
+---
+
+# Invest in the feedback around the agent
+
+<PlatformFeedback :step="$clicks" />
+
+<!--
+About 1 minute. Honeycomb's second part adds the practical work underneath the throughput figures.
+
+- Their gains arrived alongside investments in delivery, fast CI, agent-accessible tools and team practices. Part one explicitly cautions that they cannot isolate one cause from the overlapping changes.
+[click] Part two turns misses into updates to repository instructions, skills or review rules. Production signals can become constraints for the next change.
+[click] Use some of the new capacity to improve the tools themselves. Their examples include deployment notifications and change visibility built with AI so people can understand what is shipping. Fast checks and readable CLIs are part of the agent's feedback loop.
+- Their platform team owns CI/CD and the agent's working environment. They also describe Intercom's dedicated team-2x and shared plugin/skill infrastructure as a substantial investment, not merely buying model access.
+- Keep this tied to the local lint example: a stable correction can become a check everyone gets next time. Some misses need design judgment rather than another brittle rule.
+- Sources: https://www.honeycomb.io/blog/30-70-prs-day-how-we-managed-not-wreck-systems https://www.honeycomb.io/blog/ai-amplifies-existing-practices-lessons-ai-first-strategy
 -->
 
 ---
@@ -964,8 +1016,9 @@ class: ns
 About 1 minute.
 
 - Back to the PR from the start. The diff barely changed, one line.
-- What changed is what we can show: the fact from research, the decision from the plan, a check that fails without the filter, a review that stopped for a stated reason, and a flagged rollout I'll watch with a signal that stops it.
+- What changed is what we can show: the fact from research, the decision from design, a check that fails without the filter, a review that stopped for a stated reason, and a flagged rollout I'll watch with a signal that stops it.
 - That's what "done" means in this talk.
+- This is the illustrative closing checklist for the seeded export example. Align the research references, design decision and review stop with the real app artifacts before presenting those as observed results.
 -->
 
 ---
@@ -1027,9 +1080,9 @@ class: ns
 # Sources
 
 <div class="ns-sources">
-  <p><b>Pasi Huuhka</b> Research, plan, implement · How I develop with LLMs, early 2026 · Building your own PR reviewer</p>
-  <p><b>GitHub Next</b> Chopin · <b>GitHub</b> Spec Kit July 2026 · <b>Matt Pocock</b> Skills for real engineers</p>
-  <p><b>Honeycomb</b> Embracing the code review bottleneck · 30 to 70 PRs a day</p>
+  <p><b>Pasi Huuhka</b> Research, plan, implement · Current workflow · Building your own PR reviewer</p>
+  <p><b>GitHub Next</b> Chopin · <b>HumanLayer</b> Workflow phases · <b>GitHub</b> Spec Kit · <b>Matt Pocock</b> Skills</p>
+  <p><b>Honeycomb</b> Code review bottleneck · 30 to 70 PRs a day · AI amplifies existing practices</p>
   <p><b>Spotify</b> AI changed how Spotify builds · <b>Intercom</b> AI is approving our pull requests</p>
   <p><b>Uber</b> Running a software factory efficiently · <b>OpenAI</b> Harness engineering</p>
   <p><b>Polylane</b> How we prevent slop from hitting prod · We swapped our LLMs for Jev</p>

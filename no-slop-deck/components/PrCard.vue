@@ -9,7 +9,7 @@ import { computed } from 'vue'
 const props = withDefaults(defineProps<{ step?: number, mode?: 'hook' | 'evidence' }>(), { step: 0, mode: 'hook' })
 
 const hookChecks = [
-  { icon: 'check', tone: 'ok', label: '24 tests passed', meta: 'unit tests' },
+  { icon: 'check', tone: 'ok', label: '3 tests passed', meta: 'unit tests' },
   { icon: 'check', tone: 'ok', label: 'Lint, typecheck, build', meta: 'CI' },
   { icon: 'bot', tone: 'ok', label: 'Review bot: no issues found', meta: 'automated' },
   { icon: 'user', tone: 'ok', label: 'Approved by 1 reviewer', meta: '"LGTM, nice tests"' },
@@ -17,7 +17,7 @@ const hookChecks = [
 
 const evidence = [
   { icon: 'check', tone: 'ok', label: 'Fact: scoping lives in the route, not the query', meta: 'research' },
-  { icon: 'check', tone: 'ok', label: 'Decision: caller\'s team only', meta: 'plan' },
+  { icon: 'check', tone: 'ok', label: 'Decision: caller\'s team only', meta: 'design' },
   { icon: 'check', tone: 'ok', label: 'Forged teamId returns 0 foreign rows', meta: 'boundary check' },
   { icon: 'check', tone: 'ok', label: 'Check fails without the predicate', meta: 'negative control' },
   { icon: 'check', tone: 'ok', label: 'Review stopped: round 2, nothing above the bar', meta: 'stop rule' },

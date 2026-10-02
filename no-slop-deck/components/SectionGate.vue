@@ -1,6 +1,6 @@
 <!--
   Part divider drawn as a CI run of the talk. Parts already covered have
-  passed with their duration, the current part is running with its log open,
+  passed, the current part is running with its log open,
   the rest are queued. Verify and review sit in a "for each slice" group.
   On entry the previous job finishes, the connector fills and the current
   job starts. After that only the spinner moves. Outside the live slide
@@ -47,7 +47,7 @@ function state(i: number): State {
   return 'queued'
 }
 
-const log = computed(() => gates[props.current].stream.filter(l => !l.held).slice(0, 3))
+const log = computed(() => gates[props.current].stream)
 </script>
 
 <template>
@@ -75,7 +75,7 @@ const log = computed(() => gates[props.current].stream.filter(l => !l.held).slic
               <svg v-else viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" class="ring" /></svg>
             </span>
             <b class="name">{{ gates[i].name }}</b>
-            <span class="meta ns-mono">{{ state(i) === 'done' ? gates[i].dur : state(i) === 'run' ? 'Running' : 'Queued' }}</span>
+            <span class="meta ns-mono">{{ state(i) === 'done' ? 'Done' : state(i) === 'run' ? 'Running' : 'Queued' }}</span>
             <div v-if="i === current" class="log">
               <div>
                 <div v-for="(l, k) in log" :key="k" class="ln ns-mono" :class="{ now: k === log.length - 1 }" :style="{ '--k': k }">
@@ -101,7 +101,7 @@ const log = computed(() => gates[props.current].stream.filter(l => !l.held).slic
               <svg v-else viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" class="ring" /></svg>
             </span>
             <b class="name">{{ gates[i].name }}</b>
-            <span class="meta ns-mono">{{ state(i) === 'done' ? gates[i].dur : state(i) === 'run' ? 'Running' : 'Queued' }}</span>
+            <span class="meta ns-mono">{{ state(i) === 'done' ? 'Done' : state(i) === 'run' ? 'Running' : 'Queued' }}</span>
             <div v-if="i === current" class="log">
               <div>
                 <div v-for="(l, k) in log" :key="k" class="ln ns-mono" :class="{ now: k === log.length - 1 }" :style="{ '--k': k }">
@@ -123,7 +123,7 @@ const log = computed(() => gates[props.current].stream.filter(l => !l.held).slic
               <svg v-else viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" class="ring" /></svg>
             </span>
             <b class="name">{{ gates[i].name }}</b>
-            <span class="meta ns-mono">{{ state(i) === 'done' ? gates[i].dur : state(i) === 'run' ? 'Running' : 'Queued' }}</span>
+            <span class="meta ns-mono">{{ state(i) === 'done' ? 'Done' : state(i) === 'run' ? 'Running' : 'Queued' }}</span>
             <div v-if="i === current" class="log">
               <div>
                 <div v-for="(l, k) in log" :key="k" class="ln ns-mono" :class="{ now: k === log.length - 1 }" :style="{ '--k': k }">

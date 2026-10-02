@@ -22,18 +22,18 @@ withDefaults(defineProps<{ step?: number }>(), { step: 0 })
         <path d="M8,34.5 C38,34.5 34,75 62,75" /><path d="M8,115.5 C38,115.5 34,75 62,75" />
         <path d="M54,68 L63,75 L54,82" />
       </svg>
-      <div class="node green"><small>Result</small><b>24 passed</b><span>They agree. Nothing independent was checked.</span></div>
+      <div class="node green"><small>Result</small><b>3 passed</b><span>They agree. Nothing independent was checked.</span></div>
     </div>
 
     <div class="row bottom" :class="{ on: step >= 1 }" style="view-transition-name: ns-same-bottom">
-      <div class="node ok-o"><small>Decision from the plan</small><b>Caller's team only</b></div>
+      <div class="node ok-o"><small>Agreed behavior</small><b>Caller's team only</b></div>
       <div class="arrow straight"><span /></div>
-      <div class="node plain wide"><small>You write first</small><b>What a forged <code>teamId</code> must return</b></div>
+      <div class="node plain wide"><small>Expected result</small><b>A-101 and A-102.<br />No Team B rows.</b></div>
       <div class="arrow straight"><span /></div>
       <div class="node red"><small>Result</small><b>1 failed</b><span>Team B's canary row leaks.</span></div>
     </div>
 
-    <p class="take" :class="{ on: step >= 2 }">Write down the expected result before you read the generated test.</p>
+    <p class="take" :class="{ on: step >= 2 }">Write the expected result before reading the generated test.</p>
   </div>
 </template>
 

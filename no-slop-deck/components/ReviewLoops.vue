@@ -21,7 +21,7 @@ const at = (r: number, deg: number) => {
 
 const inner = [
   { label: 'Edit', deg: 180 },
-  { label: 'Tests', deg: 270 },
+  { label: 'Tests + lints', deg: 270 },
   { label: 'Browser', deg: 0 },
   { label: 'Local review', deg: 90 },
 ].map(s => ({ ...s, ...at(R1, s.deg) }))
@@ -69,14 +69,14 @@ const running = computed(() => active.value)
     <div class="copy">
       <div class="blk in">
         <b>Inner loop, on your machine</b>
-        <span>Seconds per turn. It costs only your attention.</span>
+        <span>Checks and reviewer subagents before a PR.</span>
       </div>
       <div class="blk out" :class="{ on: step >= 1 }">
         <b>Outer loop, the pull request</b>
-        <span>Minutes per turn. It costs CI time and other people's attention.</span>
+        <span>CI, external review bots and a local babysitter.</span>
       </div>
       <div class="blk take" :class="{ on: step >= 2 }">
-        Most findings should die in the inner loop.
+        Fix repeatable mistakes locally. Use the PR for a second opinion.
       </div>
     </div>
   </div>

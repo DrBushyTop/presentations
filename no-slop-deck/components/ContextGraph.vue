@@ -211,14 +211,14 @@ const edges = [
   width: 256px;
   height: 182px;
   padding: 16px 18px;
-  background: var(--z-ink);
-  color: #fff;
+  background: #e8f6f8;
+  border: 2px solid var(--ns-teal);
+  color: var(--z-ink);
   display: flex;
   flex-direction: column;
   gap: 8px;
   opacity: 0;
-  transform: translateY(12px);
-  transition: opacity 600ms var(--ns-ease) 500ms, transform 700ms var(--ns-ease) 500ms;
+  transition: opacity 450ms linear;
 }
 
 .filter .agent {
@@ -228,7 +228,7 @@ const edges = [
 
 .agent small {
   font-size: var(--ns-label);
-  color: #bdbdbd;
+  color: var(--ns-teal);
   font-weight: 700;
 }
 

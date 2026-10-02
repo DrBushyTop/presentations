@@ -355,6 +355,10 @@
 .ask-ev .ev {
   border-top: 3px solid var(--z-ink);
   padding-top: 12px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .ask-ev .ev b {
@@ -523,17 +527,18 @@
 /* ---------- Sources ---------- */
 
 .ns-sources {
-  column-count: 2;
-  column-gap: 44px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(4, minmax(0, 1fr));
+  gap: 20px 44px;
   height: 480px;
 }
 
 .ns-sources p {
-  break-inside: avoid;
-  margin: 0 0 26px;
-  font-size: 23px;
-  line-height: 1.4;
-  padding-bottom: 24px;
+  margin: 0;
+  font-size: 22px;
+  line-height: 1.35;
+  padding-bottom: 12px;
   border-bottom: 1px solid var(--ns-line);
   max-width: none;
 }

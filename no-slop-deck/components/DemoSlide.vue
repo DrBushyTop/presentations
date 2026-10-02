@@ -3,24 +3,24 @@
 import { computed } from 'vue'
 import { prefersReducedMotion, useClock, useIsActive } from '../lib/active'
 
-const props = defineProps<{ title: string, minutes: number, prompt: string, agent?: string }>()
+const props = withDefaults(defineProps<{ title: string, minutes: number, prompt: string, agent?: string, prepared?: boolean }>(), { prepared: false })
 const active = useIsActive()
 const t = useClock(() => active.value)
-const typed = computed(() => prefersReducedMotion() ? props.prompt : props.prompt.slice(0, Math.max(0, Math.floor((t.value - 0.8) * 60))))
+const typed = computed(() => props.prepared || prefersReducedMotion() ? props.prompt : props.prompt.slice(0, Math.max(0, Math.floor((t.value - 0.8) * 60))))
 const done = computed(() => typed.value.length >= props.prompt.length)
 </script>
 
 <template>
   <div class="ns-dark demo">
     <div class="top">
-      <span class="live"><i /> Live demo</span>
+      <span class="live" :class="{ prepared: props.prepared }"><i /> {{ props.prepared ? 'Prepared walkthrough' : 'Live demo' }}</span>
       <span class="min ns-mono">{{ minutes }} min</span>
     </div>
     <h1>{{ title }}</h1>
     <div class="term">
       <div class="bar"><i /><i /><i /><span class="ns-mono">{{ agent ?? 'opencode' }}</span></div>
       <div class="screen ns-mono">
-        <span class="caret-line"><b>›</b> {{ typed }}<span class="caret" :class="{ blink: done }" /></span>
+        <span class="caret-line"><b>›</b> {{ typed }}<span v-if="!props.prepared" class="caret" :class="{ blink: done }" /></span>
       </div>
     </div>
   </div>
@@ -56,6 +56,9 @@ const done = computed(() => typed.value.length >= props.prompt.length)
   background: var(--z-red-400);
   animation: pulse 1.6s ease-in-out infinite;
 }
+
+.live.prepared { color: var(--ns-frozen); }
+.live.prepared i { background: var(--ns-frozen); animation: none; }
 
 .min {
   color: #9a9a9a;

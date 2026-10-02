@@ -1,215 +1,155 @@
 <!--
-  A good plan, grilled. The agent asks, I answer and push back, the plan
-  changes by one line and the decision is written down.
-  1 the grilling · 2 the small change · 3 the decision file
+  Grilling, drawn as the interview it is: the agent asks one question at a
+  time, the person answers, and grill-with-docs writes the settled answer into
+  CONTEXT.md. Only the caller-team boundary is a fixed decision here; the
+  other two show where the real design run will land.
+  0 the request · 1 the agent's questions · 2 the answers · 3 the record
 -->
 <script setup lang="ts">
 withDefaults(defineProps<{ step?: number }>(), { step: 0 })
+const turns = [
+  { q: 'Can someone export another team\'s tasks?', a: 'No. Only the signed-in user\'s team.', fixed: true },
+  { q: 'All tasks, or what the list shows now?', a: 'Decide which filters and columns carry over.' },
+  { q: 'What belongs in the first version?', a: 'Agree the limits. Leave the rest out.' },
+]
 </script>
 
 <template>
-  <div class="arg">
-    <section class="doc">
-      <header><span class="ns-mono">plan.md</span><span class="req" :class="{ on: step >= 2 }">Most of it stands. One line changed.</span></header>
-      <ol>
-        <li>Add <code>GET /tasks/export</code> that returns CSV.</li>
-        <li class="target" :class="{ struck: step >= 2, flagged: step >= 1 }">Accept a <code>teamId</code> query parameter to filter.</li>
-        <div class="ins" :class="{ on: step >= 2 }"><div>
-          <li class="new is-decision">Decision: export only the caller's team. Ignore <code>teamId</code>.</li>
-          <li class="new">Example: Team A exports exactly its 2 rows.</li>
-          <li class="new">Example: a forged <code>teamId</code> still returns those 2 rows.</li>
-        </div></div>
-        <div class="ins" :class="{ on: step >= 3 }"><div>
-          <li class="new out">Out of scope: jobs, streaming, formatting.</li>
-          <li class="new ev">Evidence: a two-team check that fails without the filter.</li>
-        </div></div>
-      </ol>
+  <div class="grill">
+    <section class="chat">
+      <div class="msg me req"><small>Request</small>Let me download the task list for weekly reporting.</div>
+      <template v-for="(t, i) in turns" :key="i">
+        <div class="msg agent" :class="{ on: step >= 1 }" :style="{ '--i': i }"><small>Agent asks</small>{{ t.q }}</div>
+        <div class="msg me ans" :class="{ on: step >= 2, 'is-set': t.fixed }" :style="{ '--i': i }">{{ t.a }}</div>
+      </template>
     </section>
 
-    <aside class="margin">
-      <div class="note agent" :class="{ on: step >= 1 }">
-        <b>Agent asks</b>
-        <p>Where does the team come from on export?</p>
-      </div>
-      <div class="note me" :class="{ on: step >= 1 }">
-        <b>Me</b>
-        <p>The session. What if <code>teamId</code> is another team's?</p>
-      </div>
-      <div class="note stamp" :class="{ on: step >= 3 }">
-        <b>Written down</b>
-        <p class="ns-mono">docs/decisions/<br>0007-export-scope.md</p>
-      </div>
-    </aside>
+    <section class="doc" :class="{ on: step >= 3 }">
+      <header><span class="ns-mono">CONTEXT.md</span><em>grill with docs</em></header>
+      <dl>
+        <dt>Export</dt>
+        <dd>A CSV of the caller's team's tasks. Never another team's.</dd>
+        <dt>Team</dt>
+        <dd>Comes from the session, not from the request.</dd>
+      </dl>
+      <footer class="ns-mono">+ docs/adr/0007-export-scope.md</footer>
+    </section>
   </div>
 </template>
 
 <style scoped>
-.arg {
+.grill {
+  height: 510px;
   display: grid;
-  grid-template-columns: 1fr 360px;
-  gap: 28px;
-  height: 500px;
+  grid-template-columns: 1fr 420px;
+  gap: 36px;
+}
+
+.chat {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.msg {
+  max-width: 78%;
+  padding: 10px 16px;
+  font-size: 21px;
+  line-height: 1.3;
+  transition: opacity 500ms var(--ns-ease), transform 600ms var(--ns-ease);
+  transition-delay: calc(var(--i, 0) * 140ms);
+}
+
+.msg small {
+  display: block;
+  font-size: 16px;
+  font-weight: 700;
+  opacity: 0.7;
+}
+
+.msg.agent {
+  align-self: flex-start;
+  background: var(--z-ink);
+  color: #fff;
+}
+
+.msg.agent small {
+  color: var(--ns-frozen);
+  opacity: 1;
+}
+
+.msg.me {
+  align-self: flex-end;
+  background: var(--ns-soft);
+  font-weight: 700;
+}
+
+.msg.req {
+  max-width: 88%;
+  font-size: 24px;
+}
+
+.msg.ans.is-set {
+  background: #e3f4f6;
+  color: var(--ns-teal);
+}
+
+.msg.agent:not(.on),
+.msg.ans:not(.on) {
+  opacity: 0;
+  transform: translateY(8px);
 }
 
 .doc {
+  align-self: center;
   border: 1px solid var(--ns-line);
   background: #fff;
-  box-shadow: 0 20px 50px -30px rgba(26, 26, 26, 0.35);
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
+  box-shadow: 0 24px 60px -34px rgba(26, 26, 26, 0.4);
+  transition: opacity 600ms var(--ns-ease), transform 700ms var(--ns-ease);
+}
+
+.doc:not(.on) {
+  opacity: 0.15;
+  transform: translateX(14px);
 }
 
 .doc header {
   display: flex;
   justify-content: space-between;
-  gap: 18px;
-  padding: 14px 22px;
+  padding: 12px 20px;
   border-bottom: 1px solid var(--ns-line);
-  font-size: var(--ns-label);
+  font-size: 16px;
   color: var(--z-grey-600);
 }
 
-.req {
+.doc header em {
+  font-style: normal;
   font-weight: 700;
   color: var(--ns-teal);
-  transition: opacity 500ms var(--ns-ease);
 }
 
-.req:not(.on) {
-  opacity: 0;
-}
-
-ol {
-  list-style: none;
+dl {
   margin: 0;
-  padding: 10px 22px;
-  counter-reset: none;
+  padding: 18px 20px 6px;
 }
 
-li {
-  position: relative;
-  margin: 0;
-  max-width: none;
-  padding: 9px 12px;
-  font-size: 23px;
+dt {
+  font-family: var(--z-font-display);
+  font-size: 26px;
+  font-weight: 800;
+}
+
+dd {
+  margin: 2px 0 16px;
+  font-size: 21px;
   line-height: 1.35;
-  transition: background 500ms var(--ns-ease), color 500ms var(--ns-ease);
 }
 
-li::before {
-  display: none !important;
-}
-
-code {
-  font-family: var(--ns-mono);
-  font-size: 0.86em;
-  background: var(--ns-soft);
-  padding: 1px 5px;
-}
-
-.target.flagged {
-  background: #fff1ee;
-}
-
-.target::after {
-  content: '';
-  position: absolute;
-  left: 10px;
-  right: 10px;
-  top: 50%;
-  height: 2px;
-  background: var(--ns-red);
-  transform: scaleX(0);
-  transform-origin: left;
-  transition: transform 600ms var(--ns-ease);
-}
-
-.target.struck {
-  color: var(--z-grey-600);
-}
-
-.target.struck::after {
-  transform: scaleX(1);
-}
-
-.ins {
-  display: grid;
-  grid-template-rows: 0fr;
-  transition: grid-template-rows 700ms var(--ns-ease);
-}
-
-.ins > div {
-  overflow: hidden;
-}
-
-.ins.on {
-  grid-template-rows: 1fr;
-}
-
-.new {
-  background: #e3f4f6;
-}
-
-.new.is-decision {
-  font-weight: 700;
-}
-
-.new.out {
-  background: var(--ns-soft);
-}
-
-.margin {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  padding-top: 64px;
-}
-
-.note {
-  padding: 14px 18px;
-  transition: opacity 500ms var(--ns-ease), transform 700ms var(--ns-ease);
-}
-
-.note:not(.on) {
-  opacity: 0;
-  transform: translateX(22px);
-}
-
-.note b {
-  font-size: var(--ns-label);
-  letter-spacing: 0.02em;
-}
-
-.note p {
-  margin: 4px 0 0;
-  font-size: 22px;
-  line-height: 1.32;
-  max-width: none;
-}
-
-.me {
-  background: var(--ns-red);
-  color: #fff;
-}
-
-.me code {
-  background: rgba(255, 255, 255, 0.2);
-}
-
-.agent {
+.doc footer {
+  margin: 0 20px 18px;
+  padding: 10px 14px;
   background: var(--z-ink);
-  color: #fff;
-}
-
-.stamp {
-  border: 3px solid var(--ns-teal);
-  color: var(--ns-teal);
-  margin-top: auto;
-}
-
-.stamp p {
-  color: var(--z-ink);
-  font-size: 19px;
+  color: var(--ns-frozen);
+  font-size: 17px;
 }
 </style>

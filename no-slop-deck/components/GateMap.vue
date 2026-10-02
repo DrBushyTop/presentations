@@ -12,7 +12,7 @@ withDefaults(defineProps<{ step?: number }>(), { step: 99 })
 <template>
   <div class="map">
     <div class="groups">
-      <div class="grp g1" :class="{ on: step >= 1 }">Before any code</div>
+      <div class="grp g1" :class="{ on: step >= 1 }">Before implementation</div>
       <div class="grp g2" :class="{ on: step >= 2 }">For every slice: build it, then</div>
       <div class="grp g3" :class="{ on: step >= 3 }">After merge</div>
     </div>

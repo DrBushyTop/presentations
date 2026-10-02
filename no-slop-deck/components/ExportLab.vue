@@ -33,9 +33,9 @@ const A = { teamId: 'team-a' }
 const dataRows = (csv: string) => csv.split('\n').slice(1)
 const TESTS = [
   { name: 'exports a CSV header', boundary: false, run: (v: Version) => exportTasks(v, A, {}).split('\n')[0] === 'id,title,status' },
-  { name: 'exports my team\'s tasks', boundary: false, run: (v: Version) => { const c = exportTasks(v, A, {}); return c.includes('A-101') && c.includes('A-102') } },
+  { name: 'includes Team A rows', boundary: false, run: (v: Version) => { const c = exportTasks(v, A, {}); return c.includes('A-101') && c.includes('A-102') } },
   { name: 'escapes commas in titles', boundary: false, run: (v: Version) => exportTasks(v, A, {}).includes('"Fix login, then retest"') },
-  { name: 'forged teamId returns only my rows', boundary: true, run: (v: Version) => dataRows(exportTasks(v, A, { teamId: 'team-b' })).every(r => r.startsWith('A-')) },
+  { name: 'forged teamId returns A-101 and A-102', boundary: true, run: (v: Version) => dataRows(exportTasks(v, A, { teamId: 'team-b' })).map(r => r.split(',')[0]).join(',') === 'A-101,A-102' },
   { name: 'Team A exports exactly its 2 rows', boundary: true, run: (v: Version) => dataRows(exportTasks(v, A, {})).length === 2 },
 ]
 
@@ -72,6 +72,8 @@ const output = computed(() => {
   })
 })
 
+const scenario = computed(() => state.value.version === 'control' ? '5. Remove the filter' : state.value.version === 'fixed' ? '4. Fix the scope' : showBoundary.value ? '3. Add boundary checks' : state.value.forged ? '2. Forge the team' : '1. Normal request')
+
 const running = ref(false)
 let t = 0
 watch(() => JSON.stringify(state.value) + showBoundary.value, () => {
@@ -85,10 +87,8 @@ watch(() => JSON.stringify(state.value) + showBoundary.value, () => {
   <div class="lab">
     <section class="editor ns-mono">
       <header>
-        <span>routes/export.ts</span>
-        <em v-if="state.version === 'seeded'" class="tag is-seeded">Seeded defect</em>
-        <em v-else-if="state.version === 'fixed'" class="tag is-fixed">Fixed</em>
-        <em v-else class="tag is-control">Filter removed</em>
+        <span>export.ts · seeded example</span>
+        <em class="tag" :class="{ 'is-seeded': state.version === 'seeded', 'is-fixed': state.version === 'fixed', 'is-control': state.version === 'control' }">{{ scenario }}</em>
       </header>
       <div class="code">
         <div class="ln"><i>1</i>export async function exportTasks(req) {</div>
@@ -104,7 +104,7 @@ watch(() => JSON.stringify(state.value) + showBoundary.value, () => {
       </div>
       <button class="req" type="button" @click="toggleForged">
         <span class="verb">GET</span> /tasks/export<span class="q" :class="{ on: state.forged }">?teamId=team-b</span>
-        <span class="as">signed in as Team A</span>
+        <span class="as">Caller: Team A · expected: A-101, A-102</span>
       </button>
     </section>
 
@@ -191,7 +191,7 @@ watch(() => JSON.stringify(state.value) + showBoundary.value, () => {
   text-align: left;
   font: inherit;
   font-size: 17.5px;
-  line-height: 2;
+  line-height: 1.8;
   white-space: pre;
   color: #d4d4d4;
   background: none;

@@ -1,246 +1,28 @@
-<!--
-  Follow a research claim back to the code. Research looks only at code that
-  exists today: the list route and the shared query. No export yet.
-  1 the list is scoped · 2 but the scoping is in the route, not the query · 3 sort the rest
--->
 <script setup lang="ts">
-import { nextTick, onMounted, ref, watch } from 'vue'
-import { useIsActive } from '../lib/active'
-
-const props = withDefaults(defineProps<{ step?: number }>(), { step: 0 })
-
-const root = ref<HTMLElement>()
-const c1 = ref<HTMLElement>()
-const c3 = ref<HTMLElement>()
-const l1 = ref<HTMLElement>()
-const l3 = ref<HTMLElement>()
-const paths = ref<{ a: string, b: string }>({ a: '', b: '' })
-
-function curve(from?: HTMLElement, to?: HTMLElement) {
-  if (!root.value || !from || !to) return ''
-  const box = root.value.getBoundingClientRect()
-  if (!box.width) return ''
-  const k = root.value.offsetWidth / box.width
-  const f = from.getBoundingClientRect()
-  const t = to.getBoundingClientRect()
-  const x1 = (f.right - box.left) * k + 6
-  const y1 = (f.top + f.height / 2 - box.top) * k
-  const x2 = (t.left - box.left) * k - 6
-  const y2 = (t.top + t.height / 2 - box.top) * k
-  const mx = (x1 + x2) / 2
-  return `M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2},${y2}`
-}
-
-async function measure() {
-  await nextTick()
-  paths.value = { a: curve(c1.value, l1.value), b: curve(c3.value, l3.value) }
-}
-
-onMounted(() => { measure(); setTimeout(measure, 400) })
-watch(() => props.step, measure)
-const active = useIsActive()
-watch(active, (on) => { if (on) { measure(); setTimeout(measure, 700) } })
+withDefaults(defineProps<{ step?: number }>(), { step: 0 })
 </script>
 
 <template>
-  <div ref="root" class="trace">
-    <section class="notes">
-      <header class="ns-mono">research.md</header>
-      <ol>
-        <li ref="c1" :class="{ ok: step >= 1 }">
-          <span>The task list is scoped to the caller's team.</span>
-          <em class="chip ok" :class="{ on: step >= 1 }">Checked</em>
-        </li>
-        <li ref="c3" :class="{ bad: step >= 2 }">
-          <span>An export can reuse the list query and stay scoped.</span>
-          <em class="chip bad" :class="{ on: step >= 2 }">False: the route scopes it</em>
-        </li>
-        <li :class="{ maybe: step >= 3 }">
-          <span>Every route takes the team from the session.</span>
-          <em class="chip maybe" :class="{ on: step >= 3 }">Assumption</em>
-        </li>
-      </ol>
-      <footer :class="{ on: step >= 3 }">A new endpoint has to add the scoping itself.</footer>
+  <div class="research-map">
+    <section class="facts">
+      <header>What the research describes</header>
+      <div :class="{ checked: step >= 1 }"><b>The session identifies the team.</b><span>Server-side session → user → team</span></div>
+      <div :class="{ checked: step >= 2 }"><b>The list route applies the team filter.</b><span>The shared query uses the filters it receives.</span></div>
+      <div :class="{ checked: step >= 3 }"><b>The app has a list, not an export.</b><span>Existing behavior is the starting point for design.</span></div>
     </section>
-
-    <section class="code ns-mono">
-      <div class="file">
-        <header>routes/tasks.ts</header>
-        <div class="ln">export async function listTasks(req) {</div>
-        <div class="ln">  const session = await requireSession(req)</div>
-        <div ref="l1" class="ln hit" :class="{ on: step >= 1, good: true }">  return findTasks({ teamId: session.teamId })</div>
-        <div class="ln">}</div>
-      </div>
-      <div class="file">
-        <header>lib/tasks.ts <span>shared query</span></header>
-        <div class="ln">export function findTasks(where) {</div>
-        <div ref="l3" class="ln hit" :class="{ on: step >= 2, bad: true }">  return db.tasks.findMany({ where })</div>
-        <div class="ln">}</div>
-        <div class="ln dim">// no team filter of its own</div>
-      </div>
+    <section class="path">
+      <div class="node session" :class="{ lit: step >= 1 }"><small>Session</small><b class="ns-mono">Alex → team-a</b></div>
+      <span class="arrow">↓</span>
+      <div class="node" :class="{ lit: step >= 2 }"><small>List route</small><b class="ns-mono">findTasks({ teamId })</b><span>The team comes from the session.</span></div>
+      <span class="arrow">↓</span>
+      <div class="node" :class="{ lit: step >= 2 }"><small>Shared query</small><b class="ns-mono">WHERE team_id = ?</b><span>The route supplies the parameter.</span></div>
+      <p :class="{ visible: step >= 3 }">A map of today's behavior, with references back to the code.</p>
     </section>
-
-    <svg class="wires" aria-hidden="true">
-      <path :d="paths.a" class="wire good" :class="{ on: step >= 1 }" pathLength="1" />
-      <path :d="paths.b" class="wire bad" :class="{ on: step >= 2 }" pathLength="1" />
-    </svg>
   </div>
 </template>
 
 <style scoped>
-.trace {
-  position: relative;
-  display: grid;
-  grid-template-columns: 420px 1fr;
-  gap: 84px;
-  height: 500px;
-}
-
-.notes {
-  border: 1px solid var(--ns-line);
-  display: flex;
-  flex-direction: column;
-}
-
-.notes header,
-.file header {
-  font-size: 16px;
-  color: var(--z-grey-600);
-  padding: 12px 18px;
-  border-bottom: 1px solid var(--ns-line);
-}
-
-.notes ol {
-  list-style: none;
-  margin: 0;
-  padding: 6px 18px;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-around;
-}
-
-.notes li {
-  margin: 0;
-  max-width: none;
-  padding: 10px 12px;
-  font-size: 21px;
-  line-height: 1.3;
-  transition: background 400ms var(--ns-ease);
-}
-
-.notes li::before {
-  display: none !important;
-}
-
-.notes li.ok { background: #e8f6f8; }
-.notes li.bad { background: #fff1ee; }
-.notes li.maybe { background: var(--ns-soft); }
-
-.notes li span {
-  display: block;
-}
-
-.chip {
-  display: inline-block;
-  margin-top: 8px;
-  font-style: normal;
-  font-size: var(--ns-label);
-  font-weight: 700;
-  padding: 3px 10px;
-  color: #fff;
-  transition: opacity 400ms var(--ns-ease), transform 500ms var(--ns-ease);
-}
-
-.chip:not(.on) {
-  opacity: 0;
-  transform: translateY(6px);
-}
-
-.chip.ok { background: var(--ns-teal); }
-.chip.bad { background: var(--ns-red); }
-.chip.maybe { background: var(--z-grey-600); }
-
-.notes footer {
-  margin: 0 18px 16px;
-  padding: 12px 16px;
-  background: var(--z-ink);
-  color: #fff;
-  font-size: 19px;
-  font-weight: 700;
-  transition: opacity 500ms var(--ns-ease);
-}
-
-.notes footer:not(.on) {
-  opacity: 0;
-}
-
-.code {
-  display: flex;
-  flex-direction: column;
-  gap: 28px;
-  justify-content: center;
-}
-
-.file {
-  background: var(--z-ink);
-  color: #bdbdbd;
-  padding-bottom: 12px;
-}
-
-.file header {
-  border-color: #333;
-  color: #8f8f8f;
-}
-
-.file header span {
-  margin-left: 8px;
-  color: var(--ns-frozen);
-}
-
-.ln {
-  font-size: 17.5px;
-  line-height: 1.9;
-  padding: 0 18px;
-  white-space: pre;
-  transition: background 400ms var(--ns-ease), color 400ms var(--ns-ease);
-}
-
-.ln.dim {
-  color: #7a7a7a;
-}
-
-.ln.hit.on.good {
-  background: rgba(3, 127, 145, 0.45);
-  color: #fff;
-}
-
-.ln.hit.on.bad {
-  background: rgba(222, 30, 5, 0.5);
-  color: #fff;
-}
-
-.wires {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  overflow: visible;
-}
-
-.wire {
-  fill: none;
-  stroke-width: 3;
-  stroke-dasharray: 1;
-  stroke-dashoffset: 1;
-  transition: stroke-dashoffset 900ms var(--ns-ease);
-}
-
-.wire.on {
-  stroke-dashoffset: 0;
-}
-
-.wire.good { stroke: var(--ns-teal); }
-.wire.bad { stroke: var(--ns-red); }
+.research-map { height: 480px; display: grid; grid-template-columns: 1fr 1fr; gap: 44px; }
+.facts { display: grid; grid-template-rows: 52px repeat(3, 1fr); border: 1px solid var(--ns-line); }header { font-size: 20px; font-weight: 700; padding: 15px 22px; border-bottom: 1px solid var(--ns-line); }.facts > div { padding: 24px 22px; display: flex; flex-direction: column; justify-content: center; gap: 10px; border-bottom: 1px solid var(--ns-line); transition: background 400ms; }.facts b { font-size: 25px; line-height: 1.25; }.facts span { font-size: 21px; line-height: 1.3; color: var(--z-grey-600); }.facts .checked { background: #e8f6f8; }
+.path { display: flex; flex-direction: column; }.node { border: 2px solid var(--z-ink); padding: 10px 20px; display: flex; flex-direction: column; gap: 5px; transition: background 400ms, border-color 400ms; }.node small { font-size: 18px; font-weight: 700; color: var(--z-grey-600); }.node b { font-size: 23px; }.node span { font-size: 20px; }.node.lit { background: #e8f6f8; border-color: var(--ns-teal); }.session { background: var(--z-ink); color: white; }.session small { color: #bdbdbd; }.session.lit { color: var(--z-ink); }.session.lit small { color: var(--z-grey-600); }.arrow { align-self: center; font-size: 24px; line-height: 1.2; color: var(--ns-teal); }.path p { margin: auto 0 0; padding: 14px 20px; background: var(--z-ink); color: #fff; max-width: none; font-size: 22px; line-height: 1.3; font-weight: 800; opacity: 0; transition: opacity 500ms var(--ns-ease); }.path p.visible { opacity: 1; }
 </style>

@@ -8,7 +8,7 @@ withDefaults(defineProps<{ step?: number }>(), { step: 0 })
 const stages = [
   { name: 'Event', note: 'PR opened or updated' },
   { name: 'Decide', note: 'Run at all? Which commits?' },
-  { name: 'Context', note: 'Diff, files, plan' },
+  { name: 'Context', note: 'Diff, files, decisions' },
   { name: 'Model', note: 'One judgement', ai: true },
   { name: 'Validate', note: 'Parse, drop weak findings' },
   { name: 'Post', note: 'Comments on the PR' },
