@@ -6,11 +6,12 @@
     node scripts/check-slides.mjs [deck ...]      check the named decks
                                                   (a deck is a directory with slides.md,
                                                   or dir/entry.md for another entry file)
-    node scripts/check-slides.mjs --staged        check decks touched by the staged diff
+    node scripts/check-slides.mjs --staged        check only decks with staged changes (the hook)
     node scripts/check-slides.mjs --update-baseline [deck ...]
 
-  Each deck starts in a Slidev dev server. Every slide is rendered at 1280 x 720
-  in its final click state and measured in the browser. The rules:
+  Each deck starts in a Slidev dev server, all at once. Slides render in
+  parallel browser tabs (CHECK_SLIDES_TABS, default 6) at 1280 x 720 in their
+  final click state and are measured in the browser. The rules:
 
     overflow     visible content leaves the canvas or the 72px side margins
     footer       content enters the footer band or overlaps the citation line
@@ -42,8 +43,15 @@ let decks = args.filter((a) => !a.startsWith('--'))
 if (args.includes('--staged')) {
   const files = execSync('git diff --cached --name-only', { cwd: root, encoding: 'utf8' })
     .split('\n').filter(Boolean)
-  const themeChanged = files.some((f) => f.startsWith('themes/') || f === 'scripts/check-slides.mjs')
-  decks = themeChanged ? allDecks : allDecks.filter((d) => files.some((f) => f.startsWith(`${deckDir(d)}/`)))
+  // Only decks with staged changes. Folders inside a deck that never render
+  // as slides don't count.
+  const ignored = (f) => f.includes('/demo-app/')
+  decks = allDecks.filter((d) => files.some((f) => f.startsWith(`${deckDir(d)}/`) && !ignored(f)))
+  // Shared code can break any deck, but checking all of them makes the hook
+  // slow, so remind instead.
+  if (files.some((f) => f.startsWith('themes/') || f === 'scripts/check-slides.mjs')) {
+    console.log('Theme or check script changed. Run `npm run check:slides` to check every deck.')
+  }
   if (!decks.length) process.exit(0)
 }
 if (!decks.length) decks = allDecks
@@ -209,59 +217,87 @@ const FIXES = {
 }
 
 const baseline = existsSync(baselinePath) ? JSON.parse(readFileSync(baselinePath, 'utf8')) : {}
+const TABS = Number(process.env.CHECK_SLIDES_TABS) || 6
+const started = Date.now()
 const browser = await chromium.launch()
-let failures = 0
-const failedRules = new Set()
+const servers = []
+const results = {} // deck -> slide -> problems
 
-for (const deck of decks) {
-  const port = await freePort()
-  const server = await startServer(deck, port)
-  try {
-    let page = await browser.newPage({ viewport: { width: 1280, height: 720 } })
-    await page.goto(`http://localhost:${port}/1?embedded=true`, { waitUntil: 'networkidle' })
+try {
+  // Start every dev server at once, then count each deck's slides.
+  const ports = await Promise.all(decks.map(() => freePort()))
+  await Promise.all(decks.map(async (deck, i) => { servers.push(await startServer(deck, ports[i])) }))
+  const jobs = []
+  for (const [i, deck] of decks.entries()) {
+    const page = await browser.newPage({ viewport: { width: 1280, height: 720 } })
+    await page.goto(`http://localhost:${ports[i]}/1?embedded=true`, { waitUntil: 'networkidle' })
     const total = await page.evaluate(() => window.__slidev__?.nav?.total ?? 0)
-    const found = {}
-    // Chromium stops mounting large dev decks after a few dozen full reloads
-    // in one tab, so start a fresh tab every 25 slides and after a failure.
-    const freshPage = async () => {
+    await page.close()
+    results[deck] = { total, slides: {} }
+    for (let n = 1; n <= total; n++) jobs.push({ deck, port: ports[i], n })
+  }
+  console.log(`Checking ${jobs.length} slides in ${decks.join(', ')} with ${TABS} tabs`)
+
+  // Each worker owns one tab. Chromium stops mounting large dev decks after a
+  // few dozen full reloads in one tab, so a worker starts a fresh tab every
+  // 25 slides and after a failure.
+  const worker = async () => {
+    let page = await browser.newPage({ viewport: { width: 1280, height: 720 } })
+    let renders = 0
+    const fresh = async () => {
       await page.close()
       page = await browser.newPage({ viewport: { width: 1280, height: 720 } })
+      renders = 0
     }
-    const render = async (n) => {
+    const render = async ({ port, n }) => {
       await page.goto(`http://localhost:${port}/${n}?embedded=true&clicks=999`, { waitUntil: 'networkidle' })
       await page.waitForTimeout(500)
       await page.waitForSelector('#slide-content', { timeout: 5000 })
       return page.evaluate(measure, RULES)
     }
-    for (let n = 1; n <= total; n++) {
-      if (n % 25 === 0) await freshPage()
+    for (let job = jobs.shift(); job; job = jobs.shift()) {
+      if (++renders > 25) await fresh()
       let problems
       try {
-        problems = await render(n)
+        problems = await render(job)
       } catch {
-        await freshPage()
+        await fresh()
         try {
-          problems = await render(n)
+          problems = await render(job)
         } catch (error) {
-          throw new Error(`${deck} slide ${n} did not render: ${error.message.split('\n')[0]}`)
+          throw new Error(`${job.deck} slide ${job.n} did not render: ${error.message.split('\n')[0]}`)
         }
       }
-      if (problems.length) found[n] = problems.map((p) => p.rule).filter((r, i, a) => a.indexOf(r) === i)
-      const known = new Set(baseline[deck]?.[n] ?? [])
-      const fresh = problems.filter((p) => !known.has(p.rule))
-      for (const p of fresh) console.log(`✗ ${deck} slide ${n} [${p.rule}] ${p.detail}`)
-      if (!updateBaseline) {
-        failures += fresh.length
-        for (const p of fresh) failedRules.add(p.rule)
-      }
+      results[job.deck].slides[job.n] = problems
     }
-    if (updateBaseline) baseline[deck] = found
-    console.log(`${deck}: ${total} slides checked`)
-  } finally {
-    server.kill()
+    await page.close()
   }
+  await Promise.all(Array.from({ length: TABS }, worker))
+} finally {
+  for (const server of servers) server.kill()
+  await browser.close()
 }
-await browser.close()
+
+let failures = 0
+const failedRules = new Set()
+for (const deck of decks) {
+  const { total, slides } = results[deck]
+  const found = {}
+  for (let n = 1; n <= total; n++) {
+    const problems = slides[n] ?? []
+    if (problems.length) found[n] = problems.map((p) => p.rule).filter((r, i, a) => a.indexOf(r) === i)
+    const known = new Set(baseline[deck]?.[n] ?? [])
+    const fresh = problems.filter((p) => !known.has(p.rule))
+    for (const p of fresh) console.log(`✗ ${deck} slide ${n} [${p.rule}] ${p.detail}`)
+    if (!updateBaseline) {
+      failures += fresh.length
+      for (const p of fresh) failedRules.add(p.rule)
+    }
+  }
+  if (updateBaseline) baseline[deck] = found
+  console.log(`${deck}: ${total} slides checked`)
+}
+console.log(`Done in ${Math.round((Date.now() - started) / 1000)} s`)
 
 if (updateBaseline) {
   writeFileSync(baselinePath, JSON.stringify(baseline, null, 2) + '\n')
