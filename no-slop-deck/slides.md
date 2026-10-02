@@ -159,12 +159,13 @@ transition: gate | gate-back
 <!--
 About 1 minute. This is my current workflow, not a mandatory process.
 
-- A clear task can go straight to implementation. If the decisions are unclear, the next step is a design conversation with grilling. Research comes first when we need a map of unfamiliar code.
-[click] Research describes the current system. Design decides what should change. The useful facts and decisions go into artifacts so the next context can find them.
-[click] A structure outline adds meaningful vertical phases. A detailed implementation plan is optional; in my normal workflow I usually skip that extra step. Grill with docs records decisions in CONTEXT.md as part of the discussion.
-- Fresh contexts help control accumulated assumptions. My old 40 to 60% context heuristic belongs in the explanation, not in a diagram that looks like a measured limit.
-- My earlier posts describe the RPI foundation. The workflow here includes my subsequent changes. https://www.huuhka.net/research-plan-implement/ https://www.huuhka.net/how-i-currently-develop-with-llm-models-early-2026/
-- HumanLayer's current documentation also separates research, design and vertical structure, and makes the detailed plan optional. https://docs.humanlayer.com/explanation/workflow-phases
+- Each phase starts a fresh context and hands written notes to the next. Research asks how it works today, design decides what we're building, implement checks one slice at a time.
+[click] The point of research is what it keeps out of later contexts. It spends a whole context reading code, maybe 30 files, and hands on a short map with file references. Design and implementation start nearly empty, with only the notes they need. The fill levels are illustrative.
+[click] So research isn't only for unfamiliar code. Use it for complex changes and large codebases, where the reading would otherwise crowd out the work. Small, clear change: implement directly. Open decisions: grill, then implement.
+- A structure outline with vertical phases sits between design and implementation for bigger work. A detailed implementation plan is optional; I usually skip it.
+- My old rule of thumb was to keep each context under 40 to 60% full. Treat that as a heuristic, not a measured limit.
+- My earlier posts describe the RPI foundation; this includes later changes. https://www.huuhka.net/research-plan-implement/ https://www.huuhka.net/how-i-currently-develop-with-llm-models-early-2026/
+- HumanLayer's documentation also separates research, design and vertical structure, and makes the detailed plan optional. https://docs.humanlayer.com/explanation/workflow-phases
 -->
 
 ---
