@@ -162,7 +162,7 @@ About 1 minute. This is my current workflow, not a mandatory process.
 - Each phase starts a fresh context and hands written notes to the next. Research asks how it works today, design decides what we're building, implement checks one slice at a time.
 [click] The point of research is what it keeps out of later contexts. It spends a whole context reading code, maybe 30 files, and hands on a short map with file references. Design and implementation start nearly empty, with only the notes they need. The fill levels are illustrative.
 [click] So research isn't only for unfamiliar code. Use it for complex changes and large codebases, where the reading would otherwise crowd out the work. Small, clear change: implement directly. Open decisions: grill, then implement.
-- A structure outline with vertical phases sits between design and implementation for bigger work. A detailed implementation plan is optional; I usually skip it.
+- Design hands on whatever the task needs: a design document with the decisions, a structure outline with vertical phases for bigger work, and CONTEXT.md for shared terms. A detailed implementation plan is optional; I usually skip it.
 - My old rule of thumb was to keep each context under 40 to 60% full. Treat that as a heuristic, not a measured limit.
 - My earlier posts describe the RPI foundation; this includes later changes. https://www.huuhka.net/research-plan-implement/ https://www.huuhka.net/how-i-currently-develop-with-llm-models-early-2026/
 - HumanLayer's documentation also separates research, design and vertical structure, and makes the detailed plan optional. https://docs.humanlayer.com/explanation/workflow-phases

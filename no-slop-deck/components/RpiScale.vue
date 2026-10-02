@@ -8,9 +8,9 @@
 <script setup lang="ts">
 withDefaults(defineProps<{ step?: number }>(), { step: 0 })
 const phases = [
-  { name: 'Research', q: 'How does it work today?', given: 0, work: 74, workLabel: 'reads 30 files', out: 'research.md' },
-  { name: 'Design + grill', q: 'What are we building?', given: 8, work: 26, workLabel: 'the grilling', out: 'CONTEXT.md' },
-  { name: 'Implement', q: 'Does this slice work?', given: 10, work: 38, workLabel: 'one slice', out: 'commits' },
+  { name: 'Research', q: 'How does it work today?', given: 0, work: 74, workLabel: 'reads 30 files', out: ['research.md'] },
+  { name: 'Design + grill', q: 'What are we building?', given: 8, work: 26, workLabel: 'the grilling', out: ['design.md', 'outline.md', 'CONTEXT.md'] },
+  { name: 'Implement', q: 'Does this slice work?', given: 10, work: 38, workLabel: 'one slice', out: ['commits'] },
 ]
 const paths = [
   { name: 'Small, clear change', note: 'Implement directly', steps: [false, false, true] },
@@ -34,7 +34,7 @@ const paths = [
           <span class="given" :style="{ width: p.given + '%' }" />
           <span class="work" :style="{ width: p.work + '%' }"><em>{{ p.workLabel }}</em></span>
         </div>
-        <div class="out"><i v-if="i < 2" class="arr">→</i><b class="ns-mono">{{ p.out }}</b></div>
+        <div class="out"><i v-if="i < 2" class="arr">→</i><b v-for="o in p.out" :key="o" class="ns-mono">{{ o }}</b></div>
       </div>
     </section>
 
@@ -159,17 +159,20 @@ const paths = [
 }
 
 .out {
+  height: 66px;
   display: flex;
-  align-items: center;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  align-content: flex-start;
   justify-content: flex-end;
-  gap: 8px;
+  gap: 6px;
 }
 
 .out b {
-  padding: 4px 10px;
+  padding: 3px 8px;
   background: var(--ns-teal);
   color: #fff;
-  font-size: 18px;
+  font-size: 17px;
 }
 
 .arr {
