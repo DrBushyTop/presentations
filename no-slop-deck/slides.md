@@ -199,10 +199,13 @@ transition: gate | gate-back
 <!--
 Recap of the prepared research example, about 1 minute.
 
-[click] The server-side session identifies the user and their team.
-[click] The list route adds that team to the query filters. The shared query executes the supplied filters. These are two different responsibilities, and the research maps both.
-[click] The baseline has a list and no export. Design starts from these facts. Research does not quietly decide the new endpoint's behavior.
-- The diagram is an explanatory redraw of the baseline's path, not a claimed verbatim output from a completed research run. Replace or align the labels with the real artifact once Pasi has generated it.
+- This is what a research document looks like: every finding has a heading that states the takeaway, one sentence, and a file and line you can open. The editor on the right is the cited code. Line numbers are the demo app's real source.
+- First finding: the session cookie resolves to a user and their team.
+[click] The list route passes the session's team to findTasks. The client can filter by status, not by team.
+[click] findTasks adds the team filter only when it's given a team. Scoping lives in the caller. That's the fact design needs.
+[click] Only session and task routes are registered. There is no export today.
+- Research describes what exists. It doesn't recommend and it doesn't decide the new endpoint's behavior.
+- The findings are shortened from what the create-research skill writes. Regenerate the real artifact before the talk and check the line numbers still match.
 - Following a reference is about understanding an important fact. The example does not depend on research being wrong.
 - Sources: https://www.huuhka.net/research-plan-implement/ https://docs.humanlayer.com/explanation/workflow-phases
 -->
@@ -286,9 +289,10 @@ clicks: 3
 About 1 minute. Keep this at the level of the design discussion.
 
 - Start with a normal product request. The implementation agent should not silently choose the feature's meaning.
-[click] Ask who can use it, what the output contains and how far the first version goes. Explore the code for factual answers; ask the human about product choices.
-[click] These are example decision areas. Only the caller-team boundary is fixed for the teaching case here. The actual export filter, columns and limits will be resolved in Pasi's real design run.
-[click] Grill with docs records the answers in CONTEXT.md and any appropriate decision records. The durable record is the useful output, not a long interrogation transcript.
+[click] This is what grilling really looks like: a batch of numbered questions, each with the agent's recommendation. Real sessions run to dozens. Factual questions it answers from the code itself; these are the product choices.
+[click] You answer by number. Most recommendations are fine. The work is spotting the one to override: here the agent assumed all tasks, and the person wants what the list shows.
+[click] Grill with docs records the settled answers in CONTEXT.md and a decision record. The durable record is the useful output, not the transcript.
+- Only the caller-team boundary is fixed for the teaching case. The filter, columns and limits will come from Pasi's real design run.
 - This is the next step above implementing directly when a task has unclear choices. It works within a design phase or as a short conversation. No separate plan file is required.
 - Matt Pocock's grilling skills are the source for the interview pattern. https://github.com/mattpocock/skills
 - GitHub Next identifies the same problem: decisions can disappear in private chat or be silently made by an agent. https://githubnext.com/projects/chopin/
