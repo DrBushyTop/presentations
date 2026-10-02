@@ -6,7 +6,8 @@
     node scripts/check-slides.mjs [deck ...]      check the named decks
                                                   (a deck is a directory with slides.md,
                                                   or dir/entry.md for another entry file)
-    node scripts/check-slides.mjs --staged        check only decks with staged changes (the hook)
+    node scripts/check-slides.mjs --staged        the hook: every deck if the theme changed,
+                                                  otherwise only decks with staged changes
     node scripts/check-slides.mjs --update-baseline [deck ...]
 
   Each deck starts in a Slidev dev server, all at once. Slides render in
@@ -43,15 +44,12 @@ let decks = args.filter((a) => !a.startsWith('--'))
 if (args.includes('--staged')) {
   const files = execSync('git diff --cached --name-only', { cwd: root, encoding: 'utf8' })
     .split('\n').filter(Boolean)
-  // Only decks with staged changes. Folders inside a deck that never render
+  // A theme change can affect every deck, so check them all. Otherwise check
+  // only decks with staged changes. Folders inside a deck that never render
   // as slides don't count.
   const ignored = (f) => f.includes('/demo-app/')
-  decks = allDecks.filter((d) => files.some((f) => f.startsWith(`${deckDir(d)}/`) && !ignored(f)))
-  // Shared code can break any deck, but checking all of them makes the hook
-  // slow, so remind instead.
-  if (files.some((f) => f.startsWith('themes/') || f === 'scripts/check-slides.mjs')) {
-    console.log('Theme or check script changed. Run `npm run check:slides` to check every deck.')
-  }
+  const themeChanged = files.some((f) => f.startsWith('themes/'))
+  decks = themeChanged ? allDecks : allDecks.filter((d) => files.some((f) => f.startsWith(`${deckDir(d)}/`) && !ignored(f)))
   if (!decks.length) process.exit(0)
 }
 if (!decks.length) decks = allDecks

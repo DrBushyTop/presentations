@@ -24,7 +24,7 @@
 
 ## Layout check
 
-- Run `npm run check:slides -- <deck>` after changing slides. The pre-commit hook runs it only on decks with staged changes. After changing the theme or the check script, run `npm run check:slides` to check every deck.
+- Run `npm run check:slides -- <deck>` after changing slides. The pre-commit hook checks every deck when the theme changes, and otherwise only decks with staged changes.
 - A failure names the slide and the rule: `empty-bottom`, `gap`, `overflow`, `footer` or `tiny-text`. Fix the layout. Do not lower the thresholds.
 - Use `class: allow-whitespace` only when the empty space is deliberate, and say why in the speaker notes.
 - `scripts/slide-check-baseline.json` lists violations that already existed. Remove a slide's entry once it is fixed. Never add new entries by hand.
