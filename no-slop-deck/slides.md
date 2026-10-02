@@ -559,10 +559,10 @@ clicks: 2
 <!--
 About 1 minute.
 
-- I don't ask for a review after the work. It's part of the instruction I give the implementer before it starts: after each slice, run the review subagents, fix what matters, rerun the checks, and only then come back to me.
+- I don't ask for a review after the work. It's part of the instruction I give the implementer before it starts: after each slice, run the review subagents, fix what matters, rerun the checks, commit, and only then come back to me.
 - The agent builds the slice first.
-[click] Then, without me: review subagents with different questions. Functional checks the agreed behavior, non-functional checks limits and failures, security checks authority and untrusted input. They run in parallel. The agent fixes what it judges worth fixing and reruns the checks. I usually trust its judgement on which findings matter at this point.
-[click] It comes back with a short report: what it fixed, what it skipped and why, checks green. Then I decide: next slice, or a PR for this one, depending on the task. My attention is needed only after the models have checked the obvious issues.
+[click] Then, without me: review subagents with different questions. Functional checks the agreed behavior, non-functional checks limits and failures, security checks authority and untrusted input. They run in parallel. The agent fixes what it judges worth fixing, reruns the checks and commits the slice. A commit per slice keeps every step easy to review and easy to undo. I usually trust its judgement on which findings matter at this point.
+[click] The agent comes back with a short report: slice committed, what it fixed, what it skipped and why, checks green. Then I decide: next slice, or a PR for this one, depending on the task. My attention is needed only after the models have checked the obvious issues.
 - Fresh context helps the reviewer look at the change without the builder's whole conversation. It isn't full independence. Pass the decisions and the diff, not a persuasive explanation of why the implementation is right.
 - The findings in the report are illustrative.
 - Sources: https://www.huuhka.net/primary-vs-subagents-in-llm-harnesses/ https://www.huuhka.net/building-your-own-pr-reviewer-with-coding-agents/

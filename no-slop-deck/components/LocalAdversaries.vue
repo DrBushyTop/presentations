@@ -2,16 +2,16 @@
   Local review as part of the implementer's instructions, not a separate
   request. The instruction is given once, before work starts. For each slice
   the agent builds, sends review subagents, fixes what it judges worth fixing,
-  reruns the checks and only then reports back. The person decides: next
-  slice, or a PR for this one.
+  reruns the checks, commits, and only then reports back. The person decides:
+  next slice, or a PR for this one.
   0 the instruction and the build · 1 review and fix, unattended · 2 the report and your decision
 -->
 <script setup lang="ts">
 withDefaults(defineProps<{ step?: number }>(), { step: 0 })
 const lenses = ['Functional', 'Non-functional', 'Security']
 const report = [
-  { ok: true, t: 'Fixed: title starting with = ran as a formula' },
-  { ok: true, t: 'Fixed: every row loaded into memory' },
+  { ok: true, t: 'Fixed: = in a title ran as a formula' },
+  { ok: true, t: 'Fixed: all rows loaded into memory' },
   { ok: false, t: 'Skipped: rename toRow, style only' },
 ]
 </script>
@@ -20,7 +20,7 @@ const report = [
   <div class="loc">
     <section class="instr">
       <small>Your instruction, once, before work starts</small>
-      <p class="ns-mono">After each slice, run the review subagents and fix what matters. Rerun the checks, then come back to me.</p>
+      <p class="ns-mono">After each slice, run the review subagents and fix what matters. Rerun the checks, commit, then come back to me.</p>
     </section>
 
     <section class="agent">
@@ -33,6 +33,7 @@ const report = [
         </li>
         <li :class="{ on: step >= 1 }"><span class="n ns-mono">3</span><b>Fix what matters</b><em>its judgement</em></li>
         <li :class="{ on: step >= 1 }"><span class="n ns-mono">4</span><b>Rerun the checks</b></li>
+        <li :class="{ on: step >= 1 }"><span class="n ns-mono">5</span><b>Commit the slice</b></li>
       </ol>
       <svg class="back" viewBox="0 0 20 100" preserveAspectRatio="none" aria-hidden="true" :class="{ on: step >= 1 }">
         <path d="M2,92 C18,92 18,8 2,8" vector-effect="non-scaling-stroke" />
@@ -40,13 +41,14 @@ const report = [
     </section>
 
     <section class="you" :class="{ on: step >= 2 }">
-      <header>You</header>
       <div class="report">
-        <small>Slice 2 done. Checks green.</small>
+        <small>Agent reports</small>
+        <b>Slice 2 done and committed. Checks green.</b>
         <p v-for="r in report" :key="r.t" :class="{ skip: !r.ok }">
           <Icon :name="r.ok ? 'check' : 'dot'" /> {{ r.t }}
         </p>
       </div>
+      <header>You decide</header>
       <div class="choice">
         <span>Next slice</span>
         <em>or</em>
@@ -207,15 +209,22 @@ const report = [
 .report {
   flex: 1;
   padding: 14px 18px;
-  background: var(--ns-soft);
+  background: var(--z-ink);
+  color: #fff;
   display: flex;
   flex-direction: column;
   justify-content: space-around;
 }
 
 .report small {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ns-frozen);
+}
+
+.report b {
   font-size: 20px;
-  font-weight: 800;
+  line-height: 1.25;
 }
 
 .report p {
@@ -224,14 +233,14 @@ const report = [
   display: flex;
   gap: 8px;
   align-items: baseline;
-  font-size: 19px;
+  font-size: 18px;
   line-height: 1.3;
-  color: var(--ns-teal);
+  color: var(--ns-frozen);
   font-weight: 700;
 }
 
 .report p.skip {
-  color: var(--z-grey-600);
+  color: #a8a8a8;
   font-weight: 400;
 }
 
