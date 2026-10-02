@@ -4,7 +4,7 @@
   most and overriding the one that matters. grill-with-docs writes the
   settled answers into CONTEXT.md. Only the caller-team answer is fixed for
   the teaching case; the others stand in for the real design run.
-  0 the request · 1 the agent's batch · 2 the reply · 3 the record
+  0 the prompt · 1 the agent's batch · 2 the reply · 3 the record
 -->
 <script setup lang="ts">
 withDefaults(defineProps<{ step?: number }>(), { step: 0 })
@@ -18,7 +18,7 @@ const qs = [
 <template>
   <div class="grill">
     <section class="chat">
-      <div class="msg me req"><small>Request</small>Let me download the task list for weekly reporting.</div>
+      <div class="msg me req"><small>You</small>Grill me on this plan so we can both close the gaps in our understanding.</div>
 
       <div class="msg agent" :class="{ on: step >= 1 }">
         <small>Agent asks</small>

@@ -205,7 +205,7 @@ Recap of the prepared research example, about 1 minute.
 [click] findTasks adds the team filter only when it's given a team. Scoping lives in the caller. That's the fact design needs.
 [click] Only session and task routes are registered. There is no export today.
 - Research describes what exists. It doesn't recommend and it doesn't decide the new endpoint's behavior.
-- The findings are shortened from what the create-research skill writes. Regenerate the real artifact before the talk and check the line numbers still match.
+- The findings are shortened from what the create-research skill writes. The point is the shape: takeaway, sentence, a reference you can open.
 - Following a reference is about understanding an important fact. The example does not depend on research being wrong.
 - Sources: https://www.huuhka.net/research-plan-implement/ https://docs.humanlayer.com/explanation/workflow-phases
 -->
@@ -288,7 +288,7 @@ clicks: 3
 <!--
 About 1 minute. Keep this at the level of the design discussion.
 
-- Start with a normal product request. The implementation agent should not silently choose the feature's meaning.
+- The feature request was to download the team's tasks for weekly reporting. Now ask the agent to grill you on the plan, so you both close the gaps in your understanding. The implementation agent should not silently choose the feature's meaning.
 [click] This is what grilling really looks like: a batch of numbered questions, each with the agent's recommendation. Real sessions run to dozens. Factual questions it answers from the code itself; these are the product choices.
 [click] You answer by number. Most recommendations are fine. The work is spotting the one to override: here the agent assumed all tasks, and the person wants what the list shows.
 [click] Grill with docs records the settled answers in CONTEXT.md and a decision record. The durable record is the useful output, not the transcript.
