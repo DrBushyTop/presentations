@@ -42,6 +42,28 @@ layout: none
 -->
 
 ---
+layout: none
+---
+
+<SpeakerIntro />
+
+<!--
+About 20 seconds. Static apart from the entrance.
+
+- I'm Pasi. I've worked on Azure since 2014, with more than 150 customers, and I've been a Microsoft MVP since 2020.
+- The bottom row is every post on my blog. Blue dots are the ones tagged AI: 11 of the 13 I've written this year.
+- That's the work this talk comes from.
+
+Sources:
+- Azure since 2014: Pasi. Sessionize says "since 2013"; the slide uses 2014.
+- 150+ customers, DevOps Architect at Zure: https://sessionize.com/pasi-huuhka/ (title may be out of date)
+- MVP since June 2020: https://www.linkedin.com/in/pasihuuhka/ and https://www.huuhka.net/ive-been-awarded-the-microsoft-azure-mvp-title/
+- 55 posts and their dates: https://www.huuhka.net (list on 3 Oct 2026)
+- 16 tagged AI: https://www.huuhka.net/tag/ai/
+- Photo: Sessionize profile image, taken December 2024.
+-->
+
+---
 part: Would you ship this?
 class: ns
 clicks: 2
