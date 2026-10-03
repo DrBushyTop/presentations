@@ -1,127 +1,377 @@
 <!--
-  Cover artwork: an agent writing faster than anyone can read. Fluent,
-  confident output scrolls past; one line in it is the bug the talk is about.
+  Cover artwork: an agent session, drawn the way OpenCode and Codex show it.
+  One step at a time: a tool call runs with a spinner, then settles with a
+  result. Edits show a small diff (teal adds, red deletes), bash calls show
+  output. Older steps glide up and fade. The seeded bug sits in plain sight in
+  the new export file. Outside the live slide it shows a still frame.
 -->
 <script setup lang="ts">
-import { computed, ref, watch, onBeforeUnmount } from 'vue'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { prefersReducedMotion, useIsActive } from '../lib/active'
 
-const script = [
-  ['say', 'I traced the task list and reused its query.'],
-  ['cmd', '$ git switch -c agent/export-csv'],
-  ['add', '+ export async function exportTasks(req: Request) {'],
-  ['add', '+   const session = await requireSession(req)'],
-  ['bug', '+   const teamId = req.query.teamId ?? session.teamId'],
-  ['add', '+   const rows = await db.tasks.findMany({ where: { teamId } })'],
-  ['add', '+   return csv(rows, ["id", "title", "status", "due"])'],
-  ['add', '+ }'],
-  ['cmd', '$ npm test'],
-  ['ok', '  ✓ exports CSV header (4 ms)'],
-  ['ok', '  ✓ exports my team\'s tasks (11 ms)'],
-  ['ok', '  ✓ escapes commas in titles (3 ms)'],
-  ['ok', '  24 passed · 0 failed'],
-  ['say', 'All tests pass. The export reuses the existing scoping.'],
-  ['cmd', '$ gh pr create --fill'],
-  ['say', 'Opened #482. Review bot: no issues found.'],
-  ['add', '+ it("exports a UTF-8 BOM for Excel", async () => {'],
-  ['add', '+   expect(res.headers["content-type"]).toContain("text/csv")'],
-  ['add', '+ })'],
-  ['say', 'I also tidied the serializer and renamed two helpers.'],
-  ['add', '+ const toRow = (t: Task) => [t.id, t.title, t.status, t.due]'],
-  ['ok', '  ✓ lint · ✓ typecheck · ✓ build'],
-  ['say', 'Ready to merge. Summary: small, well-tested change.'],
-] as const
+type Diff = { k: '+' | '-', t: string }
+type Step =
+  | { kind: 'say', text: string }
+  | { kind: 'read' | 'grep' | 'delete', target: string, result: string, ms: number }
+  | { kind: 'write' | 'edit', target: string, result: string, ms: number, diff: Diff[] }
+  | { kind: 'bash', target: string, result: string, ms: number, out: string[] }
 
-const active = useIsActive()
-const shown = ref<{ id: number, kind: string, text: string, typed: number }[]>([])
-let timer = 0
-let n = 0
+const script: Step[] = [
+  { kind: 'say', text: 'I\'ll check how the task list scopes by team.' },
+  { kind: 'read', target: 'src/routes/tasks.ts', result: '20 lines', ms: 900 },
+  { kind: 'grep', target: '"teamId" in src', result: '6 matches', ms: 1100 },
+  { kind: 'say', text: 'The list reuses findTasks. I\'ll add the export beside it.' },
+  {
+    kind: 'write', target: 'src/routes/export.ts', result: '+7', ms: 1300,
+    diff: [
+      { k: '+', t: 'export async function exportTasks(req) {' },
+      { k: '+', t: '  const session = await requireSession(req)' },
+      { k: '+', t: '  const teamId = req.query.teamId ?? session.teamId' },
+      { k: '+', t: '  const rows = await findTasks(db, { teamId })' },
+      { k: '+', t: '  return csv(rows, COLUMNS)' },
+    ],
+  },
+  {
+    kind: 'edit', target: 'src/lib/csv.ts', result: '+2 −2', ms: 1100,
+    diff: [
+      { k: '-', t: 'const row = (t) => [t.id, t.title]' },
+      { k: '+', t: 'const toRow = (t: Task) => [t.id, t.title]' },
+    ],
+  },
+  { kind: 'delete', target: 'src/lib/legacyExport.ts', result: '−48', ms: 800 },
+  { kind: 'bash', target: 'npm test', result: '4.2 s', ms: 2400, out: ['✓ 24 passed · 0 failed'] },
+  { kind: 'bash', target: 'gh pr create --fill', result: '1.1 s', ms: 1400, out: ['Opened #482 · review bot: no issues'] },
+  { kind: 'say', text: 'Ready to merge. Small, well-tested change.' },
+]
 
-function push() {
-  const [kind, text] = script[n % script.length]
-  shown.value.push({ id: n, kind, text, typed: 0 })
-  if (shown.value.length > 26) shown.value.shift()
-  n++
+const meta = {
+  read: { icon: '→', name: 'Read' },
+  grep: { icon: '✱', name: 'Grep' },
+  write: { icon: '+', name: 'Write' },
+  edit: { icon: '✎', name: 'Edit' },
+  delete: { icon: '✕', name: 'Delete' },
+  bash: { icon: '$', name: 'Bash' },
+} as const
+
+type Block = { id: number, step: Step, done: boolean, shown: number }
+const blocks = ref<Block[]>([])
+const tick = ref(0)
+const KEEP = 6
+const frames = '⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'
+const spinner = computed(() => frames[tick.value % frames.length])
+const running = ref(false)
+
+let id = 0
+let i = 0
+let timers: number[] = []
+let spin = 0
+const later = (fn: () => void, ms: number) => { timers.push(window.setTimeout(fn, ms)) }
+
+function add(step: Step, done = false) {
+  const b: Block = { id: id++, step, done, shown: done ? 999 : 0 }
+  blocks.value.push(b)
+  if (blocks.value.length > KEEP) blocks.value.shift()
+  return blocks.value[blocks.value.length - 1]
 }
 
-function frame() {
-  const last = shown.value[shown.value.length - 1]
-  if (!last || last.typed >= last.text.length) push()
-  else last.typed = Math.min(last.text.length, last.typed + 5)
-}
-
-watch(active, (on) => {
-  clearInterval(timer)
-  if (!on) return
-  if (prefersReducedMotion()) {
-    while (shown.value.length < 22) push()
-    shown.value.forEach(l => (l.typed = l.text.length))
+function next() {
+  const step = script[i % script.length]
+  i++
+  if (i % script.length === 1 && i > 1) blocks.value = []
+  const b = add(step)
+  if (step.kind === 'say') {
+    // Type the sentence, then pause so it can be read.
+    const typeTick = () => {
+      b.shown += 2
+      if (b.shown < step.text.length) later(typeTick, 34)
+      else { b.done = true; later(next, 1600) }
+    }
+    later(typeTick, 200)
     return
   }
-  if (!shown.value.length) for (let i = 0; i < 14; i++) { push(); shown.value[shown.value.length - 1].typed = 999 }
-  timer = window.setInterval(frame, 28)
+  later(() => {
+    b.done = true
+    const lines = 'diff' in step ? step.diff.length : 'out' in step ? step.out.length : 0
+    const revealLine = () => {
+      b.shown++
+      if (b.shown < lines) later(revealLine, 260)
+      else later(next, 1500)
+    }
+    if (lines) later(revealLine, 150)
+    else later(next, 1100)
+  }, step.ms)
+}
+
+function stop() {
+  timers.forEach(clearTimeout)
+  timers = []
+  clearInterval(spin)
+  running.value = false
+}
+
+function stillFrame() {
+  blocks.value = []
+  for (const s of script.slice(script.length - KEEP)) add(s, true)
+}
+
+const active = useIsActive()
+watch(active, (on) => {
+  stop()
+  if (!on || prefersReducedMotion()) {
+    stillFrame()
+    return
+  }
+  blocks.value = []
+  i = 0
+  for (const s of script.slice(0, 3)) add(s, true)
+  i = 3
+  running.value = true
+  spin = window.setInterval(() => tick.value++, 80)
+  later(next, 700)
 }, { immediate: true })
 
-onBeforeUnmount(() => clearInterval(timer))
-
-const lines = computed(() => shown.value.map(l => ({ ...l, visible: l.text.slice(0, l.typed) })))
+onBeforeUnmount(stop)
 </script>
 
 <template>
-  <div class="stream" aria-hidden="true">
-    <div class="rail">
-      <div v-for="l in lines" :key="l.id" class="line" :class="l.kind">{{ l.visible }}</div>
-    </div>
+  <div class="session" aria-hidden="true">
+    <header>
+      <span class="app">opencode</span>
+      <span class="ns-mono">build · agent/export-csv</span>
+      <span class="state" :class="{ busy: running }">
+        <i class="ns-mono">{{ running ? spinner : '●' }}</i>{{ running ? 'Working' : 'Idle' }}
+      </span>
+    </header>
+
+    <TransitionGroup tag="div" name="blk" class="feed">
+      <div v-for="b in blocks" :key="b.id" class="blk" :class="[`k-${b.step.kind}`, { done: b.done }]">
+        <p v-if="b.step.kind === 'say'" class="say">{{ b.step.text.slice(0, b.shown) }}</p>
+
+        <template v-else>
+          <div class="call">
+            <span class="ic ns-mono">{{ b.done ? meta[b.step.kind].icon : spinner }}</span>
+            <b>{{ meta[b.step.kind].name }}</b>
+            <span class="tgt ns-mono">{{ b.step.target }}</span>
+            <span class="res ns-mono">{{ b.done ? b.step.result : '' }}</span>
+          </div>
+          <div v-if="'diff' in b.step && b.done" class="diff ns-mono">
+            <div v-for="(d, k) in b.step.diff" :key="k" class="dl" :class="[d.k === '+' ? 'add' : 'del', { on: k < b.shown }]">
+              <i>{{ d.k }}</i>{{ d.t }}
+            </div>
+          </div>
+          <div v-if="'out' in b.step && b.done" class="out ns-mono">
+            <div v-for="(o, k) in b.step.out" :key="k" class="ol" :class="{ on: k < b.shown }">{{ o }}</div>
+          </div>
+        </template>
+      </div>
+    </TransitionGroup>
   </div>
 </template>
 
 <style scoped>
-.stream {
+.session {
   position: absolute;
   inset: 0;
   background: var(--z-ink);
-  overflow: hidden;
+  color: #d6d6d6;
   display: flex;
-  align-items: flex-end;
-  padding: 0 40px 48px;
-  mask-image: linear-gradient(to bottom, transparent 0%, #000 42%);
-}
-
-.rail {
-  width: 100%;
-}
-
-.line {
-  font-family: var(--ns-mono);
-  font-size: 15px;
-  line-height: 1.75;
-  white-space: pre;
+  flex-direction: column;
   overflow: hidden;
-  text-overflow: clip;
-  color: #8c8c8c;
 }
 
-.line.say {
-  font-family: var(--z-font-text);
+header {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 22px 32px 18px;
+  border-bottom: 1px solid #333;
+  background: var(--z-ink);
+  font-size: 15px;
+  color: #8f8f8f;
+}
+
+.app {
+  font-family: var(--z-font-display);
+  font-size: 18px;
+  font-weight: 800;
   color: #fff;
-  font-weight: 600;
-  font-size: 16px;
-  margin: 6px 0;
 }
 
-.line.add {
-  color: var(--z-teal-300);
+.state {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
 }
 
-.line.bug {
-  color: var(--z-teal-300);
+.state i {
+  font-style: normal;
+  color: #6a6a6a;
 }
 
-.line.ok {
+.state.busy {
   color: var(--ns-frozen);
 }
 
-.line.cmd {
-  color: #c9c9c9;
+.state.busy i {
+  color: var(--ns-frozen);
+}
+
+.feed {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 18px;
+  padding: 0 32px 44px;
+  mask-image: linear-gradient(to bottom, transparent 0%, #000 38%);
+}
+
+.blk {
+  width: 100%;
+}
+
+/* Assistant text */
+.say {
+  margin: 4px 0;
+  max-width: none;
+  font-family: var(--z-font-text);
+  font-size: 19px;
+  line-height: 1.35;
+  font-weight: 600;
+  color: #fff;
+}
+
+/* Tool call line */
+.call {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-size: 16px;
+}
+
+.ic {
+  width: 18px;
+  text-align: center;
+  color: var(--ns-frozen);
+}
+
+.call b {
+  font-family: var(--z-font-text);
+  font-weight: 700;
+  color: #fff;
+}
+
+.tgt {
+  color: #a8a8a8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.res {
+  margin-left: auto;
+  color: #7a7a7a;
+  white-space: nowrap;
+}
+
+.done .ic {
+  color: #8f8f8f;
+}
+
+.k-write.done .ic,
+.k-edit.done .ic { color: var(--z-teal-300); }
+
+.k-delete.done .ic,
+.k-delete.done b { color: #ff8a78; }
+
+.k-delete .tgt {
+  text-decoration: line-through;
+  text-decoration-color: rgba(255, 138, 120, 0.6);
+}
+
+.k-write .res,
+.k-edit .res { color: var(--z-teal-300); }
+
+.k-delete .res { color: #ff8a78; }
+
+.k-bash .ic { color: #f2c94c; }
+
+.k-bash.done .ic { color: #8f8f8f; }
+
+/* Diff and output panels under a call */
+.diff,
+.out {
+  margin: 8px 0 0;
+  padding: 8px 0;
+  background: #222;
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+.dl {
+  padding: 0 12px;
+  white-space: pre;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: opacity 300ms var(--ns-ease), transform 400ms var(--ns-ease);
+}
+
+.dl i {
+  display: inline-block;
+  width: 16px;
+  font-style: normal;
+}
+
+.dl.add {
+  color: var(--z-teal-300);
+  background: rgba(3, 127, 145, 0.16);
+}
+
+.dl.del {
+  color: #ff8a78;
+  background: rgba(222, 30, 5, 0.16);
+}
+
+.dl:not(.on),
+.ol:not(.on) {
+  opacity: 0;
+  transform: translateX(-6px);
+}
+
+.ol {
+  padding: 0 14px;
+  color: var(--ns-frozen);
+  transition: opacity 300ms var(--ns-ease), transform 400ms var(--ns-ease);
+}
+
+/* New blocks rise in; older ones glide up. */
+.blk-move {
+  transition: transform 700ms var(--ns-ease);
+}
+
+.blk-enter-active {
+  transition: opacity 500ms var(--ns-ease), transform 700ms var(--ns-ease);
+}
+
+.blk-enter-from {
+  opacity: 0;
+  transform: translateY(18px);
+}
+
+.blk-leave-active {
+  position: absolute;
+  left: 32px;
+  right: 32px;
+  transition: opacity 400ms var(--ns-ease);
+}
+
+.blk-leave-to {
+  opacity: 0;
 }
 </style>
