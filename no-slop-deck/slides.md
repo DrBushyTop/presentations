@@ -43,24 +43,25 @@ layout: none
 
 ---
 layout: none
+clicks: 3
+nofooter: true
 ---
 
-<SpeakerIntro />
+<PapersPlease :step="$clicks" />
 
 <!--
-About 20 seconds. Static apart from the entrance.
+About 40 seconds. A nod to Papers, Please, the border inspector game. The inspector is checking my credentials.
 
-- I'm Pasi. I've worked on Azure since 2014, with more than 150 customers, and I've been a Microsoft MVP since 2020.
-- The bottom row is every post on my blog. Blue dots are the ones tagged AI: 11 of the 13 I've written this year.
-- That's the work this talk comes from.
+- Papers, please.
+[click] Purpose of visit: a talk. I started in dev, then DevOps, and now most of my work is AI: dev tooling that helps organisations run AI-assisted development, alongside normal dev projects. AI has been part of every project for the last few years. AI architect at Zure, more dev than data. Azure since 2014, 150+ customers.
+[click] Microsoft MVP since 2020, in two categories: Developer Technologies for the DevOps side, and Foundry for AI.
+[click] Approved. Welcome to ESPC.
 
 Sources:
-- Azure since 2014: Pasi. Sessionize says "since 2013"; the slide uses 2014.
-- 150+ customers, DevOps Architect at Zure: https://sessionize.com/pasi-huuhka/ (title may be out of date)
-- MVP since June 2020: https://www.linkedin.com/in/pasihuuhka/ and https://www.huuhka.net/ive-been-awarded-the-microsoft-azure-mvp-title/
-- 55 posts and their dates: https://www.huuhka.net (list on 3 Oct 2026)
-- 16 tagged AI: https://www.huuhka.net/tag/ai/
-- Photo: Sessionize profile image, taken December 2024.
+- AI architect at Zure, Azure since 2014, AI in every project, MVP categories: Pasi.
+- 150+ customers: https://sessionize.com/pasi-huuhka/
+- MVP since June 2020: https://www.huuhka.net/ive-been-awarded-the-microsoft-azure-mvp-title/
+- Portrait generated in the game's pixel style from the Sessionize photo. Papers, Please is by Lucas Pope (3909 LLC); the fonts are Silkscreen and VT323.
 -->
 
 ---
