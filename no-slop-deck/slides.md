@@ -519,6 +519,27 @@ About 1 minute. This continues the same three happy-path tests from the previous
 -->
 
 ---
+part: Verify
+class: ns
+clicks: 2
+---
+
+# Let the agent run the app and check it
+
+<RunTheApp :step="$clicks" />
+
+<!--
+About 1 minute.
+
+- Lints and tests check the code. This checks the behaviour, the way a person would, except the agent does it.
+- Start a fresh instance with known data. In the demo app that's npm run reset and npm run dev. The seed data includes B-201, a canary row that must never reach Team A.
+[click] Reproduce it in a browser the agent controls: signed in as Alex from Team A, ask the export for team-b. The canary row comes back. The server log shows the same thing: six rows for a Team A session.
+[click] Fix it, then repeat exactly the same action with the same data. Five rows, no canary. Same request before and after is the evidence.
+- OpenAI made their app bootable per git worktree so Codex could launch one instance per change, and wired Chrome DevTools into the agent so it could "reproduce bugs, validate fixes, and reason about UI behavior directly". Logs and metrics come from a local stack per worktree that's torn down when the task ends. https://openai.com/index/harness-engineering/
+- What you need to make this work: one command to start the app, one command to reset to known data, data that makes a mistake visible, and a browser the agent can drive. Most projects have the first, few have the other three.
+-->
+
+---
 layout: none
 ---
 
