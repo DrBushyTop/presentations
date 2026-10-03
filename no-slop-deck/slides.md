@@ -61,7 +61,7 @@ Sources:
 - AI architect at Zure, Azure since 2014, AI in every project, MVP categories: Pasi.
 - 150+ customers: https://sessionize.com/pasi-huuhka/
 - MVP since June 2020: https://www.huuhka.net/ive-been-awarded-the-microsoft-azure-mvp-title/
-- Portrait generated in the game's pixel style from the Sessionize photo. Papers, Please is by Lucas Pope (3909 LLC); the fonts are Silkscreen and VT323.
+- Portrait generated in the game's pixel style from my own recent photo, then reduced to 96x96 and 20 colours. Papers, Please is by Lucas Pope (3909 LLC); the fonts are Silkscreen and VT323.
 -->
 
 ---

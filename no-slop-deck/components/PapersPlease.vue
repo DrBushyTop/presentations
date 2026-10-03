@@ -5,7 +5,8 @@
   the names match · 3 APPROVED
   Facts: AI architect at Zure (Pasi), Azure since 2014 (Pasi), 150+
   customers (Sessionize bio), Microsoft MVP since 2020 in DevTech and Foundry
-  (Pasi, LinkedIn). The portrait is generated from his Sessionize photo.
+  (Pasi, LinkedIn). Both portraits are generated from his own recent photo:
+  the booth face as he is now, the passport photo formal and printed.
   Overview and print show the final, stamped state without motion.
 -->
 <script setup lang="ts">
@@ -73,9 +74,9 @@ watch(active, (on) => { if (on) setTimeout(measure, 700) })
 
     <section class="desk">
       <article class="doc passport">
-        <header>Republic of Azure</header>
+        <header class="ph">Republic of Azure<span class="seal" aria-hidden="true">AZ</span></header>
         <div class="id">
-          <div ref="photo" class="photo" :class="{ inspect: s === 1 }"><img src="/pasi-pixel.png" alt=""></div>
+          <div ref="photo" class="photo" :class="{ inspect: s === 1 }"><img src="/pasi-passport.png" alt=""></div>
           <dl>
             <dt>Name</dt>
             <dd ref="nameA" :class="{ inspect: s === 2 }">Huuhka, Pasi</dd>
@@ -83,11 +84,18 @@ watch(active, (on) => { if (on) setTimeout(measure, 700) })
             <dd>AI architect</dd>
           </dl>
         </div>
-        <dl class="fields">
-          <dt>Note</dt><dd>More dev than data</dd>
-          <dt>Employer</dt><dd>Zure</dd>
-          <dt>Azure since</dt><dd class="big">2014</dd>
-        </dl>
+        <div class="fields">
+          <div class="f wide"><dt>Note</dt><dd>More dev than data</dd></div>
+          <div class="f"><dt>Employer</dt><dd>Zure</dd></div>
+          <div class="f"><dt>Document no.</dt><dd>NSE-0482</dd></div>
+          <div class="f"><dt>Azure since</dt><dd class="big">2014</dd></div>
+          <div class="f"><dt>Class</dt><dd>Dev<br>DevOps<br>AI</dd></div>
+        </div>
+        <div class="mrz" aria-label="Machine-readable zone">
+          <div>I&lt;AZRNSE0482&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;</div>
+          <div>2014AZURE&lt;&lt;MVP2020&lt;DEVAI&lt;&lt;&lt;&lt;&lt;4</div>
+          <div>HUUHKA&lt;&lt;PASI&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;</div>
+        </div>
         <div class="stamp" aria-hidden="true">Approved</div>
       </article>
 
@@ -202,13 +210,13 @@ watch(active, (on) => { if (on) setTimeout(measure, 700) })
   border-right: 6px solid #23241d;
   display: flex;
   flex-direction: column;
-  gap: 22px;
+  gap: 18px;
 }
 
 .window {
   align-self: center;
-  width: 276px;
-  height: 276px;
+  width: 308px;
+  height: 308px;
   padding: 10px;
   background: #23241d;
   outline: 4px solid transparent;
@@ -320,6 +328,16 @@ dd {
   transform: rotate(-1.5deg);
 }
 
+.passport {
+  display: flex;
+  flex-direction: column;
+  /* Guilloche-style security print behind the fields. */
+  background:
+    repeating-radial-gradient(circle at 70% 62%, transparent 0 9px, rgba(90, 107, 90, 0.09) 9px 11px),
+    repeating-linear-gradient(135deg, transparent 0 6px, rgba(90, 107, 90, 0.05) 6px 7px),
+    var(--paper);
+}
+
 .passport header {
   background: #5a6b5a;
 }
@@ -328,28 +346,70 @@ dd {
   display: grid;
   grid-template-columns: 148px 1fr;
   gap: 16px;
-  padding: 16px;
+  padding: 14px 16px 10px;
 }
 
 .photo {
-  width: 148px;
-  height: 148px;
+  width: 152px;
+  height: 152px;
   background: #23241d;
   padding: 4px;
 }
 
 .fields {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 16px;
   padding: 0 16px;
 }
 
+.f.wide {
+  grid-column: 1 / -1;
+}
+
+.f dd {
+  font-size: 27px;
+}
+
 .fields .big {
-  font-size: 72px;
+  font-size: 58px;
+}
+
+.ph {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.seal {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 3px double var(--paper);
+  border-radius: 50%;
+  font-size: 14px;
+}
+
+.mrz {
+  margin-top: auto;
+  padding: 8px 16px 12px;
+  background: rgba(58, 49, 39, 0.07);
+  border-top: 2px solid rgba(58, 49, 39, 0.25);
+  font-size: 21px;
+  line-height: 1.05;
+  letter-spacing: 0.06em;
+  white-space: pre;
+  color: #4a4034;
 }
 
 .stamp {
   position: absolute;
-  left: 44px;
-  bottom: 44px;
+  left: 64px;
+  bottom: 22px;
+  z-index: 2;
   padding: 6px 16px;
   white-space: nowrap;
   border: 6px solid var(--green);
