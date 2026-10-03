@@ -2,11 +2,12 @@
   Cover artwork: an agent session, drawn the way OpenCode and Codex show it.
   One step at a time: a tool call runs with a spinner, then settles with a
   result. Edits show a small diff (teal adds, red deletes), bash calls show
-  output. Older steps glide up and fade. The seeded bug sits in plain sight in
+  output. Older steps glide up under the header and are removed only once
+  they're fully out of view; the loop carries on into the next round. The seeded bug sits in plain sight in
   the new export file. Outside the live slide it shows a still frame.
 -->
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { prefersReducedMotion, useIsActive } from '../lib/active'
 
 type Diff = { k: '+' | '-', t: string }
@@ -56,7 +57,8 @@ const meta = {
 type Block = { id: number, step: Step, done: boolean, shown: number }
 const blocks = ref<Block[]>([])
 const tick = ref(0)
-const KEEP = 6
+const STILL = 6
+const feed = ref<{ $el: HTMLElement }>()
 const frames = '⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'
 const spinner = computed(() => frames[tick.value % frames.length])
 const running = ref(false)
@@ -70,23 +72,37 @@ const later = (fn: () => void, ms: number) => { timers.push(window.setTimeout(fn
 function add(step: Step, done = false) {
   const b: Block = { id: id++, step, done, shown: done ? 999 : 0 }
   blocks.value.push(b)
-  if (blocks.value.length > KEEP) blocks.value.shift()
   return blocks.value[blocks.value.length - 1]
+}
+
+// Drop blocks only once they've scrolled completely above the feed, so
+// nothing leaves a gap while it is still on screen.
+async function prune() {
+  await nextTick()
+  const el = feed.value?.$el
+  if (!el) return
+  const top = el.getBoundingClientRect().top
+  const gone = new Set<number>()
+  for (const child of el.children) {
+    const r = (child as HTMLElement).getBoundingClientRect()
+    if (r.bottom < top) gone.add(Number((child as HTMLElement).dataset.id))
+  }
+  if (gone.size) blocks.value = blocks.value.filter(b => !gone.has(b.id))
 }
 
 function next() {
   const step = script[i % script.length]
   i++
-  if (i % script.length === 1 && i > 1) blocks.value = []
   const b = add(step)
+  later(prune, 900)
   if (step.kind === 'say') {
     // Type the sentence, then pause so it can be read.
     const typeTick = () => {
-      b.shown += 2
-      if (b.shown < step.text.length) later(typeTick, 34)
-      else { b.done = true; later(next, 1600) }
+      b.shown += 3
+      if (b.shown < step.text.length) later(typeTick, 30)
+      else { b.done = true; later(next, 1200) }
     }
-    later(typeTick, 200)
+    later(typeTick, 150)
     return
   }
   later(() => {
@@ -94,12 +110,12 @@ function next() {
     const lines = 'diff' in step ? step.diff.length : 'out' in step ? step.out.length : 0
     const revealLine = () => {
       b.shown++
-      if (b.shown < lines) later(revealLine, 260)
-      else later(next, 1500)
+      if (b.shown < lines) later(revealLine, 200)
+      else later(next, 1100)
     }
-    if (lines) later(revealLine, 150)
-    else later(next, 1100)
-  }, step.ms)
+    if (lines) later(revealLine, 120)
+    else later(next, 800)
+  }, step.ms * 0.75)
 }
 
 function stop() {
@@ -111,7 +127,7 @@ function stop() {
 
 function stillFrame() {
   blocks.value = []
-  for (const s of script.slice(script.length - KEEP)) add(s, true)
+  for (const s of script.slice(script.length - STILL)) add(s, true)
 }
 
 const active = useIsActive()
@@ -143,8 +159,8 @@ onBeforeUnmount(stop)
       </span>
     </header>
 
-    <TransitionGroup tag="div" name="blk" class="feed">
-      <div v-for="b in blocks" :key="b.id" class="blk" :class="[`k-${b.step.kind}`, { done: b.done }]">
+    <TransitionGroup ref="feed" tag="div" name="blk" class="feed">
+      <div v-for="b in blocks" :key="b.id" :data-id="b.id" class="blk" :class="[`k-${b.step.kind}`, { done: b.done }]">
         <p v-if="b.step.kind === 'say'" class="say">{{ b.step.text.slice(0, b.shown) }}</p>
 
         <template v-else>
@@ -223,12 +239,14 @@ header {
 .feed {
   position: relative;
   flex: 1;
+  min-height: 0;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
   gap: 18px;
   padding: 0 32px 44px;
-  mask-image: linear-gradient(to bottom, transparent 0%, #000 38%);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 90px);
 }
 
 .blk {
@@ -365,13 +383,6 @@ header {
 }
 
 .blk-leave-active {
-  position: absolute;
-  left: 32px;
-  right: 32px;
-  transition: opacity 400ms var(--ns-ease);
-}
-
-.blk-leave-to {
-  opacity: 0;
+  display: none;
 }
 </style>
