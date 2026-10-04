@@ -68,7 +68,7 @@ Sources:
 - MVP since June 2020: https://www.huuhka.net/ive-been-awarded-the-microsoft-azure-mvp-title/
 - Both portraits were generated from my own recent photo, using the game's official screenshots as a style reference. The booth sprite is 72x72 pixels with 9 colours; the passport photo is 48x48 with 5 colours and shows me straight on. Both use flat shading and nearest-neighbour scaling. Papers, Please is by Lucas Pope (3909 LLC); the fonts are Silkscreen and VT323.
 - Visual reference: https://www.papersplea.se/presskit/
-- The documents stay square to the canvas, with flat paper, a dotted desk, a stepped seal and stamp, and inspection lines that join the highlighted box edges at right angles. Reveals move in short pixel steps.
+- The documents rest at slight angles, with flat paper, a dotted desk, a stepped seal and stamp, and inspection lines that join the highlighted box edges at right angles. The stamp has its own tilt and sits slightly off-centre, as if applied by hand. Reveals move in short pixel steps.
 - The passport has a document heading, field dividers and a machine-readable zone. The stamp follows the supplied game reference, with a checker border, entry verdict and shield. Its top row marks ESPC 2026. The passport number and issuance are props for this introduction.
 -->
 

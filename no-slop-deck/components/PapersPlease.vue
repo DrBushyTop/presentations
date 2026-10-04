@@ -45,8 +45,12 @@ function edge(el: HTMLElement | undefined, side: 'left' | 'right') {
   const r = el.getBoundingClientRect()
   const style = getComputedStyle(el)
   const outline = parseFloat(style.outlineOffset) + parseFloat(style.outlineWidth) / 2
-  const x = side === 'right' ? (r.right - box.left) * k + outline : (r.left - box.left) * k - outline
-  return [x, (r.top + r.height / 2 - box.top) * k]
+  const angle = (parseFloat(style.getPropertyValue('--angle')) || 0) * Math.PI / 180
+  const distance = (side === 'right' ? 1 : -1) * (el.offsetWidth / 2 + outline)
+  return [
+    (r.left + r.width / 2 - box.left) * k + distance * Math.cos(angle),
+    (r.top + r.height / 2 - box.top) * k + distance * Math.sin(angle),
+  ]
 }
 async function measure() {
   await nextTick()
@@ -54,7 +58,7 @@ async function measure() {
   links.value = { photo: [...edge(face.value, 'right'), ...edge(photo.value, 'left')], name: [...edge(nameA.value, 'right'), ...edge(nameB.value, 'left')] }
 }
 function inspectionPath(points: number[], turnX?: number) {
-  const [x1, y1, x2, y2] = points.map(n => Math.round(n / 4) * 4)
+  const [x1, y1, x2, y2] = points
   const x = turnX ?? Math.round((x1 + x2) / 8) * 4
   return `M ${x1} ${y1} H ${x} V ${y2} H ${x2}`
 }
@@ -321,9 +325,11 @@ watch(active, (on) => { if (on) setTimeout(measure, 700) })
 }
 
 .doc {
+  --angle: 0deg;
   position: absolute;
   background: var(--paper);
   box-shadow: 4px 4px 0 #161315;
+  transform: rotate(var(--angle));
   transition: opacity 200ms steps(3), transform 200ms steps(4);
 }
 
@@ -359,6 +365,7 @@ dd {
 }
 
 .passport {
+  --angle: -1.5deg;
   left: 32px;
   top: 32px;
   width: 360px;
@@ -477,8 +484,8 @@ dd {
 
 .stamp {
   position: absolute;
-  left: 72px;
-  bottom: 72px;
+  left: 64px;
+  bottom: 68px;
   z-index: 2;
   width: 216px;
   height: 84px;
@@ -490,7 +497,7 @@ dd {
   text-transform: uppercase;
   mix-blend-mode: multiply;
   opacity: 1;
-  transform: translateY(0);
+  transform: rotate(-5deg);
   transition: transform 100ms steps(2), opacity 100ms steps(2);
 }
 
@@ -515,10 +522,11 @@ dd {
 
 .pp:not(.s3) .stamp {
   opacity: 0;
-  transform: translateY(-12px);
+  transform: translateY(-12px) rotate(-5deg);
 }
 
 .record {
+  --angle: 1.5deg;
   left: 432px;
   top: 32px;
   width: 380px;
@@ -554,6 +562,7 @@ dd {
 }
 
 .permit {
+  --angle: -1deg;
   left: 432px;
   top: 300px;
   width: 380px;
@@ -610,7 +619,7 @@ dd {
 .record:not(.on),
 .permit:not(.on) {
   opacity: 0;
-  transform: translateX(24px);
+  transform: translateX(24px) rotate(var(--angle));
 }
 
 /* ---------- Inspection lines ---------- */
