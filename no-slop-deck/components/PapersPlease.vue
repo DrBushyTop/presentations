@@ -30,8 +30,7 @@ const lines = [
   { at: 3, who: 'Inspector', t: 'Welcome to ESPC.' },
 ]
 
-// Inspection lines join two fields across documents. Measured from the DOM,
-// because the documents are rotated.
+// Inspection lines join the visible fields in canvas coordinates.
 const root = ref<HTMLElement>()
 const face = ref<HTMLElement>()
 const photo = ref<HTMLElement>()
@@ -47,10 +46,16 @@ function centre(el?: HTMLElement) {
 }
 async function measure() {
   await nextTick()
+  if (!root.value?.getBoundingClientRect().width) return
   links.value = { photo: [...centre(face.value), ...centre(photo.value)], name: [...centre(nameA.value), ...centre(nameB.value)] }
 }
+function inspectionPath(points: number[], turnX?: number) {
+  const [x1, y1, x2, y2] = points.map(n => Math.round(n / 4) * 4)
+  const x = turnX ?? Math.round((x1 + x2) / 8) * 4
+  return `M ${x1} ${y1} H ${x} V ${y2} H ${x2}`
+}
 onMounted(() => { measure(); setTimeout(measure, 600) })
-watch(() => props.step, measure)
+watch(() => props.step, () => { measure(); setTimeout(measure, 250) })
 const active = useIsActive()
 watch(active, (on) => { if (on) setTimeout(measure, 700) })
 </script>
@@ -76,7 +81,10 @@ watch(active, (on) => { if (on) setTimeout(measure, 700) })
 
     <section class="desk">
       <article class="doc passport">
-        <header class="ph">Republic of Azure<span class="seal" aria-hidden="true">AZ</span></header>
+        <header class="ph">Republic of Azure<span class="seal" aria-hidden="true">
+          <svg viewBox="0 0 12 12"><path d="M3 0h6v1h2v2h1v6h-1v2H9v1H3v-1H1V9H0V3h1V1h2Z M3 1v1H2v1H1v6h1v1h1v1h6v-1h1V9h1V3h-1V2H9V1Z" fill="currentColor" fill-rule="evenodd" /></svg>
+          <span>AZ</span>
+        </span></header>
         <div class="id">
           <div ref="photo" class="photo" :class="{ inspect: s === 1 }"><img src="/pasi-passport-papers-please.png" alt="Passport portrait of Pasi Huuhka"></div>
           <dl>
@@ -98,7 +106,13 @@ watch(active, (on) => { if (on) setTimeout(measure, 700) })
           <div>2014AZURE&lt;&lt;MVP2020&lt;DEVAI&lt;&lt;&lt;&lt;&lt;4</div>
           <div>HUUHKA&lt;&lt;PASI&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;</div>
         </div>
-        <div class="stamp" aria-hidden="true">Approved</div>
+        <div class="stamp" aria-hidden="true">
+          <svg viewBox="0 0 72 20">
+            <path d="M2 0h68v2h2v16h-2v2H2v-2H0V2h2Z" fill="var(--paper)" />
+            <path d="M2 0h68v2h2v16h-2v2H2v-2H0V2h2Z M4 4v12h64V4Z" fill="currentColor" fill-rule="evenodd" />
+          </svg>
+          <span>Approved</span>
+        </div>
       </article>
 
       <article class="doc record" :class="{ on: s >= 1 }">
@@ -126,12 +140,12 @@ watch(active, (on) => { if (on) setTimeout(measure, 700) })
 
     <svg class="links" viewBox="0 0 1280 720" aria-hidden="true">
       <g :class="{ on: s === 1 }">
-        <line v-if="links.photo.length" :x1="links.photo[0]" :y1="links.photo[1]" :x2="links.photo[2]" :y2="links.photo[3]" />
+        <path v-if="links.photo.length" :d="inspectionPath(links.photo)" />
         <text v-if="links.photo.length" :x="(links.photo[0] + links.photo[2]) / 2" :y="(links.photo[1] + links.photo[3]) / 2 - 12" text-anchor="middle">Match</text>
       </g>
       <g :class="{ on: s === 2 }">
-        <line v-if="links.name.length" :x1="links.name[0]" :y1="links.name[1]" :x2="links.name[2]" :y2="links.name[3]" />
-        <text v-if="links.name.length" :x="(links.name[0] + links.name[2]) / 2" :y="(links.name[1] + links.name[3]) / 2 - 12" text-anchor="middle">Match</text>
+        <path v-if="links.name.length" :d="inspectionPath(links.name, 848)" />
+        <text v-if="links.name.length" x="848" :y="(links.name[1] + links.name[3]) / 2 - 12" text-anchor="middle">Match</text>
       </g>
     </svg>
   </div>
@@ -281,14 +295,15 @@ watch(active, (on) => { if (on) setTimeout(measure, 700) })
   right: 0;
   top: 60px;
   bottom: 0;
-  background: repeating-linear-gradient(0deg, #5b4636 0 46px, #523f30 46px 50px);
+  background-color: #241f22;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8'%3E%3Cpath fill='%23372e2c' d='M0 0h2v2H0z'/%3E%3C/svg%3E");
 }
 
 .doc {
   position: absolute;
   background: var(--paper);
-  box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.35);
-  transition: opacity 350ms steps(4), transform 450ms cubic-bezier(0.2, 0.9, 0.3, 1);
+  box-shadow: 4px 4px 0 #161315;
+  transition: opacity 200ms steps(3), transform 200ms steps(4);
 }
 
 .doc header {
@@ -323,21 +338,13 @@ dd {
 }
 
 .passport {
-  left: 34px;
-  top: 34px;
+  left: 32px;
+  top: 32px;
   width: 360px;
-  height: 540px;
-  transform: rotate(-1.5deg);
-}
-
-.passport {
+  height: 544px;
   display: flex;
   flex-direction: column;
-  /* Guilloche-style security print behind the fields. */
-  background:
-    repeating-radial-gradient(circle at 70% 62%, transparent 0 9px, rgba(90, 107, 90, 0.09) 9px 11px),
-    repeating-linear-gradient(135deg, transparent 0 6px, rgba(90, 107, 90, 0.05) 6px 7px),
-    var(--paper);
+  box-shadow: inset 0 0 0 4px #a5a184, 4px 4px 0 #161315;
 }
 
 .passport header {
@@ -346,7 +353,7 @@ dd {
 
 .id {
   display: grid;
-  grid-template-columns: 148px 1fr;
+  grid-template-columns: 152px 1fr;
   gap: 16px;
   padding: 14px 16px 10px;
 }
@@ -386,13 +393,26 @@ dd {
 }
 
 .seal {
-  width: 34px;
-  height: 34px;
+  position: relative;
+  width: 36px;
+  height: 36px;
   display: grid;
   place-items: center;
-  border: 3px double var(--paper);
-  border-radius: 50%;
   font-size: 14px;
+}
+
+.seal svg,
+.stamp svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  shape-rendering: crispEdges;
+}
+
+.seal span,
+.stamp span {
+  position: relative;
 }
 
 .mrz {
@@ -409,33 +429,33 @@ dd {
 
 .stamp {
   position: absolute;
-  left: 64px;
-  bottom: 22px;
+  left: 36px;
+  bottom: 16px;
   z-index: 2;
-  padding: 6px 16px;
+  width: 288px;
+  height: 80px;
+  display: grid;
+  place-items: center;
   white-space: nowrap;
-  border: 6px solid var(--green);
   color: var(--green);
   font-family: 'PP Label', monospace;
   font-size: 32px;
   font-weight: 700;
   text-transform: uppercase;
-  transform: rotate(-14deg) scale(1);
-  mix-blend-mode: multiply;
-  opacity: 0.92;
-  transition: transform 180ms cubic-bezier(0.5, 1.8, 0.5, 1), opacity 120ms;
+  opacity: 1;
+  transform: translateY(0);
+  transition: transform 100ms steps(2), opacity 100ms steps(2);
 }
 
 .pp:not(.s3) .stamp {
   opacity: 0;
-  transform: rotate(-14deg) scale(1.9);
+  transform: translateY(-12px);
 }
 
 .record {
-  left: 430px;
-  top: 30px;
+  left: 432px;
+  top: 32px;
   width: 380px;
-  transform: rotate(1.5deg);
 }
 
 .record header {
@@ -468,11 +488,10 @@ dd {
 }
 
 .permit {
-  left: 420px;
+  left: 432px;
   top: 300px;
-  width: 400px;
+  width: 380px;
   background: #c8cfa8;
-  transform: rotate(-1deg);
 }
 
 .permit header {
@@ -495,8 +514,8 @@ dd {
 }
 
 .cats div {
-  padding: 10px 12px;
-  border: 3px solid #6f7a55;
+  padding: 8px;
+  border: 4px solid #6f7a55;
   display: flex;
   flex-direction: column;
 }
@@ -525,7 +544,7 @@ dd {
 .record:not(.on),
 .permit:not(.on) {
   opacity: 0;
-  transform: translateX(80px) rotate(4deg);
+  transform: translateX(24px);
 }
 
 /* ---------- Inspection lines ---------- */
@@ -547,10 +566,12 @@ dd {
   opacity: 1;
 }
 
-.links line {
+.links path {
+  fill: none;
   stroke: var(--red);
   stroke-width: 4;
-  stroke-dasharray: 10 6;
+  stroke-dasharray: 8 8;
+  shape-rendering: crispEdges;
 }
 
 .links text {
@@ -561,7 +582,7 @@ dd {
   fill: #fff;
   paint-order: stroke;
   stroke: var(--red);
-  stroke-width: 10px;
+  stroke-width: 8px;
 }
 
 .still,

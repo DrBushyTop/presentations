@@ -68,6 +68,7 @@ Sources:
 - MVP since June 2020: https://www.huuhka.net/ive-been-awarded-the-microsoft-azure-mvp-title/
 - Both portraits were generated from my own recent photo, using the game's official screenshots as a style reference. The booth sprite is 72x72 pixels with 9 colours; the passport photo is 48x48 with 5 colours and shows me straight on. Both use flat shading and nearest-neighbour scaling. Papers, Please is by Lucas Pope (3909 LLC); the fonts are Silkscreen and VT323.
 - Visual reference: https://www.papersplea.se/presskit/
+- The documents stay square to the canvas, with flat paper, a dotted desk, a stepped seal and stamp, and inspection lines that turn at right angles. Reveals move in short pixel steps.
 -->
 
 ---
