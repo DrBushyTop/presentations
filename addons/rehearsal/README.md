@@ -8,9 +8,15 @@ repository decks enable it in their headmatter. The workspace package is linked 
 1. Start a deck with its normal `npm run dev:*` or `npm run start:*` command.
 2. Open presenter view. For the no-slop deck running on port 3131, use
    `http://localhost:3131/presenter/1?password=slides`.
-3. Click **Rehearsal**, set the target, and click **Start rehearsal**.
-4. Present normally. Use **Pause rehearsal** for interruptions.
-5. Open **Rehearsal** and click **Finish rehearsal** to review the run.
+3. Click **Rehearse** in the presenter bar, set the target, and click **Start rehearsal**.
+4. Present normally. The bar shows a red dot, the total so far and the target.
+   Use the pause button next to it for interruptions, and the play button to resume.
+5. Click the timer and then **Finish rehearsal** to review the run.
+
+While recording, the panel shows the total against the target, the time on the
+current slide, and how far you are ahead of or behind an even split of the target
+across the slides. Even pace is a rough guide: it assumes every slide takes the
+same time.
 
 Slide changes close the previous visit and begin another. Going back adds another
 visit to that slide's total. Click reveals stay within the same visit. Pausing and
@@ -24,9 +30,9 @@ views. Its report stays outside the slide canvas.
 
 ## Results and storage
 
-The report shows slide totals, visit counts, section totals, the overall target,
-and how many slides you visited. Partial runs are labelled. It also shows
-cumulative totals in deck order. Revisits count in cumulative totals, so these
+The panel shows the selected run's total, slides visited and selected cuts, a
+timeline coloured by section, section totals and every slide. Newest runs are
+listed first. It also exports cumulative totals in deck order. Revisits count in cumulative totals, so these
 are totals through the deck rather than timestamps of the first visit.
 
 Sort by duration to find expensive slides. After pausing or finishing, select
@@ -35,7 +41,7 @@ CSV contains the slide report and cut selections. JSON includes every visit and
 the deck's titles, section labels, Markdown and raw speaker notes as they were
 when the run began.
 
-**Export HTML report** downloads a standalone page. Open it locally without a
+**Report** downloads a standalone HTML page. Open it locally without a
 server or internet connection. It is ordered by importance:
 
 1. The measured total against the target, how much to cut, the slide where the

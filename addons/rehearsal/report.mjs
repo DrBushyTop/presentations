@@ -1,3 +1,4 @@
+import { sectionColors } from './colors.mjs'
 import { slideTotals } from './timing.mjs'
 
 // This function runs inside the downloaded HTML. It has no external dependencies.
@@ -51,14 +52,8 @@ function reportApp() {
   const byNo = new Map(rows.map(row => [row.no, row]))
   const visited = rows.filter(row => row.visits > 0)
   const unvisited = rows.filter(row => row.visits === 0)
-  const palette = [['#037f91', '#fff'], ['#d99a00', '#1a1a1a'], ['#4f5bd5', '#fff'], ['#3b9550', '#fff'],
-    ['#a3489a', '#fff'], ['#05b4cc', '#1a1a1a'], ['#7f8f00', '#fff'], ['#9a5b2e', '#fff'], ['#5a6b85', '#fff'],
-    ['#d0679f', '#fff'], ['#2a8f7f', '#fff'], ['#7a4fc4', '#fff']]
-  const colorOf = {}
-  let paletteIndex = 0
   const parts = [...new Set(rows.map(row => row.part))]
-  // 'Other' holds slides before the first `part`; grey keeps it out of the way unless it is the only section.
-  for (const part of parts) colorOf[part] = part === 'Other' && parts.length > 1 ? ['#8a8f98', '#fff'] : palette[paletteIndex++ % palette.length]
+  const colorOf = data.colors
   const colorVars = part => ({ '--c': colorOf[part][0], '--fg': colorOf[part][1] })
   // Contiguous runs of slides in the same section, in deck order.
   const sections = []
@@ -601,7 +596,9 @@ footer{margin-top:24px;font-size:12.5px;color:var(--muted);max-width:80ch}
 
 export function rehearsalReport(session, now) {
   // Escape '<' so literal slide markup cannot terminate the JSON script element.
-  const data = JSON.stringify({ exportedAt: now, session, rows: slideTotals(session, now) }).replaceAll('<', '\\u003c')
+  const rows = slideTotals(session, now)
+  const colors = sectionColors(rows.map(row => row.part))
+  const data = JSON.stringify({ exportedAt: now, session, rows, colors }).replaceAll('<', '\\u003c')
   return `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Rehearsal report</title>
 <style>${styles}</style></head><body><main>
