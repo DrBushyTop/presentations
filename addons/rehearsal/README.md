@@ -33,13 +33,31 @@ Sort by duration to find expensive slides. After pausing or finishing, select
 potential cuts to estimate time saved and the remaining presentation duration.
 CSV contains the slide report and cut selections. JSON includes every visit and
 the deck's titles, section labels, Markdown and raw speaker notes as they were
-when the run began. **Export HTML report** downloads a standalone page with slide
-and section charts, source content, individual visits and the full raw data.
-Open it locally without a server or internet connection. Sort by duration, filter
-by section, search content, and select potential cuts. **Save report with selected
-cuts** saves those selections into a new HTML file. **Print / save PDF** opens the
-browser print dialog. Reports from older runs still show timings, but cannot
-recover content that was not captured at the time.
+when the run began.
+
+**Export HTML report** downloads a standalone page. Open it locally without a
+server or internet connection. It is ordered by importance:
+
+1. The measured total against the target, how much to cut, the slide where the
+   run passed the target, and a projection for skipped slides at the run's median
+   pace. Slides visited, paused time, median slide time and revisits sit beside it.
+2. A timeline of the whole run in deck order. Section bands sit above one segment
+   per slide, sized by time, with the target line and the overrun marked. Hover a
+   segment for details and click it to open that slide.
+3. A section table with slide counts, start times, totals and shares. Click a row
+   to list its slides.
+4. The longest slides, slides you went back to, slides under five seconds and
+   slides you skipped.
+5. The path through the deck: slide number over measured time in the order you
+   presented, with jumps back in red.
+6. Every slide with its time, visits and running start time. Expand a slide for
+   its speaker notes, markup, frontmatter and individual visits. Sort, filter by
+   section, and search titles, markup and notes.
+
+Tick slides to plan cuts. The timeline, headline and toolbar update with the time
+saved and the new total. **Save copy with cuts** writes those selections into a
+new HTML file. **Print** prints the summary and charts. Reports from older runs
+still show timings, but cannot recover content that was not captured at the time.
 
 Runs are saved in browser local storage once per second and on slide changes.
 Reloading recovers an unfinished run. Click **Resume rehearsal** to continue;
