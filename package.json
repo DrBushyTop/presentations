@@ -46,7 +46,8 @@
     "start:no-slop-engineer": "npm run build:no-slop-engineer && node no-slop-engineer/serve.mjs",
     "prepare": "git config core.hooksPath .githooks",
     "check:slides": "node scripts/check-slides.mjs",
-    "check:slides:baseline": "node scripts/check-slides.mjs --update-baseline"
+    "check:slides:baseline": "node scripts/check-slides.mjs --update-baseline",
+    "test:rehearsal": "node --test addons/rehearsal/timing.test.mjs"
   },
   "devDependencies": {
     "@slidev/cli": "^52.19.1",
@@ -54,6 +55,7 @@
     "playwright-chromium": "^1.50.0"
   },
   "workspaces": [
-    "themes/*"
+    "themes/*",
+    "addons/*"
   ]
 }

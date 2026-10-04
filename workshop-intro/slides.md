@@ -1,6 +1,11 @@
 ---
 theme: zure
+addons:
+  - slidev-addon-rehearsal
 title: App modernization lab
+duration: 10min
+rehearsal:
+  targetMinutes: 10
 titleTemplate: '%s · Zure'
 author: Pasi Huuhka
 info: |

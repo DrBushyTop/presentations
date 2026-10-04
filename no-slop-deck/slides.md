@@ -1,5 +1,7 @@
 ---
 theme: zure
+addons:
+  - slidev-addon-rehearsal
 title: The no slop engineer
 duration: 60min
 rehearsal:

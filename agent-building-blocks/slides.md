@@ -1,6 +1,7 @@
 ---
 theme: zure
 addons:
+  - slidev-addon-rehearsal
   - slidev-addon-shared-mermaid
 title: Skills, tools and agent boundaries
 titleTemplate: '%s · Zure'

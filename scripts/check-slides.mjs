@@ -44,12 +44,12 @@ let decks = args.filter((a) => !a.startsWith('--'))
 if (args.includes('--staged')) {
   const files = execSync('git diff --cached --name-only', { cwd: root, encoding: 'utf8' })
     .split('\n').filter(Boolean)
-  // A theme change can affect every deck, so check them all. Otherwise check
+  // A theme or addon change can affect every deck, so check them all. Otherwise check
   // only decks with staged changes. Folders inside a deck that never render
   // as slides don't count.
   const ignored = (f) => f.includes('/demo-app/')
-  const themeChanged = files.some((f) => f.startsWith('themes/'))
-  decks = themeChanged ? allDecks : allDecks.filter((d) => files.some((f) => f.startsWith(`${deckDir(d)}/`) && !ignored(f)))
+  const sharedPresentationChanged = files.some((f) => f.startsWith('themes/') || f.startsWith('addons/'))
+  decks = sharedPresentationChanged ? allDecks : allDecks.filter((d) => files.some((f) => f.startsWith(`${deckDir(d)}/`) && !ignored(f)))
   if (!decks.length) process.exit(0)
 }
 if (!decks.length) decks = allDecks
