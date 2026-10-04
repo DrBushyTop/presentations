@@ -663,49 +663,6 @@ clicks: 2
 ---
 part: Review
 class: ns
----
-
-# Two real PRs from T3 Code
-
-<T3PrExamples />
-
-<!--
-About 1 minute, as the entry point for the following walkthrough. Both examples are merged PRs with playable recordings and explicit agent credits. The PR numbers and video buttons open the original sources in a new tab. Both cards stay visible so we can choose a link while presenting.
-
-- PR #11354, merged 12 September 2026, fixes background preview Enter sending the human's unfinished composer draft. Play the 10-second before clip, then the 14-second after clip. The draft diagram on this slide is an illustration; the linked clips show the actual app. The PR credits GPT-6-Astra in Codex and reports 105 focused tests. Native macOS remained unverified.
-- For the review walkthrough, show a finding that earned a fix and one that did not. The agent reproduced a clipboard sanitization bug before fixing it, then repeated the check: https://github.com/pingdotgg/t3code/pull/11354#discussion_r3994847850
-- Macroscope and CodeRabbit both questioned native text selection behavior. The agent checked the bundled Electron runtime; CodeRabbit withdrew its finding after that verification: https://github.com/pingdotgg/t3code/pull/11354#discussion_r3994836449
-- PR #15265, merged 3 October 2026, changes one production line containing two CSS selectors. The selector excerpt on this slide shows the replacement, not the full source line. The PR reports 4,316 elements restyled before and 5 after one small DOM mutation. This is not the count for the whole typing session.
-- The comparison video is 14.48 seconds; the stress video is 47.32 seconds. Both use 4× CPU throttling. The PR includes production-build traces, a real-data copy, a larger stress copy, and visual checks across 32 banner-layout, theme and width combinations.
-- GPT-6-Astra in Codex found and fixed the performance issue. Claude Opus 5.5 in Claude Code measured it and opened the PR, both inside T3 Code. The measurements are the authors' reported results, not a benchmark we independently reran.
-- These public artifacts show agent development, verification and review responses. They do not establish the configuration or budget of an unattended babysitter.
-
-Sources:
-- https://github.com/pingdotgg/t3code/pull/11354
-- https://github.com/pingdotgg/t3code/pull/15265
--->
-
----
-layout: none
----
-
-<DemoSlide title="Review bots and a local babysitter" :minutes="3" prepared agent="T3 Code · two real PRs" prompt="Follow the review comments, the local fixes and the next CI run. Which findings deserve action? Which commit do the checks cover? Where does the babysitter stop?" />
-
-<!--
-Prepared walkthrough in T3 Code, about 3 minutes.
-
-- The public PR examples and clips are linked on the preceding slide. Use them for the verification and review walkthrough. A live babysitter run needs separately prepared local artifacts.
-1. PR one: show the different bots' actual comments. Pick a useful finding and some overlap or noise.
-2. PR two: compare the one-line CSS change with the recorded behavior and measurements. Check which commit the approval covers.
-3. If the live babysitter is ready, show its fix, push, next CI results and actual stop or escalation. A new commit requires new evidence.
-- Keep the local implementation/subagent loop on the earlier diagram. These PRs demonstrate the outer loop.
-- Preparation status: the public PRs and recordings are selected. The babysit skill was previously under construction; show it only once the real workflow is ready. Do not imply a working integration we have not observed.
-- Source for the bot architecture and bounded fixes: https://www.huuhka.net/building-your-own-pr-reviewer-with-coding-agents/
--->
-
----
-part: Review
-class: ns
 clicks: 3
 ---
 
@@ -722,6 +679,49 @@ clicks: 3
 [click] The babysitter: a local agent run that watches the PR, reads comments and CI, makes one bounded fix, pushes, and waits. I'm building a babysit skill for this. It'll get a demo when it's ready.
 
 [click] Where it goes wrong: reviewers undoing each other, acting on a CI result from an older commit, commits landing after approval that nobody reviewed, and prompt injection. An agent that acts on PR comments will act on a malicious one.
+-->
+
+---
+layout: none
+---
+
+<DemoSlide title="Review bots and a local babysitter" :minutes="3" prepared agent="T3 Code · two real PRs" prompt="Follow the review comments, the local fixes and the next CI run. Which findings deserve action? Which commit do the checks cover? Where does the babysitter stop?" />
+
+<!--
+Prepared walkthrough in T3 Code, about 3 minutes.
+
+- The public PR examples and clips are linked on the following slide. Use them for the verification and review walkthrough. A live babysitter run needs separately prepared local artifacts.
+1. PR one: show the different bots' actual comments. Pick a useful finding and some overlap or noise.
+2. PR two: compare the one-line CSS change with the recorded behavior and measurements. Check which commit the approval covers.
+3. If the live babysitter is ready, show its fix, push, next CI results and actual stop or escalation. A new commit requires new evidence.
+- Keep the local implementation/subagent loop on the earlier diagram. These PRs demonstrate the outer loop.
+- Preparation status: the public PRs and recordings are selected. The babysit skill was previously under construction; show it only once the real workflow is ready. Do not imply a working integration we have not observed.
+- Source for the bot architecture and bounded fixes: https://www.huuhka.net/building-your-own-pr-reviewer-with-coding-agents/
+-->
+
+---
+part: Review
+class: ns
+---
+
+# Two real PRs from T3 Code
+
+<T3PrExamples />
+
+<!--
+About 1 minute. Use these links for the walkthrough introduced on the preceding slide. Both examples are merged PRs with playable recordings and explicit agent credits. The PR numbers and video buttons open the original sources in a new tab. Both cards stay visible so we can choose a link while presenting.
+
+- PR #11354, merged 12 September 2026, fixes background preview Enter sending the human's unfinished composer draft. Play the 10-second before clip, then the 14-second after clip. The draft diagram on this slide is an illustration; the linked clips show the actual app. The PR credits GPT-6-Astra in Codex and reports 105 focused tests. Native macOS remained unverified.
+- For the review walkthrough, show a finding that earned a fix and one that did not. The agent reproduced a clipboard sanitization bug before fixing it, then repeated the check: https://github.com/pingdotgg/t3code/pull/11354#discussion_r3994847850
+- Macroscope and CodeRabbit both questioned native text selection behavior. The agent checked the bundled Electron runtime; CodeRabbit withdrew its finding after that verification: https://github.com/pingdotgg/t3code/pull/11354#discussion_r3994836449
+- PR #15265, merged 3 October 2026, changes one production line containing two CSS selectors. The selector excerpt on this slide shows the replacement, not the full source line. The PR reports 4,316 elements restyled before and 5 after one small DOM mutation. This is not the count for the whole typing session.
+- The comparison video is 14.48 seconds; the stress video is 47.32 seconds. Both use 4× CPU throttling. The PR includes production-build traces, a real-data copy, a larger stress copy, and visual checks across 32 banner-layout, theme and width combinations.
+- GPT-6-Astra in Codex found and fixed the performance issue. Claude Opus 5.5 in Claude Code measured it and opened the PR, both inside T3 Code. The measurements are the authors' reported results, not a benchmark we independently reran.
+- These public artifacts show agent development, verification and review responses. They do not establish the configuration or budget of an unattended babysitter.
+
+Sources:
+- https://github.com/pingdotgg/t3code/pull/11354
+- https://github.com/pingdotgg/t3code/pull/15265
 -->
 
 ---
