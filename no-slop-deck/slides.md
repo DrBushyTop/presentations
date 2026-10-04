@@ -58,9 +58,9 @@ nofooter: true
 About 40 seconds. A nod to Papers, Please, the border inspector game. The inspector is checking my credentials.
 
 - Papers, please.
-[click] Purpose of visit: a talk. I started in dev, then DevOps, and now most of my work is AI: dev tooling that helps organisations run AI-assisted development, alongside normal dev projects. AI has been part of every project for the last few years. AI architect at Zure, more dev than data. Azure since 2014, 150+ customers.
+[click] Purpose of visit: a talk. DevOps and development were my background; now most of my work is AI: dev tooling that helps organisations run AI-assisted development, alongside normal dev projects. AI has been part of every project for the last few years. AI architect at Zure. Azure since 2014, 150+ customers.
 [click] Microsoft MVP since 2020, in two categories: Developer Technologies for the DevOps side, and Foundry for AI.
-[click] Approved. Welcome to ESPC.
+[click] Entry granted. Welcome to ESPC.
 
 Sources:
 - AI architect at Zure, Azure since 2014, AI in every project, MVP categories: Pasi.
@@ -68,7 +68,8 @@ Sources:
 - MVP since June 2020: https://www.huuhka.net/ive-been-awarded-the-microsoft-azure-mvp-title/
 - Both portraits were generated from my own recent photo, using the game's official screenshots as a style reference. The booth sprite is 72x72 pixels with 9 colours; the passport photo is 48x48 with 5 colours and shows me straight on. Both use flat shading and nearest-neighbour scaling. Papers, Please is by Lucas Pope (3909 LLC); the fonts are Silkscreen and VT323.
 - Visual reference: https://www.papersplea.se/presskit/
-- The documents stay square to the canvas, with flat paper, a dotted desk, a stepped seal and stamp, and inspection lines that turn at right angles. Reveals move in short pixel steps.
+- The documents stay square to the canvas, with flat paper, a dotted desk, a stepped seal and stamp, and inspection lines that join the highlighted box edges at right angles. Reveals move in short pixel steps.
+- The passport has a document heading, field dividers and a machine-readable zone. The stamp follows the supplied game reference, with a checker border, entry verdict and shield. Its top row marks ESPC 2026. The passport number and issuance are props for this introduction.
 -->
 
 ---

@@ -2,7 +2,7 @@
   Speaker intro in the style of Papers, Please (Lucas Pope, 2013). The
   inspector checks Pasi's documents, then stamps the passport.
   0 papers, please · 1 purpose of visit, the photo matches · 2 the MVP permit,
-  the names match · 3 APPROVED
+  the names match · 3 ENTRY GRANTED
   Facts: AI architect at Zure (Pasi), Azure since 2014 (Pasi), 150+
   customers (Sessionize bio), Microsoft MVP since 2020 in DevTech and Foundry
   (Pasi, LinkedIn). Both portraits are generated from his own recent photo:
@@ -12,11 +12,12 @@
   Overview and print show the final, stamped state without motion.
 -->
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, useId, watch } from 'vue'
 import { useSlideContext } from '@slidev/client'
 import { useIsActive } from '../lib/active'
 
 const props = withDefaults(defineProps<{ step?: number }>(), { step: 0 })
+const stampPatternId = `pp-stamp-${useId()}`
 const { $renderContext } = useSlideContext()
 const still = computed(() => !['slide', 'presenter'].includes($renderContext.value as string))
 const s = computed(() => (still.value ? 3 : props.step))
@@ -24,37 +25,47 @@ const s = computed(() => (still.value ? 3 : props.step))
 const lines = [
   { at: 0, who: 'Inspector', t: 'Papers, please.' },
   { at: 1, who: 'Inspector', t: 'Purpose of visit?' },
-  { at: 1, who: 'Pasi', t: 'A talk. Dev, DevOps, now mostly AI.' },
+  { at: 1, who: 'Pasi', t: 'A talk. DevOps & dev to AI.' },
   { at: 2, who: 'Inspector', t: 'MVP in what?' },
   { at: 2, who: 'Pasi', t: 'DevOps and AI. Both.' },
   { at: 3, who: 'Inspector', t: 'Welcome to ESPC.' },
 ]
 
-// Inspection lines join the visible fields in canvas coordinates.
+// Inspection lines join the facing edges of the highlighted fields.
 const root = ref<HTMLElement>()
 const face = ref<HTMLElement>()
 const photo = ref<HTMLElement>()
 const nameA = ref<HTMLElement>()
 const nameB = ref<HTMLElement>()
 const links = ref<{ photo: number[], name: number[] }>({ photo: [], name: [] })
-function centre(el?: HTMLElement) {
+function edge(el: HTMLElement | undefined, side: 'left' | 'right') {
   if (!root.value || !el) return [0, 0]
   const box = root.value.getBoundingClientRect()
   const k = root.value.offsetWidth / box.width
   const r = el.getBoundingClientRect()
-  return [(r.left + r.width / 2 - box.left) * k, (r.top + r.height / 2 - box.top) * k]
+  const style = getComputedStyle(el)
+  const outline = parseFloat(style.outlineOffset) + parseFloat(style.outlineWidth) / 2
+  const x = side === 'right' ? (r.right - box.left) * k + outline : (r.left - box.left) * k - outline
+  return [x, (r.top + r.height / 2 - box.top) * k]
 }
 async function measure() {
   await nextTick()
   if (!root.value?.getBoundingClientRect().width) return
-  links.value = { photo: [...centre(face.value), ...centre(photo.value)], name: [...centre(nameA.value), ...centre(nameB.value)] }
+  links.value = { photo: [...edge(face.value, 'right'), ...edge(photo.value, 'left')], name: [...edge(nameA.value, 'right'), ...edge(nameB.value, 'left')] }
 }
 function inspectionPath(points: number[], turnX?: number) {
   const [x1, y1, x2, y2] = points.map(n => Math.round(n / 4) * 4)
   const x = turnX ?? Math.round((x1 + x2) / 8) * 4
   return `M ${x1} ${y1} H ${x} V ${y2} H ${x2}`
 }
-onMounted(() => { measure(); setTimeout(measure, 600) })
+let resizeObserver: ResizeObserver | undefined
+onMounted(() => {
+  resizeObserver = new ResizeObserver(measure)
+  if (root.value) resizeObserver.observe(root.value)
+  measure()
+  setTimeout(measure, 600)
+})
+onBeforeUnmount(() => resizeObserver?.disconnect())
 watch(() => props.step, () => { measure(); setTimeout(measure, 250) })
 const active = useIsActive()
 watch(active, (on) => { if (on) setTimeout(measure, 700) })
@@ -81,7 +92,7 @@ watch(active, (on) => { if (on) setTimeout(measure, 700) })
 
     <section class="desk">
       <article class="doc passport">
-        <header class="ph">Republic of Azure<span class="seal" aria-hidden="true">
+        <header class="ph"><div>Republic of Azure<small>Passport</small></div><span class="seal" aria-hidden="true">
           <svg viewBox="0 0 12 12"><path d="M3 0h6v1h2v2h1v6h-1v2H9v1H3v-1H1V9H0V3h1V1h2Z M3 1v1H2v1H1v6h1v1h1v1h6v-1h1V9h1V3h-1V2H9V1Z" fill="currentColor" fill-rule="evenodd" /></svg>
           <span>AZ</span>
         </span></header>
@@ -92,33 +103,43 @@ watch(active, (on) => { if (on) setTimeout(measure, 700) })
             <dd ref="nameA" :class="{ inspect: s === 2 }">Huuhka, Pasi</dd>
             <dt>Role</dt>
             <dd>AI architect</dd>
+            <dt>Employer</dt>
+            <dd>Zure</dd>
           </dl>
         </div>
         <div class="fields">
-          <div class="f wide"><dt>Note</dt><dd>More dev than data</dd></div>
-          <div class="f"><dt>Employer</dt><dd>Zure</dd></div>
-          <div class="f"><dt>Document no.</dt><dd>NSE-0482</dd></div>
+          <div class="f"><dt>Passport no.</dt><dd>NSE-0482</dd></div>
+          <div class="f"><dt>Issued</dt><dd>2026</dd></div>
           <div class="f"><dt>Azure since</dt><dd class="big">2014</dd></div>
-          <div class="f"><dt>Class</dt><dd>Dev<br>DevOps<br>AI</dd></div>
+          <div class="f"><dt>Career</dt><dd>DevOps &amp; dev<br>to AI</dd></div>
+          <div class="f"><dt>Destination</dt><dd>ESPC 2026</dd></div>
+          <div class="f"><dt>Entry type</dt><dd>Speaker</dd></div>
         </div>
         <div class="mrz" aria-label="Machine-readable zone">
-          <div>I&lt;AZRNSE0482&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;</div>
-          <div>2014AZURE&lt;&lt;MVP2020&lt;DEVAI&lt;&lt;&lt;&lt;&lt;4</div>
-          <div>HUUHKA&lt;&lt;PASI&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;</div>
+          <div>P&lt;AZRHUUHKA&lt;&lt;PASI&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;</div>
+          <div>NSE0482&lt;&lt;2026&lt;&lt;AZURE2014&lt;&lt;ESPC2026&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;</div>
         </div>
-        <div class="stamp" aria-hidden="true">
-          <svg viewBox="0 0 72 20">
-            <path d="M2 0h68v2h2v16h-2v2H2v-2H0V2h2Z" fill="var(--paper)" />
-            <path d="M2 0h68v2h2v16h-2v2H2v-2H0V2h2Z M4 4v12h64V4Z" fill="currentColor" fill-rule="evenodd" />
+        <div class="stamp" role="img" aria-label="Entry granted for ESPC 2026">
+          <svg viewBox="0 0 72 28" aria-hidden="true">
+            <defs>
+              <pattern :id="stampPatternId" width="2" height="2" patternUnits="userSpaceOnUse">
+                <path d="M0 0h1v1H0Z M1 1h1v1H1Z" fill="currentColor" />
+              </pattern>
+            </defs>
+            <path d="M0 0h72v28H0Z M2 2v24h68V2Z" :fill="`url(#${stampPatternId})`" fill-rule="evenodd" />
+            <path d="M0 0h6v1H1v5H0Z M66 0h6v6h-1V1h-5Z M0 22h1v5h5v1H0Z M71 22h1v6h-6v-1h5Z" fill="currentColor" />
+            <path d="M3 9H52 M53 2V26" fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="1 1" />
+            <path d="M56 8h2v2h3V8h3v2h3V8h2v11h-1v2h-2v2h-2v2h-3v-1h-2v-2h-2v-3h-1Z M59 20h2v-2h2v-2h2v-2h2v-3h-2v2h-2v2h-2v2h-2Z" fill="currentColor" fill-rule="evenodd" />
           </svg>
-          <span>Approved</span>
+          <span class="stamp-date">ESPC 2026</span>
+          <span class="stamp-verdict"><span>Entry</span><span>Granted</span></span>
         </div>
       </article>
 
       <article class="doc record" :class="{ on: s >= 1 }">
         <header>Work record</header>
         <ul>
-          <li>Dev, then DevOps, now AI</li>
+          <li>DevOps &amp; dev to AI</li>
           <li>AI dev tooling for orgs</li>
           <li>AI in every project for years</li>
           <li><b>150+</b> customers</li>
@@ -173,7 +194,7 @@ watch(active, (on) => { if (on) setTimeout(measure, 700) })
   --paper: #e6dbb9;
   --ink: #3a3127;
   --red: #c0392b;
-  --green: #3f7d3a;
+  --green: #526b2a;
   position: absolute;
   inset: 0;
   z-index: 20;
@@ -341,7 +362,7 @@ dd {
   left: 32px;
   top: 32px;
   width: 360px;
-  height: 544px;
+  height: 588px;
   display: flex;
   flex-direction: column;
   box-shadow: inset 0 0 0 4px #a5a184, 4px 4px 0 #161315;
@@ -349,6 +370,14 @@ dd {
 
 .passport header {
   background: #5a6b5a;
+}
+
+.ph small {
+  display: block;
+  margin-top: 4px;
+  font-size: 14px;
+  line-height: 1;
+  color: #d7d4b7;
 }
 
 .id {
@@ -365,25 +394,45 @@ dd {
   padding: 4px;
 }
 
+.id dt,
+.fields dt {
+  line-height: 1.15;
+}
+
+.id dd {
+  margin-bottom: 4px;
+}
+
+.id dd:first-of-type {
+  margin: 4px 0 0;
+}
+
+.id .inspect {
+  outline-offset: 0;
+}
+
 .fields {
   position: relative;
   z-index: 1;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 4px 16px;
-  padding: 0 16px;
+  padding: 8px 16px 0;
+  border-top: 2px solid #b9b191;
 }
 
-.f.wide {
-  grid-column: 1 / -1;
+.f {
+  padding-bottom: 4px;
+  border-bottom: 2px solid #c9c1a0;
 }
 
 .f dd {
-  font-size: 27px;
+  margin-bottom: 4px;
+  font-size: 24px;
 }
 
 .fields .big {
-  font-size: 58px;
+  font-size: 40px;
 }
 
 .ph {
@@ -410,8 +459,7 @@ dd {
   shape-rendering: crispEdges;
 }
 
-.seal span,
-.stamp span {
+.seal span {
   position: relative;
 }
 
@@ -420,31 +468,49 @@ dd {
   padding: 8px 16px 12px;
   background: rgba(58, 49, 39, 0.07);
   border-top: 2px solid rgba(58, 49, 39, 0.25);
-  font-size: 21px;
-  line-height: 1.05;
-  letter-spacing: 0.06em;
+  font-size: 16px;
+  line-height: 1.1;
+  letter-spacing: 0.04em;
   white-space: pre;
   color: #4a4034;
 }
 
 .stamp {
   position: absolute;
-  left: 36px;
-  bottom: 16px;
+  left: 72px;
+  bottom: 72px;
   z-index: 2;
-  width: 288px;
-  height: 80px;
-  display: grid;
-  place-items: center;
+  width: 216px;
+  height: 84px;
   white-space: nowrap;
   color: var(--green);
   font-family: 'PP Label', monospace;
-  font-size: 32px;
+  font-size: 24px;
   font-weight: 700;
   text-transform: uppercase;
+  mix-blend-mode: multiply;
   opacity: 1;
   transform: translateY(0);
   transition: transform 100ms steps(2), opacity 100ms steps(2);
+}
+
+.stamp-date {
+  position: absolute;
+  left: 9px;
+  top: 6px;
+  font-family: 'PP Type', monospace;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.stamp-verdict {
+  position: absolute;
+  left: 9px;
+  top: 30px;
+  display: flex;
+  flex-direction: column;
+  line-height: 0.875;
 }
 
 .pp:not(.s3) .stamp {
