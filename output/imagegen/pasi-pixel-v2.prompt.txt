@@ -1,0 +1,7 @@
+Use case: style-transfer.
+Make one square pixel-art portrait directly from the original reference photograph. Correct facial proportions are the main priority.
+Treat this as drawing over the photographed head, preserving its geometry, rather than inventing a new front-facing game character. Keep the original slight head angle and facial asymmetry. Preserve the measured relationship between the hairline, temples, cheekbones, eyes, glasses, nose, mouth, jaw and chin. In particular, keep the lower face slender and its natural taper from the cheekbones toward the narrower chin. Do not widen the cheeks, square off the jaw, enlarge the chin, or make the head symmetrical. Do not add a broad, heavy neck.
+Preserve the original swept-up dark hairstyle, thin round metal glasses, subtle closed-mouth smile and age. Keep the original facial expression. Glasses may retain subtle violet reflections, with the eyes readable.
+Change the rendering into crisp, restrained retro pixel art, approximately 128 by 128 logical pixels enlarged with hard pixel edges. Use simple coherent pixel clusters and a limited muted palette. Avoid a photorealistic image with a mosaic filter.
+Crop the composition to the full head and upper shoulders, with a small margin above the hair. Use a plain dark crew-neck top and a flat muted olive-gray background. Remove earbuds and backpack. No text, border, watermark or props.
+The original photograph is the sole reference for identity and face shape.

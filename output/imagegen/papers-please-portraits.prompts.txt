@@ -1,0 +1,28 @@
+Generated with the built-in imagegen tool.
+Style reference: https://www.papersplea.se/presskit/img/shots/PapersPlease-Desktop-1140x640-en-02-Booth.png
+Identity reference: no-slop-deck/public/pasi.jpg
+Delivery: nearest-neighbour resize to 72x72 with 10 colours for the booth and 48x48 with 5 colours for the passport.
+
+Booth prompt
+
+Use case: stylized-concept.
+Create ONE square booth portrait for a presentation that recreates the visual atmosphere of Papers, Please.
+Input image 1: the original photograph, the sole identity reference.
+Input image 2: an official Papers, Please screenshot, the visual style reference only. Study the actual entrant face at the left of this screenshot. Match its extremely economical, flat, rough pixel-art rendering.
+Draw the photographed person as if he is an entrant in that game. Preserve his slightly tilted head, swept-up dark hair, thin round glasses, closed-mouth smile and slender tapering jaw. Prioritize the outline and proportions of his real face over a generic game character. Keep the face narrower toward the chin; no square jaw.
+The ENTIRE square portrait must have only 72 by 72 logical pixels, enlarged as hard square blocks. The head is roughly 42 logical pixels wide. Design the shapes at that tiny resolution, not a detailed portrait covered with pixel texture.
+Use no more than 10 flat, subdued colors. Skin is desaturated olive-beige with just one shadow and one highlight. Dark olive-brown hair is a simple silhouette with 2 or 3 blocky clusters, not individual strands. Glasses are a few thin stepped pixels, with NO purple or shiny reflections. Eyes and mouth are short pixel marks. No skin texture, pores, gradients, realistic wrinkles, polished dithering or soft rendering.
+Head and upper shoulders centered, some space above the hair, simple dark brown jacket. Background is a single flat dull dark olive gray. No earbuds or backpack.
+Render only the portrait image, not the screenshot, game UI, frame, passport, labels or text. This should look as crude and restrained as an actual Papers, Please entrant sprite, while still resembling the person in image 1.
+
+Passport prompt
+
+Use case: identity-preserve.
+Edit image 2, the existing Papers, Please style passport-photo portrait. Change the pose to a strictly FRONT-FACING official ID photo.
+Image 1 is the original photograph and the reference for this person's identity and facial proportions.
+Image 2 is the existing passport portrait to edit and the reference for its crude pixel style, printed colors and clothing.
+The camera must face the subject directly at eye level. Head held upright, no tilt, no three-quarter view, no head rotation in either direction. Face centered on a vertical line. Both eyes on the same horizontal line, both round eyeglass lenses the same apparent size, nose bridge centered between them, ears visible equally at the same height. Both shoulders square to the camera and level. The original photograph's head angle must NOT be copied.
+Preserve this person's recognizable swept-up dark hair, thin round glasses, nose, restrained closed-mouth smile, and slender face that narrows naturally toward the chin. Do not make his face wider or square off the jaw. Keep normal small facial asymmetries while making the overall pose frontal.
+Match the existing extremely low-detail Papers, Please passport-photo rendering. Design the WHOLE square photo at 48 by 48 logical pixels, enlarged as hard blocks. Head about 25 logical pixels wide, complete head and upper shoulders centered, margin above the hair, simple dark jacket and light collared shirt.
+Use ONLY five flat desaturated tones: pale gray-beige paper background, parchment skin highlight, mid olive-gray skin shadow, dark gray-brown hair/glasses/clothing, and one intermediate gray-brown. Features are minimal pixel marks, hair a simple block silhouette. No purple lens reflections, smooth shading, gradients, realistic skin texture, fine detail, anti-aliasing or decorative dithering.
+Keep the square crop, paper background and formal clothing. Output only the photo, without a passport layout, text, frame, stamp, watermark or props.

@@ -6,7 +6,9 @@
   Facts: AI architect at Zure (Pasi), Azure since 2014 (Pasi), 150+
   customers (Sessionize bio), Microsoft MVP since 2020 in DevTech and Foundry
   (Pasi, LinkedIn). Both portraits are generated from his own recent photo:
-  the booth face as he is now, the passport photo formal and printed.
+  the booth face as he is now, the passport photo straight on and printed.
+  The sprites use 72x72 pixels and 9 colours for the booth, 48x48 pixels
+  and 5 colours for the passport, enlarged with nearest-neighbour scaling.
   Overview and print show the final, stamped state without motion.
 -->
 <script setup lang="ts">
@@ -63,7 +65,7 @@ watch(active, (on) => { if (on) setTimeout(measure, 700) })
 
     <section class="booth">
       <div ref="face" class="window" :class="{ inspect: s === 1 }">
-        <img src="/pasi-pixel.png" alt="Pixel portrait of Pasi Huuhka">
+        <img src="/pasi-pixel-papers-please.png" alt="Pixel portrait of Pasi Huuhka">
       </div>
       <ol class="transcript">
         <li v-for="(l, i) in lines" :key="i" :class="{ on: s >= l.at, them: l.who === 'Pasi' }">
@@ -76,7 +78,7 @@ watch(active, (on) => { if (on) setTimeout(measure, 700) })
       <article class="doc passport">
         <header class="ph">Republic of Azure<span class="seal" aria-hidden="true">AZ</span></header>
         <div class="id">
-          <div ref="photo" class="photo" :class="{ inspect: s === 1 }"><img src="/pasi-passport.png" alt=""></div>
+          <div ref="photo" class="photo" :class="{ inspect: s === 1 }"><img src="/pasi-passport-papers-please.png" alt="Passport portrait of Pasi Huuhka"></div>
           <dl>
             <dt>Name</dt>
             <dd ref="nameA" :class="{ inspect: s === 2 }">Huuhka, Pasi</dd>
