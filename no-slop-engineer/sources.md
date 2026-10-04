@@ -260,6 +260,14 @@ Managed workflows use task-specific benchmarks, cost per completed outcome and q
 
 Limit: A substantial platform investment. It challenges blanket dismissal of factories, not the need for boundaries.
 
+### Why software factories fail
+
+[Dex Horthy / HumanLayer](https://github.com/humanlayer/advanced-context-engineering-for-coding-agents/blob/main/wsff.md) · 2026-07-22
+
+HumanLayer read only specs and tickets from July 2025, ended up with code nobody could maintain, and put human code review back while keeping planning up front.
+
+Limit: Essay version of the AI Engineer World's Fair 2026 keynote (https://www.youtube.com/watch?v=Ib5GBkD555M). Quotes come from the essay, not a checked transcript. It does not say they stopped reviewing plans.
+
 ### I am betting my company on proactive agents
 
 [Boris Tane / Polylane](https://polylane.com/blog/proactive-agents/) · 2026-07-05

@@ -2,8 +2,9 @@
   Local review as part of the implementer's instructions, not a separate
   request. The instruction is given once, before work starts. For each slice
   the agent builds, sends review subagents, fixes what it judges worth fixing,
-  reruns the checks, commits, and only then reports back. The person decides:
-  next slice, or a PR for this one.
+  reruns the checks, records a short clip of the feature, commits, and only
+  then reports back. The person watches the clip, then decides: next slice,
+  or a PR for this one. The clip goes into the PR description.
   0 the instruction and the build · 1 review and fix, unattended · 2 the report and your decision
 -->
 <script setup lang="ts">
@@ -11,7 +12,6 @@ withDefaults(defineProps<{ step?: number }>(), { step: 0 })
 const lenses = ['Functional', 'Non-functional', 'Security']
 const report = [
   { ok: true, t: 'Fixed: = in a title ran as a formula' },
-  { ok: true, t: 'Fixed: all rows loaded into memory' },
   { ok: false, t: 'Skipped: rename toRow, style only' },
 ]
 </script>
@@ -20,7 +20,7 @@ const report = [
   <div class="loc">
     <section class="instr">
       <small>Your instruction, once, before work starts</small>
-      <p class="ns-mono">After each slice, run the review subagents and fix what matters. Rerun the checks, commit, then come back to me.</p>
+      <p class="ns-mono">After each slice, run the review subagents and fix what matters. Rerun the checks, record a short clip of the feature, commit, then come back to me.</p>
     </section>
 
     <section class="agent">
@@ -33,7 +33,8 @@ const report = [
         </li>
         <li :class="{ on: step >= 1 }"><span class="n ns-mono">3</span><b>Fix what matters</b><em>its judgement</em></li>
         <li :class="{ on: step >= 1 }"><span class="n ns-mono">4</span><b>Rerun the checks</b></li>
-        <li :class="{ on: step >= 1 }"><span class="n ns-mono">5</span><b>Commit the slice</b></li>
+        <li :class="{ on: step >= 1 }"><span class="n ns-mono">5</span><b>Record a clip</b><em>drives the browser</em></li>
+        <li :class="{ on: step >= 1 }"><span class="n ns-mono">6</span><b>Commit the slice</b></li>
       </ol>
       <svg class="back" viewBox="0 0 20 100" preserveAspectRatio="none" aria-hidden="true" :class="{ on: step >= 1 }">
         <path d="M2,92 C18,92 18,8 2,8" vector-effect="non-scaling-stroke" />
@@ -44,6 +45,10 @@ const report = [
       <div class="report">
         <small>Agent reports</small>
         <b>Slice 2 done and committed. Checks green.</b>
+        <div class="clip">
+          <span class="play"><Icon name="play" /></span>
+          <span><b>Clip, 0:24</b>Alex exports Team A's tasks</span>
+        </div>
         <p v-for="r in report" :key="r.t" :class="{ skip: !r.ok }">
           <Icon :name="r.ok ? 'check' : 'dot'" /> {{ r.t }}
         </p>
@@ -56,7 +61,7 @@ const report = [
       </div>
     </section>
 
-    <p class="take" :class="{ on: step >= 2 }">Your attention starts after the models have checked.</p>
+    <p class="take" :class="{ on: step >= 2 }">Your attention starts after the models have checked. Watch the clip first.</p>
   </div>
 </template>
 
@@ -135,8 +140,8 @@ const report = [
 }
 
 .steps .n {
-  width: 34px;
-  height: 34px;
+  width: 30px;
+  height: 30px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -161,7 +166,7 @@ const report = [
   display: flex;
   gap: 8px;
   flex-basis: 100%;
-  padding-left: 48px;
+  padding-left: 44px;
 }
 
 .lenses i {
@@ -237,6 +242,38 @@ const report = [
   line-height: 1.3;
   color: var(--ns-frozen);
   font-weight: 700;
+}
+
+.clip {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 10px 6px 6px;
+  border: 2px solid var(--ns-frozen);
+}
+
+.clip .play {
+  width: 44px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--ns-frozen);
+  color: var(--z-ink);
+  font-size: 18px;
+}
+
+.clip > span:last-child {
+  display: flex;
+  flex-direction: column;
+  font-size: 17px;
+  line-height: 1.2;
+  color: #e6e6e6;
+}
+
+.clip b {
+  font-size: 17px;
+  color: var(--ns-frozen);
 }
 
 .report p.skip {

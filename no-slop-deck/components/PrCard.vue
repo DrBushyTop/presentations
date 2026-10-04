@@ -20,7 +20,8 @@ const evidence = [
   { icon: 'check', tone: 'ok', label: 'Decision: caller\'s team only', meta: 'design' },
   { icon: 'check', tone: 'ok', label: 'Forged teamId returns 0 foreign rows', meta: 'boundary check' },
   { icon: 'check', tone: 'ok', label: 'Check fails without the predicate', meta: 'negative control' },
-  { icon: 'check', tone: 'ok', label: 'Review stopped: round 2, nothing above the bar', meta: 'stop rule' },
+  { icon: 'play', tone: 'ok', label: 'Clip: forged export, before and after', meta: 'video' },
+  { icon: 'check', tone: 'ok', label: 'Review stopped: nothing above the bar', meta: 'stop rule' },
   { icon: 'clock', tone: 'watch', label: 'Behind a flag. I watch exports per team.', meta: 'rollout' },
 ] as const
 
@@ -185,7 +186,7 @@ const rows = computed(() => (props.mode === 'hook' ? hookChecks : evidence))
 }
 
 .evidence .checks li {
-  padding: 7px 0;
+  padding: 5px 0;
   grid-template-columns: 30px 1fr;
   grid-template-rows: auto;
   align-items: baseline;

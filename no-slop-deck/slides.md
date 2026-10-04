@@ -1,6 +1,9 @@
 ---
 theme: zure
 title: The no slop engineer
+duration: 60min
+rehearsal:
+  targetMinutes: 60
 titleTemplate: '%s · Pasi Huuhka'
 author: Pasi Huuhka
 info: |
@@ -316,6 +319,7 @@ About 1 minute. Keep this at the level of the design discussion.
 [click] This is what grilling really looks like: a batch of numbered questions, each with the agent's recommendation. Real sessions run to dozens. Factual questions it answers from the code itself; these are the product choices.
 [click] You answer by number. Most recommendations are fine. The work is spotting the one to override: here the agent assumed all tasks, and the person wants what the list shows.
 [click] Grill with docs records the settled answers in CONTEXT.md and a decision record. The durable record is the useful output, not the transcript.
+- Grilling is also the cheapest point to understand the feature. I've answered every choice before any code exists, so when I later read the diff I'm checking it against decisions I made, not learning the feature from the code.
 - Only the caller-team boundary is fixed for the teaching case. The filter, columns and limits will come from Pasi's real design run.
 - This is the next step above implementing directly when a task has unclear choices. It works within a design phase or as a short conversation. No separate plan file is required.
 - Matt Pocock's grilling skills are the source for the interview pattern. https://github.com/mattpocock/skills
@@ -558,6 +562,7 @@ About 1 minute.
 - Start a fresh instance with known data. In the demo app that's npm run reset and npm run dev. The seed data includes B-201, a canary row that must never reach Team A.
 [click] Reproduce it in a browser the agent controls: signed in as Alex from Team A, ask the export for team-b. The canary row comes back. The server log shows the same thing: six rows for a Team A session.
 [click] Fix it, then repeat exactly the same action with the same data. Five rows, no canary. Same request before and after is the evidence.
+- Ask the agent to record both runs. The two clips go into the PR, and they show a reviewer the bug and the fix in under a minute. We'll see that again in the review loop.
 - OpenAI made their app bootable per git worktree so Codex could launch one instance per change, and wired Chrome DevTools into the agent so it could "reproduce bugs, validate fixes, and reason about UI behavior directly". Logs and metrics come from a local stack per worktree that's torn down when the task ends. https://openai.com/index/harness-engineering/
 - What you need to make this work: one command to start the app, one command to reset to known data, data that makes a mistake visible, and a browser the agent can drive. Most projects have the first, few have the other three.
 -->
@@ -607,7 +612,10 @@ About 1 minute.
 - I don't ask for a review after the work. It's part of the instruction I give the implementer before it starts: after each slice, run the review subagents, fix what matters, rerun the checks, commit, and only then come back to me.
 - The agent builds the slice first.
 [click] Then, without me: review subagents with different questions. Functional checks the agreed behavior, non-functional checks limits and failures, security checks authority and untrusted input. They run in parallel. The agent fixes what it judges worth fixing, reruns the checks and commits the slice. A commit per slice keeps every step easy to review and easy to undo. I usually trust its judgement on which findings matter at this point.
-[click] The agent comes back with a short report: slice committed, what it fixed, what it skipped and why, checks green. Then I decide: next slice, or a PR for this one, depending on the task. My attention is needed only after the models have checked the obvious issues.
+- Before the commit it records a short clip of the feature. It already drives the browser for the checks, so the clip costs almost nothing.
+[click] The agent comes back with a short report: slice committed, a clip, what it fixed, what it skipped and why, checks green. My attention is needed only after the models have checked the obvious issues.
+- I watch the clip before I read the diff. Thirty seconds tells me what the slice does, so I read the code knowing what it's for. If the clip surprises me, that's the first thing to ask about. Then I decide: next slice, or a PR for this one. The clips go into the PR description, so a reviewer sees the feature before the code too.
+- OpenAI's harness team does this end to end: the agent records a video of the bug, fixes it, and records a second video of the fix before opening the PR. https://openai.com/index/harness-engineering/
 - Fresh context helps the reviewer look at the change without the builder's whole conversation. It isn't full independence. Pass the decisions and the diff, not a persuasive explanation of why the implementation is right.
 - The findings in the report are illustrative.
 - Sources: https://www.huuhka.net/primary-vs-subagents-in-llm-harnesses/ https://www.huuhka.net/building-your-own-pr-reviewer-with-coding-agents/
@@ -651,6 +659,31 @@ clicks: 2
 -->
 
 ---
+part: Review
+class: ns
+---
+
+# Two real PRs from T3 Code
+
+<T3PrExamples />
+
+<!--
+About 1 minute, as the entry point for the following walkthrough. Both examples are merged PRs with playable recordings and explicit agent credits. The PR numbers and video buttons open the original sources in a new tab. Both cards stay visible so we can choose a link while presenting.
+
+- PR #11354, merged 12 September 2026, fixes background preview Enter sending the human's unfinished composer draft. Play the 10-second before clip, then the 14-second after clip. The draft diagram on this slide is an illustration; the linked clips show the actual app. The PR credits GPT-6-Astra in Codex and reports 105 focused tests. Native macOS remained unverified.
+- For the review walkthrough, show a finding that earned a fix and one that did not. The agent reproduced a clipboard sanitization bug before fixing it, then repeated the check: https://github.com/pingdotgg/t3code/pull/11354#discussion_r3994847850
+- Macroscope and CodeRabbit both questioned native text selection behavior. The agent checked the bundled Electron runtime; CodeRabbit withdrew its finding after that verification: https://github.com/pingdotgg/t3code/pull/11354#discussion_r3994836449
+- PR #15265, merged 3 October 2026, changes one production line containing two CSS selectors. The selector excerpt on this slide shows the replacement, not the full source line. The PR reports 4,316 elements restyled before and 5 after one small DOM mutation. This is not the count for the whole typing session.
+- The comparison video is 14.48 seconds; the stress video is 47.32 seconds. Both use 4× CPU throttling. The PR includes production-build traces, a real-data copy, a larger stress copy, and visual checks across 32 banner-layout, theme and width combinations.
+- GPT-6-Astra in Codex found and fixed the performance issue. Claude Opus 5.5 in Claude Code measured it and opened the PR, both inside T3 Code. The measurements are the authors' reported results, not a benchmark we independently reran.
+- These public artifacts show agent development, verification and review responses. They do not establish the configuration or budget of an unattended babysitter.
+
+Sources:
+- https://github.com/pingdotgg/t3code/pull/11354
+- https://github.com/pingdotgg/t3code/pull/15265
+-->
+
+---
 layout: none
 ---
 
@@ -659,12 +692,12 @@ layout: none
 <!--
 Prepared walkthrough in T3 Code, about 3 minutes.
 
-- Choose two real PRs after Pasi has prepared them. Show the actual third-party review agents, their overlap or disagreement, and the local babysitter handling worthwhile findings.
+- The public PR examples and clips are linked on the preceding slide. Use them for the verification and review walkthrough. A live babysitter run needs separately prepared local artifacts.
 1. PR one: show the different bots' actual comments. Pick a useful finding and some overlap or noise.
-2. PR two: show the babysitter's local fix, push, current commit and next results. A new commit requires new evidence.
-3. Show a stop or escalation rather than an endless request for more review.
+2. PR two: compare the one-line CSS change with the recorded behavior and measurements. Check which commit the approval covers.
+3. If the live babysitter is ready, show its fix, push, next CI results and actual stop or escalation. A new commit requires new evidence.
 - Keep the local implementation/subagent loop on the earlier diagram. These PRs demonstrate the outer loop.
-- Preparation status: real PRs and recordings/screenshots still need to be selected. The babysit skill was previously under construction; show it only once the real workflow is ready. Do not imply a working integration we have not observed.
+- Preparation status: the public PRs and recordings are selected. The babysit skill was previously under construction; show it only once the real workflow is ready. Do not imply a working integration we have not observed.
 - Source for the bot architecture and bounded fixes: https://www.huuhka.net/building-your-own-pr-reviewer-with-coding-agents/
 -->
 
@@ -775,7 +808,7 @@ Production. Keep the counterargument, containing a bad change, the full Polylane
 ---
 part: Production
 class: ns
-clicks: 3
+clicks: 4
 ---
 
 # Some teams already skip reading every line
@@ -783,17 +816,24 @@ clicks: 3
 <AutomationDial :step="$clicks" />
 
 <!--
-About 1.5 minutes. Give this a fair hearing.
+About 2 minutes. Give this a fair hearing.
 
 [click] People still approve every change. Dillon reads every line. Honeycomb's team reviews plans for bigger tickets and reads less of the code, but it auto-approves 0% of PRs on purpose. Uber keeps people in review and tests its review bots against past PRs with known bugs, scoring precision, recall, cost and noise.
 
-[click] Machines approve some changes. Spotify's Fleet Management auto-merges most automated changes after checks. Its merged changes doubled, and it's watching PR size creep up. Intercom auto-approves over 19% of PRs, but only narrow ones, anyone can ask for a human, and the engineer who ships stays accountable. OpenAI's harness team made human review optional, and enforced structure with linters and tests. They also spent a fifth of their week cleaning up slop until they automated that too.
+[click] Machines approve some changes. Spotify's Fleet Management auto-merges most automated changes after checks. Its merged changes doubled, and it's watching PR size creep up. Intercom auto-approves over 19% of PRs, but only narrow ones, anyone can ask for a human, and the engineer who ships stays accountable.
+- OpenAI's harness team made human review optional: "Humans may review pull requests, but aren't required to." They still understand the system, just not line by line. They own the rules: a fixed layer model, custom lints and structural tests, and plans and decision logs checked into the repo. Their words: "Human taste is captured once, then enforced continuously on every line of code." They also spent a fifth of their week cleaning up slop until they automated that too.
 - Be fair to OpenAI's tradeoff: they also run "minimal blocking merge gates" and rerun flaky tests instead of blocking, because "corrections are cheap, and waiting is expensive." They add: "This would be irresponsible in a low-throughput environment." Reading less works when recovery is cheap.
+
+[click] One team moved the other way. HumanLayer, whose research and planning workflow I borrowed earlier in this talk, went lights-off in July 2025: "Just read the specs and the tickets, background agents for all the small/medium stuff." Months later they were digging into "the codebase you stopped reading three months ago", and by November one co-founder spent two weeks rewriting by hand. Dex Horthy's 2026 AI Engineer keynote, "Why software factories fail", puts code review back: "For now, the judge is you." They kept the planning; plans now cut the review, they don't replace it.
+- Dex's speed claim: you can "move 2-3x faster, safely" instead of chasing 10 to 100 times.
+- My view: reading all the code gives the best quality I've seen. It's also the slowest option. Pick where on this line each change sits, don't default to one end.
 
 [click] The common thread: every team that reads less of the code added more automated checks, and made recovery cheap.
 
 - Numbers as of each post: Intercom April 2026, Spotify September 2026.
 - Sources: https://www.honeycomb.io/blog/30-70-prs-day-how-we-managed-not-wreck-systems https://www.uber.com/gb/en/blog/efficient-software-factory/ https://www.intercom.com/blog/ai-is-approving-our-pull-requests-heres-how-we-made-it-safe/ https://openai.com/index/harness-engineering/ https://engineering.atspotify.com/2026/9/ai-changed-how-spotify-builds-what-we-learned-and-fixed-about-quality-at-higher-velocity
+- HumanLayer sources: essay version of the keynote https://github.com/humanlayer/advanced-context-engineering-for-coding-agents/blob/main/wsff.md (keynote video https://www.youtube.com/watch?v=Ib5GBkD555M, July 2026), the "2-3x faster, safely" post https://x.com/dexhorthy/status/2081058573556306030 and HumanLayer's own summary: "read the code, seek leverage, and break skills into workflows" https://www.humanlayer.dev/blog/humanlayer-resources
+- The quotes come from the essay and the post, not a checked video transcript.
 - These are company reports, not controlled comparisons.
 -->
 
@@ -1066,7 +1106,8 @@ class: ns
 About 1 minute.
 
 - Back to the PR from the start. The diff barely changed, one line.
-- What changed is what we can show: the fact from research, the decision from design, a check that fails without the filter, a review that stopped for a stated reason, and a flagged rollout I'll watch with a signal that stops it.
+- What changed is what we can show: the fact from research, the decision from design, a check that fails without the filter, a clip of the forged export before and after, a review that stopped for a stated reason, and a flagged rollout I'll watch with a signal that stops it.
+- Every row is something I understood on the way, not only something a tool reported. The clip is the fastest one for the next reviewer: they see the boundary hold before they read line 3.
 - That's what "done" means in this talk.
 - This is the illustrative closing checklist for the seeded export example. Align the research references, design decision and review stop with the real app artifacts before presenting those as observed results.
 -->
@@ -1131,7 +1172,7 @@ class: ns
 
 <div class="ns-sources">
   <p><b>Pasi Huuhka</b> Research, plan, implement · Current workflow · Building your own PR reviewer</p>
-  <p><b>GitHub Next</b> Chopin · <b>HumanLayer</b> Workflow phases · <b>GitHub</b> Spec Kit · <b>Matt Pocock</b> Skills</p>
+  <p><b>GitHub Next</b> Chopin · <b>HumanLayer</b> Workflow phases · Why software factories fail · <b>GitHub</b> Spec Kit · <b>Matt Pocock</b> Skills</p>
   <p><b>Honeycomb</b> Code review bottleneck · 30 to 70 PRs a day · AI amplifies existing practices</p>
   <p><b>Spotify</b> AI changed how Spotify builds · <b>Intercom</b> AI is approving our pull requests</p>
   <p><b>Uber</b> Running a software factory efficiently · <b>OpenAI</b> Harness engineering</p>
