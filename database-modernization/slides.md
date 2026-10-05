@@ -1,6 +1,7 @@
 ---
 theme: zure
 addons:
+  - slidev-addon-rehearsal
   - slidev-addon-shared-mermaid
 title: Modernizing databases
 titleTemplate: '%s · Zure'
@@ -23,7 +24,7 @@ fonts:
   provider: google
   sans: Inter
   mono: JetBrains Mono
-  weights: '400,600,700'
+  weights: '200,400,600,700,800'
 seoMeta:
   ogTitle: Modernizing databases
   ogDescription: How to choose a target, reduce migration risk and prove that the system still works.

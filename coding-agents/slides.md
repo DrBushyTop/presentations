@@ -1,6 +1,7 @@
 ---
 theme: zure
 addons:
+  - slidev-addon-rehearsal
   - slidev-addon-shared-mermaid
 title: How I develop with coding agents
 titleTemplate: '%s · Zure'
@@ -23,7 +24,7 @@ fonts:
   provider: google
   sans: Inter
   mono: JetBrains Mono
-  weights: '400,600,700'
+  weights: '200,400,600,700,800'
 seoMeta:
   ogTitle: How I develop with coding agents
   ogDescription: How I research, structure, implement and review work with coding agents.
@@ -67,6 +68,7 @@ to keep that understanding from falling behind.
 
 ---
 part: Operating model
+class: ceremony-slide
 ---
 
 # I add process when the task earns it
@@ -310,6 +312,7 @@ structure, so I often skip the old separate plan step.
 
 ---
 part: QRSPI
+class: phase-slide
 ---
 
 # My current QRSPI flow usually skips the separate plan
@@ -344,6 +347,7 @@ Usually it goes from structure to implementation. A separate plan still works.
 
 ---
 part: QRSPI
+class: questions-slide
 ---
 
 # I separate questions the agent can answer from decisions only I can make
@@ -462,6 +466,7 @@ assumptions challenged before they settle into the structure and then the code.
 
 ---
 part: QRSPI
+class: slice-grid-slide
 ---
 
 # I split the structure into slices I can run and check
@@ -667,6 +672,7 @@ evidence telling me where to focus.
 
 ---
 part: Execution
+class: ui-loop-slide
 ---
 
 # For UI work, the browser is part of the loop
@@ -817,6 +823,7 @@ catch more mistakes automatically before I spend time reviewing them.
 
 ---
 part: Harness engineering
+class: harness-slide
 ---
 
 # Every repeated correction should tighten the repository
@@ -872,6 +879,7 @@ software factory.
 
 ---
 part: Takeaways
+class: takeaways-slide
 ---
 
 # The parts I expect to keep
@@ -924,7 +932,7 @@ challenge the result, inspect the evidence and decide whether the work is done.
 
 ---
 part: Appendix
-class: dense
+class: dense references-slide
 ---
 
 # References and further reading

@@ -10,6 +10,10 @@ This repository contains reusable Slidev themes and individual presentations.
   a six-slide companion on configuration, reusable skills, context and subagents.
 - `workshop-intro/` contains an eight-slide, ten-minute **App modernization lab**
   introduction, including setup and lab troubleshooting tips.
+- `no-slop-deck/` contains **The no slop engineer**, a 60-minute ESPC talk.
+  Each slide builds with clicks. Components take a `step` prop set from
+  `$clicks` instead of using `v-click`. The export lab and review budget
+  slides are live: their controls work during the talk.
 
 Run a deck interactively:
 
@@ -25,10 +29,28 @@ npm run dev:coding-agents
 npm run dev:database-modernization
 npm run dev:agent-building-blocks
 npm run dev:workshop-intro
+npm run dev:no-slop
 ```
 
 `npm run build` builds every deck. Use `npm run export` or
 `npm run export-pptx` to select one for export.
+
+## Rehearsal timing
+
+All five primary Slidev decks include a rehearsal timer in presenter view. Click **Rehearsal**
+to start a run, pause for interruptions, and finish to see slide and section times.
+Returning to a slide adds to its total. Results save locally and export as CSV or
+JSON, or as an HTML report with charts, slide content and speaker notes. Select potential cuts to estimate time saved. The no-slop target is 60 minutes.
+
+See [the rehearsal addon guide](addons/rehearsal/README.md) for usage, recovery and
+browser requirements.
+
+## No slop engineer planning page
+
+`no-slop-engineer/` contains an interactive outline workbench with structure options,
+case studies, timings, demo plans and a standalone source notebook. Run it with
+`npm run start:no-slop-engineer`. See [its README](no-slop-engineer/README.md)
+for the M1 Tailscale link and serving details.
 
 ## Shared presentation code
 

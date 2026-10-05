@@ -7,6 +7,7 @@ const decks = [
   ['database-modernization', 'Modernizing databases'],
   ['agent-building-blocks', 'Skills, tools and agent boundaries'],
   ['workshop-intro', 'App modernization lab'],
+  ['no-slop', 'The no slop engineer'],
 ]
 
 const [action, ...args] = process.argv.slice(2)

@@ -1,0 +1,8 @@
+{
+  "name": "slidev-addon-rehearsal",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "keywords": ["slidev-addon", "slidev"],
+  "engines": { "slidev": ">=52.19.1" }
+}

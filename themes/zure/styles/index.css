@@ -27,8 +27,11 @@
   --z-red-300: #fc8c7d;
   --z-red-900: #500b02;
 
+  /* Frozen blue family (brand manual p. 55). #037F91 is Dark Blue One, which
+     keeps text contrast on white; Frozen Blue itself belongs on Jet Black. */
+  --z-frozen: #05c3de;
   --z-teal: #037f91;
-  --z-teal-300: #70cad1;
+  --z-teal-300: #70cad1; /* zure.com web token */
   --z-teal-100: #bef6fe;
 
   --z-yellow: #c5de05;
@@ -47,13 +50,20 @@
 
   /* Dark-background counterpart. Add `theme-dark` to a full-bleed wrapper. */
   --z-dark-bg: var(--z-ink);
-  --z-dark-surface: #2a2a2a;
-  --z-dark-border: #3a3a3a;
+  --z-dark-surface: #262626; /* Dark Grey One */
+  --z-dark-border: #333333; /* Dark Grey Two */
   --z-dark-text: var(--z-white);
   --z-dark-text-secondary: var(--z-grey-200);
   --z-dark-text-muted: var(--z-grey-600);
   --z-dark-accent: var(--z-red-400);
-  --z-dark-structure: var(--z-teal-300);
+  --z-dark-structure: var(--z-frozen);
+
+  /* Inter stands in for Neue Haas Grotesk: close proportions, free, and
+     consistent across machines. Helvetica is the manual's named fallback. */
+  --z-font-display: 'Inter', 'Helvetica Neue', Helvetica, 'Segoe UI', Arial, sans-serif;
+  --z-font-text: 'Inter', 'Helvetica Neue', Helvetica, 'Segoe UI', Arial, sans-serif;
+  --z-display-weight: 800;
+  --z-display-tracking: -0.02em;
 
   /* Slidev theme hooks */
   --slidev-theme-primary: var(--z-accent);
@@ -80,7 +90,7 @@ body,
   --uno: px-18 pt-13 pb-20;
   background: var(--z-white);
   color: var(--z-ink);
-  font-family: 'Inter', 'Neue Haas Grotesk Text', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-family: var(--z-font-text);
   font-size: var(--z-fs-body);
   line-height: 1.4;
   font-feature-settings: 'cv05' 1, 'ss01' 1;
@@ -89,20 +99,22 @@ body,
 /* ---------- Headings ---------- */
 
 .slidev-layout h1 {
+  font-family: var(--z-font-display);
   font-size: var(--z-fs-title);
-  line-height: 1.12;
-  font-weight: 700;
-  letter-spacing: -0.022em;
+  line-height: 1.06;
+  font-weight: var(--z-display-weight);
+  letter-spacing: var(--z-display-tracking);
   color: var(--z-ink);
   margin-bottom: 0.62em;
-  max-width: 27ch;
+  max-width: 34ch;
   /* No accent rule under titles — whitespace carries the separation. */
 }
 
 .slidev-layout h2 {
+  font-family: var(--z-font-display);
   font-size: var(--z-fs-h2);
-  font-weight: 700;
-  letter-spacing: -0.012em;
+  font-weight: var(--z-display-weight);
+  letter-spacing: -0.02em;
   color: var(--z-teal);
   margin-bottom: 0.35em;
 }
@@ -1020,8 +1032,8 @@ body,
 .cite {
   position: absolute;
   left: 4.5rem;
-  right: 9rem;
-  bottom: 2.5rem;
+  right: 4.5rem;
+  bottom: 3.1rem;
   font-size: var(--z-fs-cite);
   line-height: 1.4;
   color: var(--z-grey-600);
@@ -1061,9 +1073,9 @@ body,
 
 /* Callout used to annotate the "so what" of an exhibit. */
 .sowhat {
-  border: 1px solid var(--z-red-300);
+  border-left: 5px solid var(--z-red);
   background: var(--z-callout-bg);
-  padding: 0.6rem 0.85rem;
+  padding: 0.6rem 0.95rem;
   font-size: 19px;
   line-height: 1.36;
   color: var(--z-callout-text);
@@ -1074,9 +1086,9 @@ body,
 }
 
 .note {
-  border: 1px solid var(--z-grey-200);
+  border-left: 5px solid var(--z-grey-600);
   background: var(--z-grey-100);
-  padding: 0.6rem 0.85rem;
+  padding: 0.6rem 0.95rem;
   font-size: 19px;
   line-height: 1.36;
   color: var(--z-ink-800);
@@ -1355,16 +1367,19 @@ body,
   padding: 0;
 }
 
-/* Section divider: text left, motif band right — same rhythm as the cover. */
+/* Section divider: white canvas, a thin Dark Blue One number and a heavy
+   title, after the manual's divider typography. Artwork sits on the
+   right with a hard edge; gradients band badly on projectors. */
 .zsplit {
   position: absolute;
   inset: 0;
   display: grid;
-  grid-template-columns: 1.42fr 1fr;
+  grid-template-columns: 1.25fr 1fr; /* same split as the cover */
   background: var(--z-white);
 }
 
 .zsplit-art {
+  position: relative;
   height: 100%;
   overflow: hidden;
   display: flex;
@@ -1384,16 +1399,29 @@ body,
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: 0 3.2rem 0 3.4rem;
+  padding: 0 3rem 0 4.5rem;
   background: var(--z-white);
-  border-left: 12px solid var(--z-red);
+  color: var(--z-ink);
 }
 
 .zsection-body h1 {
-  font-size: 46px;
-  line-height: 1.06;
-  margin-bottom: 0.45em;
-  max-width: 17ch;
+  font-size: 58px;
+  line-height: 1.02;
+  margin-bottom: 0.5em;
+  max-width: 18ch;
+  color: var(--z-ink);
+}
+
+/* "Part 01" reads as the manual's outlined section number. */
+.zsection-body .eyebrow {
+  margin-bottom: 0.35rem !important;
+  color: var(--z-teal);
+  font-family: var(--z-font-text);
+  font-size: 64px;
+  font-weight: 200;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  text-transform: none;
 }
 
 .theme-dark,
@@ -1575,19 +1603,23 @@ body,
    `layout: none` renders without the `.slidev-layout` wrapper, so these blocks
    must declare their own typography instead of inheriting it. */
 
+/* ---------- Full-bleed slides (layout: none) ---------- */
+
 .zcover,
 .zsection-body,
 .zdark {
-  font-family: 'Inter', 'Neue Haas Grotesk Text', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-family: var(--z-font-text);
   color: var(--z-ink);
 }
 
 .zcover h1,
 .zsection-body h1,
-.zdark h1 {
-  font-weight: 700;
-  letter-spacing: -0.028em;
-  line-height: 1.08;
+.zdark h1,
+.zbig {
+  font-family: var(--z-font-display);
+  font-weight: var(--z-display-weight);
+  letter-spacing: var(--z-display-tracking);
+  line-height: 1.02;
 }
 
 .zcover p,
@@ -1597,7 +1629,9 @@ body,
   text-align: left;
 }
 
-/* ---------- Cover ---------- */
+/* ---------- Cover ----------
+   Cover: white canvas, black logo top-left on the text spine,
+   a large heavy title and imagery on the right. */
 
 .zcover {
   position: absolute;
@@ -1606,24 +1640,34 @@ body,
   grid-template-columns: 1.25fr 1fr;
   align-items: center;
   background: var(--z-white);
+  color: var(--z-ink);
 }
 
 .zcover-text {
-  padding: 0 2.6rem 0 3.6rem;
-  border-left: 12px solid var(--z-red);
+  position: relative;
+  z-index: 1;
+  padding: 0 2.6rem 0 4.5rem;
 }
 
 .zcover-text h1 {
-  font-size: 50px;
-  line-height: 1.06;
-  letter-spacing: -0.028em;
+  font-size: 64px;
   max-width: none;
-  margin-bottom: 1.1rem;
+  margin-bottom: 1.2rem;
+  color: var(--z-ink);
+}
+
+.zcover .eyebrow {
+  color: var(--z-red);
+}
+
+.zcover a,
+.zcover .intro-duration {
+  color: var(--z-teal);
 }
 
 .zcover-sub {
-  font-size: 21px;
-  line-height: 1.42;
+  font-size: 22px;
+  line-height: 1.4;
   color: var(--z-ink-800);
   max-width: none !important;
   margin-bottom: 1.5rem;
@@ -1631,12 +1675,13 @@ body,
 
 .zcover-meta {
   font-size: 17px;
-  letter-spacing: 0.04em;
+  font-weight: 400;
   color: var(--z-grey-600);
   max-width: none !important;
 }
 
 .zcover-art {
+  position: relative;
   height: 100%;
   display: flex;
   align-items: center;
@@ -1665,21 +1710,18 @@ body,
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: 0 5rem;
+  padding: 0 4.5rem;
 }
 
 .zdark-pad {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: 2.4rem 5rem;
+  padding: 2.4rem 4.5rem;
 }
 
 .zbig {
-  font-size: 50px;
-  line-height: 1.14;
-  font-weight: 700;
-  letter-spacing: -0.028em;
+  font-size: 54px;
   color: var(--z-text);
   max-width: 24ch !important;
   margin-bottom: 1.6rem;
@@ -1761,46 +1803,56 @@ body,
   margin-top: 0.45rem;
 }
 
-/* ---------- Footer layer ---------- */
+/* ---------- Footer layer ----------
+   Mirrors the brand manual's page furniture: small bold labels on the left
+   and right, with the wordmark in the bottom-left corner (an approved
+   placement). The wordmark stays at 88px, above the 80px digital minimum. */
 
 .z-footer {
   position: absolute;
-  left: 4.5rem;
-  right: 2.6rem;
-  bottom: 0.8rem;
+  left: calc(4.5rem + 88px + 22px);
+  right: 4.5rem; /* matches the content edge at x = 1208 */
+  bottom: 0.95rem;
   display: flex;
   align-items: baseline;
   justify-content: space-between;
+  font-family: var(--z-font-text);
   font-size: 13px;
-  letter-spacing: 0.03em;
-  color: var(--z-grey-600);
+  font-weight: 700;
+  color: var(--z-ink);
   pointer-events: none;
 }
 
 .z-footer .z-track {
   display: flex;
-  gap: 1.1rem;
+  gap: 1rem;
 }
 
 .z-footer .z-track span.on {
-  color: var(--z-red);
-  font-weight: 700;
+  color: var(--z-grey-600);
+  font-weight: 400;
 }
 
 .z-footer .z-no {
   font-variant-numeric: tabular-nums;
 }
 
-/* Official Zure wordmark from zure.com, kept small and clear of slide content. */
 .z-brand {
   position: absolute;
-  top: 1.35rem;
-  right: 2.6rem;
+  left: 4.5rem;
+  bottom: 0.85rem;
   z-index: 10;
   display: block;
-  width: 5.4rem;
+  width: 88px;
   height: auto;
   pointer-events: none;
+}
+
+/* Cover: black wordmark on the left spine, above the title. */
+.z-brand.z-brand-cover {
+  top: 3.2rem;
+  bottom: auto;
+  width: 132px;
 }
 
 .sowhat p,
