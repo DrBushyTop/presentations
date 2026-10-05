@@ -45,13 +45,6 @@ JSON, or as an HTML report with charts, slide content and speaker notes. Select 
 See [the rehearsal addon guide](addons/rehearsal/README.md) for usage, recovery and
 browser requirements.
 
-## No slop engineer planning page
-
-`no-slop-engineer/` contains an interactive outline workbench with structure options,
-case studies, timings, demo plans and a standalone source notebook. Run it with
-`npm run start:no-slop-engineer`. See [its README](no-slop-engineer/README.md)
-for the M1 Tailscale link and serving details.
-
 ## Shared presentation code
 
 - `themes/zure/` is the reusable Zure theme. It includes typography, layouts,

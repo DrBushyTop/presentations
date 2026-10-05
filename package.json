@@ -42,8 +42,6 @@
     "demo:check": "npm --prefix no-slop-deck/demo-app run check",
     "demo:start": "npm --prefix no-slop-deck/demo-app run build && npm --prefix no-slop-deck/demo-app start",
     "demo:reset": "npm --prefix no-slop-deck/demo-app run reset",
-    "build:no-slop-engineer": "node no-slop-engineer/build.mjs",
-    "start:no-slop-engineer": "npm run build:no-slop-engineer && node no-slop-engineer/serve.mjs",
     "prepare": "git config core.hooksPath .githooks",
     "check:slides": "node scripts/check-slides.mjs",
     "check:slides:baseline": "node scripts/check-slides.mjs --update-baseline",
