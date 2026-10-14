@@ -2,19 +2,15 @@
   The agent runs the app and checks the behaviour itself: start a fresh
   instance with known data, reproduce the problem in the browser, fix it, and
   repeat the same action. Commands, ports and seed data are the demo app's
-  (README: npm run reset, npm run dev on 5176, canary row B-201). The export
-  endpoint is the one being built in the talk.
+  (README: npm run reset, npm run dev on 5176). A-102's title has a comma on
+  purpose. The export endpoint is the one being built in the talk; the quoting
+  bug is illustrative.
   0 start · 1 reproduce · 2 fix and repeat the same action
 -->
 <script setup lang="ts">
 withDefaults(defineProps<{ step?: number }>(), { step: 0 })
 const steps = ['Start a fresh instance', 'Reproduce it', 'Fix', 'Repeat the same action']
-const rows = [
-  { id: 'A-101', t: 'Draft Q4 roadmap' },
-  { id: 'A-102', t: 'Fix login, then retest' },
-  { id: '', t: '… A-103 to A-105', dim: true },
-  { id: 'B-201', t: 'CANARY: Team B only', bad: true },
-]
+const cols = ['id', 'title', 'status']
 </script>
 
 <template>
@@ -33,13 +29,12 @@ const rows = [
       <p class="dim">API :4323 · UI :5176</p>
       <div class="swap">
         <div class="log" :class="{ on: step === 1 }">
-          <p class="warn">GET /api/tasks/export?teamId=team-b</p>
-          <p class="warn">200 · 6 rows · session team-a</p>
+          <p class="cmd">GET /api/tasks/export · 200</p>
+          <p class="warn">row A-102: 4 fields, expected 3</p>
         </div>
         <div class="log" :class="{ on: step >= 2 }">
-          <p class="cmd">agent: fix routes/export.ts</p>
-          <p class="ok">GET /api/tasks/export?teamId=team-b</p>
-          <p class="ok">200 · 5 rows · session team-a</p>
+          <p class="cmd">agent: quote fields in export.ts</p>
+          <p class="ok">5 rows · 3 fields each</p>
         </div>
       </div>
     </section>
@@ -47,18 +42,21 @@ const rows = [
     <section class="browser" :class="{ on: step >= 1 }">
       <header>
         <i /><i /><i />
-        <span class="url ns-mono">localhost:5176/api/tasks/export?teamId=team-b</span>
-        <em>agent's browser · signed in as Alex, Team A</em>
+        <span class="url ns-mono">localhost:5176 · tasks.csv</span>
+        <em>agent's browser · the export opened as a table</em>
       </header>
-      <div class="csv ns-mono">
-        <p class="hd">id,title</p>
-        <p v-for="r in rows" :key="r.id" class="row" :class="{ bad: r.bad, gone: r.bad && step >= 2, dim: r.dim }">
-          {{ r.dim ? r.t : `${r.id},${r.t}` }}<b v-if="r.bad">Team B</b>
-        </p>
+      <div class="grid">
+        <span v-for="c in cols" :key="c" class="hd">{{ c }}</span><span class="hd" />
+        <span class="ns-mono">A-101</span><span>Draft Q4 roadmap</span><span>open</span><span />
+        <span class="ns-mono">A-102</span>
+        <span class="swapcell"><b class="fixed" :class="{ on: step >= 2 }">Fix login, then retest</b><b class="broke" :class="{ on: step < 2 }">Fix login</b></span>
+        <span class="swapcell"><b class="fixed" :class="{ on: step >= 2 }">done</b><b class="broke bad" :class="{ on: step < 2 }">then retest</b></span>
+        <span class="swapcell"><b class="broke bad" :class="{ on: step < 2 }">done</b></span>
+        <span class="dim ns-mono">…</span><span class="dim">A-103 to A-105</span><span /><span />
       </div>
       <div class="verdict">
-        <span class="v bad" :class="{ on: step === 1 }">Canary row visible. Team scoping is broken.</span>
-        <span class="v ok" :class="{ on: step >= 2 }">Same request, same data. No Team B rows.</span>
+        <span class="v bad" :class="{ on: step === 1 }">A-102 splits into four columns. The comma isn't quoted.</span>
+        <span class="v ok" :class="{ on: step >= 2 }">Same export, same data. Every row has three columns.</span>
       </div>
     </section>
   </div>
@@ -212,50 +210,61 @@ const rows = [
   color: var(--ns-teal);
 }
 
-.csv {
+.grid {
   flex: 1;
-  padding: 18px 22px;
+  display: grid;
+  grid-template-columns: 90px 1.6fr 0.9fr 0.7fr;
+  align-content: center;
+  padding: 10px 22px;
 }
 
-.csv p {
-  margin: 0;
-  max-width: none;
-  font-size: 21px;
-  line-height: 2;
+.grid > span {
   display: flex;
   align-items: center;
-  gap: 12px;
-  transition: opacity 500ms var(--ns-ease), background 500ms var(--ns-ease);
-}
-
-.csv .row.dim {
-  color: var(--z-grey-600);
-}
-
-.csv .hd {
-  color: var(--z-grey-600);
-}
-
-.row.bad {
-  margin: 0 -10px !important;
+  min-height: 52px;
   padding: 0 10px;
+  border-bottom: 1px solid var(--ns-line);
+  font-size: 20px;
+}
+
+.grid .hd {
+  min-height: 38px;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--z-grey-600);
+  border-bottom: 2px solid var(--z-ink);
+}
+
+.grid .dim {
+  color: var(--z-grey-600);
+}
+
+.swapcell {
+  display: grid !important;
+  align-items: center;
+}
+
+.swapcell b {
+  grid-area: 1 / 1;
+  font-weight: 400;
+  transition: opacity 500ms var(--ns-ease);
+}
+
+.swapcell b:not(.on) {
+  opacity: 0;
+}
+
+.swapcell b.bad {
+  margin: 0 -10px;
+  padding: 4px 10px;
   background: #ffe2dc;
   color: var(--ns-red);
   font-weight: 700;
 }
 
-.row.bad b {
-  margin-left: auto;
-  padding: 0 8px;
-  background: var(--ns-red);
-  color: #fff;
-  font-family: var(--z-font-text);
-  font-size: 16px;
-  line-height: 1.6;
-}
-
-.row.gone {
-  opacity: 0;
+.swapcell b.fixed {
+  color: var(--ns-teal);
+  font-weight: 700;
 }
 
 .verdict {
