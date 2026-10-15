@@ -137,22 +137,22 @@ watch(active, (on) => { if (on) setTimeout(measure, 700) })
     </section>
 
     <section class="desk">
-      <!-- Passport: the first intro's structure with the game's details,
-           chip labels, the country in spaced outline letters, a security
-           hatch, an entry visa block and the machine-readable zone. -->
+      <!-- Passport: the game's layout in Zure's colours (zure.com and the
+           deck theme), with a pixelated Zure wordmark where the game prints
+           the country name, a security hatch, an entry visa block and the
+           machine-readable zone. -->
       <article class="doc passport">
         <header class="ph">
-          <div><b>Republic of Azure</b><small>Passport · Passeport</small></div>
-          <svg class="crest" viewBox="0 0 14 16" aria-hidden="true"><path d="M0 0h14v9h-1v2h-2v2H9v2H5v-2H3v-2H1V9H0Z M2 2v7h1v2h2v2h4v-2h2V9h1V2Z M9 3h2v2h-1v2H9v2H8v2H6v-2h1V7h1V5h1Z" fill-rule="evenodd" /></svg>
+          <div><b>Republic of Zure</b><small>Passport · Passeport</small></div>
         </header>
-        <div class="country"><i /><span>Azure</span></div>
+        <div class="country"><i /><img class="wordmark" src="/zure-passport-wordmark.png" alt="Zure"></div>
         <div ref="nameA" class="pname" :class="{ inspect: s === 2 }">Huuhka, Pasi</div>
         <div class="prole">AI architect</div>
         <div class="pgrid">
           <div ref="photo" class="photo" :class="{ inspect: s === 1 }"><img src="/pasi-passport-papers-please.png" alt="Passport portrait of Pasi Huuhka"></div>
           <dl>
             <dt>No.</dt><dd>NSE-0482</dd>
-            <dt>Emp.</dt><dd>Zure</dd>
+            <dt>Nat.</dt><dd>Finland</dd>
             <dt>Azure</dt><dd>2014</dd>
             <dt>Iss.</dt><dd>2026</dd>
             <dt>Exp.</dt><dd>2036</dd>
@@ -170,7 +170,7 @@ watch(active, (on) => { if (on) setTimeout(measure, 700) })
           <div class="stamp-here">Stamp here</div>
         </div>
         <div class="mrz" aria-label="Machine-readable zone">
-          <div>P&lt;AZRHUUHKA&lt;&lt;PASI&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;</div>
+          <div>P&lt;ZURHUUHKA&lt;&lt;PASI&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;</div>
           <div>NSE0482&lt;&lt;AZURE2014&lt;&lt;ESPC2026&lt;&lt;&lt;&lt;&lt;&lt;</div>
         </div>
       </article>
@@ -182,11 +182,10 @@ watch(active, (on) => { if (on) setTimeout(measure, 700) })
         <div class="frame">
           <div class="row"><b class="chip">Past</b><span>DevOps</span></div>
           <div class="row"><b class="chip">Now</b><span>AI Dev</span></div>
-          <div class="band">Work</div>
+          <div class="band">Focus</div>
           <p>AI dev tooling for orgs.<br>AI in every project.</p>
         </div>
         <small>Keep on person</small>
-        <div class="foot"><b class="chip">Customers</b><span>150+</span></div>
       </article>
 
       <!-- MVP permit: the game's entry permit in the MVP logo's blue and
@@ -614,9 +613,9 @@ watch(active, (on) => { if (on) setTimeout(measure, 700) })
   display: flex;
   flex-direction: column;
   background-color: #ebe5dc;
-  background-image: repeating-linear-gradient(135deg, transparent 0 7px, rgba(63, 102, 132, 0.07) 7px 8px);
-  border: 4px solid #3f6684;
-  color: #3b3437;
+  background-image: repeating-linear-gradient(135deg, transparent 0 7px, rgba(222, 30, 5, 0.06) 7px 8px);
+  border: 4px solid #1a1a1a;
+  color: #2b2626;
 }
 
 .ph {
@@ -624,8 +623,8 @@ watch(active, (on) => { if (on) setTimeout(measure, 700) })
   align-items: center;
   justify-content: space-between;
   padding: 10px 14px;
-  background: #3f6684;
-  color: #e3ecf2;
+  background: #1a1a1a;
+  color: #f3f3f2;
 }
 
 .ph b {
@@ -641,14 +640,7 @@ watch(active, (on) => { if (on) setTimeout(measure, 700) })
   margin-top: 2px;
   font-size: 20px;
   line-height: 1;
-  color: #b9cddb;
-}
-
-.crest {
-  width: 28px;
-  height: 32px;
-  fill: #e3ecf2;
-  shape-rendering: crispEdges;
+  color: #70cad1;
 }
 
 .country {
@@ -664,15 +656,12 @@ watch(active, (on) => { if (on) setTimeout(measure, 700) })
   background: repeating-linear-gradient(90deg, #a9a29d 0 12px, transparent 12px 18px);
 }
 
-.country span {
-  font-family: 'PP Label', monospace;
-  font-size: 30px;
-  font-weight: 700;
-  line-height: 1;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: #ebe5dc;
-  text-shadow: 2px 0 #8d8683, -2px 0 #8d8683, 0 2px #8d8683, 0 -2px #8d8683;
+/* The Zure wordmark rasterised to a 61 x 17 pixel grid with a drop shadow. */
+.wordmark {
+  width: 122px;
+  height: 34px;
+  max-width: none;
+  image-rendering: pixelated;
 }
 
 .pname {
@@ -722,7 +711,7 @@ watch(active, (on) => { if (on) setTimeout(measure, 700) })
 
 .passport dt {
   padding: 1px 4px;
-  background: #8e9aa6;
+  background: #037f91;
   color: #ebe5dc;
 }
 
@@ -739,7 +728,7 @@ watch(active, (on) => { if (on) setTimeout(measure, 700) })
   display: flex;
   flex-direction: column;
   gap: 10px;
-  border: 4px dotted #c9a227;
+  border: 4px dotted #de1e05;
 }
 
 .visa-top {
@@ -753,8 +742,8 @@ watch(active, (on) => { if (on) setTimeout(measure, 700) })
   font-size: 26px;
   line-height: 0.9;
   text-transform: uppercase;
-  color: #c39a1c;
-  text-shadow: 1px 0 #c39a1c;
+  color: #de1e05;
+  text-shadow: 1px 0 #de1e05;
 }
 
 /* Left empty: this entrant's papers are fine. */
@@ -762,16 +751,16 @@ watch(active, (on) => { if (on) setTimeout(measure, 700) })
   flex: 1;
   display: grid;
   place-items: center;
-  border: 3px dashed #d8c27a;
+  border: 3px dashed #fc8c7d;
   font-family: 'PP Label', monospace;
   font-size: 14px;
   font-weight: 700;
   text-transform: uppercase;
-  color: #cbb46a;
+  color: #f2836f;
 }
 
 .visa dt {
-  background: #c9a227;
+  background: #de1e05;
 }
 
 .mrz {
@@ -788,11 +777,11 @@ watch(active, (on) => { if (on) setTimeout(measure, 700) })
 
 /* ---------- Work record: the identity supplement tag ---------- */
 
+/* Sized to its contents, like the game's small identity supplement. */
 .record {
   left: 326px;
-  top: 112px;
+  top: 232px;
   width: 230px;
-  height: 500px;
   z-index: 2;
   padding: 18px 16px 14px;
   display: flex;
@@ -868,23 +857,10 @@ watch(active, (on) => { if (on) setTimeout(measure, 700) })
 }
 
 .record small {
-  margin-top: auto;
+  margin-top: 10px;
   text-align: center;
   font-size: 20px;
   color: #8a7f9c;
-}
-
-.foot {
-  margin-top: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.record .foot span {
-  font-size: 34px;
-  line-height: 1;
-  color: #b8322a;
 }
 
 .record:not(.on),
@@ -1143,6 +1119,9 @@ watch(active, (on) => { if (on) setTimeout(measure, 700) })
 
 .pr .foot {
   margin-top: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .evidence {
