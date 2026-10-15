@@ -30,7 +30,7 @@ layout: none
 
 <div class="ns-cover">
   <div class="ns-cover-text">
-    <h1>The no <span>slop</span><br />engineer</h1>
+    <h1>The <span>no slop</span><br />engineer</h1>
     <p class="sub">Practices for shipping agent-written code you can explain</p>
     <p class="meta">Pasi Huuhka · Zure · ESPC 2026</p>
   </div>
@@ -48,28 +48,33 @@ About 30 seconds.
 
 ---
 layout: none
-clicks: 3
+clicks: 4
 nofooter: true
 ---
 
-<PapersPlease :step="$clicks" />
+<PapersPleaseBooth :step="$clicks" />
 
 <!--
-About 40 seconds. A nod to Papers, Please, the border inspector game. The inspector is checking my credentials.
+About 1 minute. A nod to Papers, Please, the border inspector game. The inspector checks my credentials, then my agent's PR.
 
 - Papers, please.
-[click] Purpose of visit: a talk. DevOps and development were my background; now most of my work is AI: dev tooling that helps organisations run AI-assisted development, alongside normal dev projects. AI has been part of every project for the last few years. AI architect at Zure. Azure since 2014, 150+ customers.
-[click] Microsoft MVP since 2020, in two categories: Developer Technologies for the DevOps side, and Foundry for AI.
-[click] Entry granted. Welcome to ESPC.
+[click] Purpose of visit: a talk about slop. DevOps and development were my background; now most of my work is AI: dev tooling that helps organisations run AI-assisted development, alongside normal dev projects. AI architect at Zure. Azure since 2014, 150+ customers.
+[click] Microsoft MVP since 2020, in two categories: Developer Technologies for the DevOps side and Foundry for AI. Pipelines, then prompts.
+[click] My papers check out. Then I hand over my agent's PR. All checks green, zero new tests, a summary that says it works. The inspector asks for evidence. There isn't any.
+[click] Merge denied. Let the six stamps land and the shutter come down before speaking.
+- "In the game, nothing gets through without the inspector checking the papers. That's the job now. Papers, please, for every PR."
 
 Sources:
 - AI architect at Zure, Azure since 2014, AI in every project, MVP categories: Pasi.
 - 150+ customers: https://sessionize.com/pasi-huuhka/
 - MVP since June 2020: https://www.huuhka.net/ive-been-awarded-the-microsoft-azure-mvp-title/
-- Both portraits were generated from my own recent photo, using the game's official screenshots as a style reference. The booth sprite is 72x72 pixels with 9 colours; the passport photo is 48x48 with 5 colours and shows me straight on. Both use flat shading and nearest-neighbour scaling. Papers, Please is by Lucas Pope (3909 LLC); the fonts are Silkscreen and VT323.
+- Both portraits were generated from my own recent photo, using the game's official screenshots as a style reference. The booth portrait is 72x72 pixels with its background removed; the passport photo is 48x48 with 5 colours and shows me straight on. Both use flat shading and nearest-neighbour scaling. Papers, Please is by Lucas Pope (3909 LLC); the fonts are Silkscreen and VT323.
 - Visual reference: https://www.papersplea.se/presskit/
-- The documents rest at slight angles, with flat paper, a dotted desk, a stepped seal and stamp, and inspection lines that join the highlighted box edges at right angles. The stamp has its own tilt and sits slightly off-centre, as if applied by hand. Reveals move in short pixel steps.
-- The passport has a document heading, field dividers and a machine-readable zone. The stamp follows the supplied game reference, with a checker border, entry verdict and shield. Its top row marks ESPC 2026. The passport number and issuance are props for this introduction.
+- The booth sprite's head and neck are the original portrait. The body below was redrawn with an image model, using a photo for the build, then snapped to the sprite's pixel grid. The head sits at about 1.75 on the height chart.
+- The layout follows the game: the height chart behind the entrant, speech bubbles over the face, the counter, the date and weight panel, and the stamp drawer that pulls out from the right edge. The panel shows the first day of ESPC 2026 (30 Nov to 3 Dec) in the game's date format and the talk length in place of the weight.
+- The documents follow the game's: the passport has chip labels, the country in spaced outline letters, an entry visa block with the conference dates and an empty stamp box, and the machine-readable zone; the work record is an identity supplement tag; and the MVP permit is a scalloped entry permit in the MVP logo's blue and white, with a red seal. They lie straight, as in the game, so the pixel type stays crisp; only the stamp marks are tilted. The marks copy the game's ENTRY DENIED stamp, solid ink with the paper showing through, reading MERGE DENIED with the conference date. The stamp drawer is drawn after the game's: cylinder knobs, stamps with a rounded top face and an engraved label, hex studs and guide rods either side, a light, and the alignment strip lying over the stamps.
+- The passport number, issue and expiry years are props.
+- The PR is a prop. Its branch, agent/export-csv, is the one the agent works on in the cover stream.
 -->
 
 ---
