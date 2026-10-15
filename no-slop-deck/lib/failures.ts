@@ -93,3 +93,14 @@ export const failures: Failure[][] = [
     },
   ],
 ]
+
+// Where you're the bottleneck at each gate: the job the part hands to the
+// agent or the environment.
+export const bottlenecks: string[] = [
+  'You answer the questions the code could answer',
+  'Only you know what was decided',
+  'You review four days of work in one sitting',
+  'You are the first to run it, and you copy the errors back',
+  'You relay the bot comments and decide when to stop',
+  'You repeat last month\'s review comment',
+]

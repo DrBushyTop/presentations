@@ -41,8 +41,8 @@ layout: none
 About 30 seconds.
 
 - Let the stream run for a moment before speaking.
-- Say: "That's an agent writing code faster than any of us can read it. Everything it says sounds reasonable. Keep an eye on it, we'll come back to one of those lines."
-- I'm Pasi, from Zure. This talk is about the practices I use so that code I didn't type is still code I can explain.
+- Say: "That's an agent writing code faster than any of us can read it. Everything it says sounds reasonable. Most of it, nobody will read line by line."
+- I'm Pasi, from Zure. This talk is about the practices I use so that code I didn't type is still code I can explain: what it does and why, how I know it works, and where to look when it breaks.
 - Timings in the notes are estimates per slide, not rehearsed. Rehearse before deciding what to cut.
 -->
 
@@ -78,31 +78,6 @@ Sources:
 -->
 
 ---
-part: Would you ship this?
-class: ns
-clicks: 1
----
-
-# Four green pull requests
-
-<BrokenPrs :step="$clicks" />
-
-<!--
-About 1.5 minutes.
-
-- Four normal-looking PRs. Tests, lint, review bot and an approval on every one. Give the room a few seconds to scan them.
-
-[click] Each one is wrong, and each in a different way.
-- #482: the export's tests only check that Team A rows are present. They never check what else comes back. We'll see this one in the verify part.
-- #517: the sidebar reads the server's storage module straight from browser code. It works, and it's the shortcut every later change will copy.
-- #530: built layer by layer over four days, 1,940 lines in one PR. The first time anyone ran it in a browser was during review.
-- #541: four lines. Creating an index without CONCURRENTLY locks writes to the orders table while it builds. That's Polylane's example; we'll come back to it in production.
-- Say: "None of these is exotic. Green checks just don't tell you which of them you're looking at."
-- #482 is the demo app's export with a seeded defect. The other three are illustrative.
-- Intercom's name for what happens under volume: "humans start rubber-stamping. Glancing at a diff, skimming the description, clicking approve." https://www.intercom.com/blog/ai-is-approving-our-pull-requests-heres-how-we-made-it-safe/
--->
-
----
 layout: none
 clicks: 1
 ---
@@ -122,29 +97,7 @@ About 1 minute.
 -->
 
 ---
-part: Would you ship this?
-class: ns
-clicks: 2
----
-
-# Agents write faster than we can read
-
-<ReadRace :step="$clicks" />
-
-<!--
-About 1 minute.
-
-[click] Start the race. Left: model output at about 15 times human reading pace. Right: you, reading at about 238 words a minute.
-
-[click] The backlog is the real number. Everything in it gets accepted on trust or read later, which usually means never.
-
-- Say: "The bottleneck moved from writing code to understanding it."
-- Source: GitHub Next, Chopin. They put reading at about 238 words a minute and generation at roughly 4,500 tokens a minute, and call the ratio about 1 to 15. Their own figures give nearer 1 to 19, so 15 is the conservative number. https://githubnext.com/projects/chopin/
-- If asked: Anthropic's randomised study (52 mostly junior engineers) found AI-assisted learners scored 50% vs 67% on comprehension. That was learning a new library, not production review. https://www.anthropic.com/research/AI-assistance-coding-skills
--->
-
----
-part: Would you ship this?
+part: Agents that merge
 class: ns
 clicks: 2
 ---
@@ -156,7 +109,7 @@ clicks: 2
 <!--
 About 1 minute.
 
-- The other bottleneck is you as the relay. Everything the agent can't reach goes through you: you copy the error out of the browser, answer a question the code could have answered, paste in the bug report from Slack, tell it which CI check failed.
+- Agents write faster than anyone can read; GitHub Next puts it at about 15 to 1. But reading isn't the only place you're the bottleneck. The bigger one is you as the relay. Everything the agent can't reach goes through you: you copy the error out of the browser, answer a question the code could have answered, paste in the bug report from Slack, tell it which CI check failed.
 - Each relay is slow, and it's lossy. You summarise, you forget a detail, the agent fills the gap with a guess. And the agent can't loop on its own work while you're in the middle.
 
 [click] Poteto, who works on agent tooling at SpaceX AI, described the start of their performance work this way: they were "the meat proxy between my agent and Chrome DevTools".
@@ -167,37 +120,36 @@ About 1 minute.
 -->
 
 ---
-part: Would you ship this?
+part: Agents that merge
 class: ns
-clicks: 3
+clicks: 1
 ---
 
-# Six gates between a request and production
+# Where this goes: agents that merge
 
-<GateMap :step="$clicks" />
+<TrustLadder mode="goal" :step="$clicks" />
 
 <!--
-About 1 minute.
+About 1.5 minutes.
 
-- This is the map for the talk. Each gate asks one question.
-
-[click] Three before implementation: understand the current system, discuss the design, and decide how to slice the work. Use the phases that the task needs. A detailed implementation plan is optional.
-
-[click] Then a loop for every slice: build it, verify it, review it, and go round again for the next one. It's not a waterfall. Verify and review happen many times a day.
-
-[click] Production once it merges.
-
-- Scale this to the task. A typo fix doesn't go through six gates. A change to who can see what does.
+- Rung one is the bottleneck slide: you relay everything, and you read every line, or say you do.
+[click] The top rung: the agent merges its own PRs. Poteto works backwards from there: "How do I get to the point where my agent can merge its own code?"
+- Say: "This isn't a talk about reading less. It's about replacing reading with something better, one rung at a time."
+- That's how this fits with no slop. Slop is a change accepted without evidence. A 1,940-line PR with "LGTM" on it is slop with a human signature. An agent's merge backed by checks that can fail, a clip of it running and a rollout you can undo isn't.
+- Climbing without the evidence is the slop version. Call it vibe merging.
+- One thing doesn't go away on any rung: you still click through it yourself. More on that in verify.
+- The middle rungs stay faint for now. We fill them in at the end.
+- Source: https://www.youtube.com/watch?v=MN9dGgmLyso
 -->
 
 ---
-part: Would you ship this?
+part: Agents that merge
 class: ns
 clicks: 3
 transition: gate | gate-back
 ---
 
-# How agent work goes wrong
+# What keeps you on the bottom rung
 
 <FailureMap :step="$clicks" />
 
@@ -208,7 +160,7 @@ About 1 minute. Don't read the cards out. Each part opens with its own and shows
 [click] Before implementation: the agent guesses instead of looking, picks what the feature means, or builds everything before anyone looks.
 [click] For every slice: it takes the shortcut, its tests only confirm the code, nobody runs it, and review either rubber-stamps or never stops.
 [click] After merge: it passes CI and breaks under real traffic, and the same mistake comes back next week.
-- The four PRs from the start are four of these.
+- Each part opens with its own failures, and where you're the bottleneck at that step.
 -->
 
 ---
@@ -237,6 +189,7 @@ clicks: 1
 <!--
 About 1 minute.
 
+- Where you're the bottleneck: the agent asks you things the code, the logs or the tickets could answer, or it doesn't ask and guesses.
 - Two ways research fails, or gets skipped.
 - Guessing: the agent answers a factual question from its priors. "The list probably hides done tasks." It sounds right, and nothing on screen says it was a guess.
 - Rediscovery: every phase reads the same 30 files again, and the reading crowds out the work.
@@ -355,6 +308,7 @@ transition: gate | gate-back
 <!--
 About 1 minute.
 
+- Where you're the bottleneck: the decisions live in your head. Every agent and every colleague has to come back to you.
 - The agent can't know what you meant, so it decides. "I assumed the export includes all tasks" is a product decision made by an implementation agent.
 - And the decisions live in one person's chat. Nobody else can explain or debug them.
 [click] The fixes: grill the open choices before any code, record them where the team can read them, and review the plan together.
@@ -471,6 +425,7 @@ clicks: 1
 <!--
 About 1 minute.
 
+- Where you're the bottleneck: four days of work arrive at once and you're the only reviewer who can say it's wrong.
 - An agent will happily finish every layer before anyone has clicked anything. Day four is when you find out the columns are wrong.
 - And the reverse mistake: a four-line PR gets approved in seconds because it's small.
 [click] The fixes: a thin working path on day one, and review effort set by blast radius, not by line count.
@@ -567,6 +522,7 @@ clicks: 1
 <!--
 About 1 minute.
 
+- Where you're the bottleneck: you're the first one to run it, and you copy the errors back. You'll still click through it, but not to find out whether it works at all.
 - Three failures. The agent does the easy thing: a browser module reads server storage because it works.
 - It writes tests that check the code against itself. The example is exaggerated, but tests that only repeat the implementation's assumptions are common.
 - And nobody runs it. Three tests pass and the button downloads an empty file.
@@ -663,6 +619,27 @@ About 1 minute.
 part: Verify
 class: ns
 clicks: 2
+---
+
+# Then click through it yourself
+
+<FeelsWrong :step="$clicks" />
+
+<!--
+About 1.5 minutes.
+
+- Be explicit here: the agent running the app does not replace you clicking through it.
+- The agent checked what it was asked to check, and all of it passes. The export works.
+[click] Two minutes of clicking: the list was filtered to open tasks and the export ignored the filter. Two seconds with no spinner. The file is export (3).csv. The button and the menu disagree on what it's called. None of it fails a check, and all of it feels wrong to a person. The findings are illustrative.
+[click] The agent checks what you asked for. You notice what nobody asked for, and those findings are often the most useful.
+- What changes is when you click. You no longer click to find out whether it works at all. The agent did that. You click to find out whether it's right.
+- Each finding is also a candidate check. "The export respects the list filter" can become a test. "It feels slow" mostly can't.
+-->
+
+---
+part: Verify
+class: ns
+clicks: 2
 transition: gate | gate-back
 ---
 
@@ -703,6 +680,7 @@ clicks: 1
 <!--
 About 1 minute.
 
+- Where you're the bottleneck: you relay the bot comments, and you're the one who decides when the loop stops.
 - Two opposite failures. The rubber stamp: 1,940 lines and "LGTM" two minutes later.
 - The endless loop: bots keep finding things, fixes create new findings, two reviewers undo each other.
 [click] The fixes: agents review every slice before a person is asked, you watch the clip before reading the diff, and a stop rule ends the loop.
@@ -926,6 +904,7 @@ clicks: 1
 <!--
 About 1 minute.
 
+- Where you're the bottleneck: you write the same review comment again, because nothing remembers the last one.
 - CI doesn't know production: the traffic, the locks, the queues. A four-line migration can block every write to a table.
 - And the quiet one: the same correction, typed into review again and again.
 [click] The fixes: checks that use what production knows, a small blast radius when something gets through, and turning repeated corrections into checks. That last one is the Monday takeaway.
@@ -1222,31 +1201,10 @@ Thirty seconds, keep it moving. Same company as the case study.
 ---
 part: Close
 class: ns
----
-
-# The same four PRs, with evidence
-
-<BrokenPrs mode="evidence" />
-
-<!--
-About 1 minute.
-
-- Back to the four PRs from the start. The checks at the top are the same. What's different is the line at the bottom: the evidence that would have caught each one.
-- #482: a boundary check, taken from the design decision, that fails when the filter is removed.
-- #517: a lint rule. Browser code may not import server modules. The demo app already has this rule.
-- #530: four slices instead of one PR, each with a clip of it running before anyone reads the diff.
-- #541: a production-aware check. Polylane's no-go comment: 38 writes a second would wait for the index build. Use CONCURRENTLY.
-- None of these needs a better reviewer. Each one is evidence the agent could have produced, and that someone checked.
-- That's what "done" means in this talk.
--->
-
----
-part: Close
-class: ns
 clicks: 3
 ---
 
-# Work backwards from agents that merge
+# Replace reading with evidence
 
 <TrustLadder :step="$clicks" />
 
@@ -1254,12 +1212,14 @@ clicks: 3
 About 2 minutes.
 
 - Poteto's starting question for scaling: "How do I get to the point where my agent can merge its own code?" Work backwards from there. Each rung moves one job from you to the environment.
-- Rung one is where most of us start: you relay everything, which is the bottleneck slide.
+- Back to the ladder from the start. Rung one is where most of us start: you relay everything, which is the bottleneck slide.
 [click] It runs and checks its own work, so you can read the diff instead of testing it. It reviews each slice with subagents, so you watch a clip and read code that's already been through a round.
 [click] It finds its own context: tickets, Slack, telemetry, past sessions. Then the top rung. Poteto reports that their agents now merge their own PRs, after a loop of verifier agents that run and click through the app. They review the commit history in the morning, sample instead of reading everything, and when they find a problem they fix the environment, not the one agent: a new lint rule, a better skill.
 - They're explicit that this took a long time and isn't something you get by installing a skill library. "It took a lot of bravery."
-[click] And it only works where mistakes are cheap to undo and the work can be checked. Matt Pocock's follow-up question was about one-way doors, changes that can't be walked back. Poteto's answer: "verifiability of the domain is an important aspect", and they didn't claim to have the answer.
+[click] Two things don't change. On every rung, you still click through it yourself. Merging isn't releasing: the change can land behind a flag, and a person uses it before users do.
+- And it only works where mistakes are cheap to undo and the work can be checked. Matt Pocock's follow-up question was about one-way doors, changes that can't be walked back. Poteto's answer: "verifiability of the domain is an important aspect", and they didn't claim to have the answer.
 - Compare with the dial from the production part: HumanLayer tried the top rung and went back to reading code. Pick the rung per kind of change, not one for the whole team.
+- Say: "The agent can merge when its evidence beats what your reading would have caught."
 - Question for the room: what would have to be true for your agent to merge this? The list of failures is most of the answer.
 - Source: https://www.youtube.com/watch?v=MN9dGgmLyso
 -->

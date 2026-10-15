@@ -1,11 +1,12 @@
 <!--
   Opens each part: how agent work goes wrong at this gate, what it looks like
-  when it happens, and the practice the part goes on to show.
-  0 failures and what you'd see · 1 the fixes
+  when it happens, and the practice the part goes on to show. The band names
+  where you're the bottleneck at this gate.
+  0 failures, what you'd see and where you're stuck · 1 the fixes
 -->
 <script setup lang="ts">
 import { computed } from 'vue'
-import { failures } from '../lib/failures'
+import { bottlenecks, failures } from '../lib/failures'
 
 const props = withDefaults(defineProps<{ gate: number, step?: number }>(), { step: 99 })
 const rows = computed(() => failures[props.gate])
@@ -23,6 +24,7 @@ const rows = computed(() => failures[props.gate])
       <p class="seen ns-mono">{{ r.seen }}</p>
       <p class="fix" :class="{ on: step >= 1 }"><Icon name="arrow" />{{ r.fix }}</p>
     </div>
+    <div class="you"><Icon name="user" /><span>Where you're the bottleneck</span><b>{{ bottlenecks[gate] }}</b></div>
   </div>
 </template>
 
@@ -119,6 +121,31 @@ const rows = computed(() => failures[props.gate])
   opacity: 0;
   transform: translateX(-24px);
   filter: blur(5px);
+}
+
+.you {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 22px;
+  background: #fff1ee;
+  border-left: 6px solid var(--ns-red);
+}
+
+.you :deep(.ns-icon) {
+  font-size: 24px;
+  color: var(--ns-red);
+}
+
+.you span {
+  font-size: var(--ns-label);
+  font-weight: 700;
+  color: var(--z-grey-600);
+  white-space: nowrap;
+}
+
+.you b {
+  font-size: 23px;
 }
 
 .three .name { font-size: 26px; }
