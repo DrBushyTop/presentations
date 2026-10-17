@@ -32,8 +32,10 @@ export const pending = sessionState(
   (p) => ({ ...p, elements: p.elements.map(({ node, ...rest }) => rest) }),
 )
 
-/** The message being composed, the open chat and the deck's earlier chats. Survives reloads, one per deck. */
-export const draft = useLocalStorage(`slidev-t3-annotate:${deckId}`, { message: '', annotations: [], threadId: '', chats: [] }, { mergeDefaults: true })
+/** The message being composed and its notes. Survives reloads, one per deck. The chat itself lives on the dev server. */
+export const draft = useLocalStorage(`slidev-t3-annotate:${deckId}`, { message: '', annotations: [] }, { mergeDefaults: true })
+delete draft.value.threadId // kept by earlier versions
+delete draft.value.chats
 export const modelChoice = useLocalStorage('slidev-t3-annotate:model', { instanceId: '', model: '', effort: '' }, { mergeDefaults: true })
 
 export function clearPending() {

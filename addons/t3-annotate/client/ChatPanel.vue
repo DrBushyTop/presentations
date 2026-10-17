@@ -1,7 +1,7 @@
 <script setup>
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { useNav } from '@slidev/client'
-import { chat, refreshChat } from './chat.mjs'
+import { chat, openChat, refreshChat } from './chat.mjs'
 import { api, draft, modelChoice, ui } from './store.mjs'
 
 const nav = useNav()
@@ -15,10 +15,12 @@ const scroller = ref(null)
 
 const modelKey = m => `${m.instanceId}|${m.model}`
 const selectedModel = computed(() => models.value.find(m => m.instanceId === modelChoice.value.instanceId && m.model === modelChoice.value.model))
-const otherThreads = computed(() => threads.value.filter(t => !draft.value.chats.some(c => c.id === t.id)))
+const chats = computed(() => chat.conversation.chats)
+const threadId = computed(() => chat.conversation.threadId)
+const otherThreads = computed(() => threads.value.filter(t => !chats.value.some(c => c.id === t.id)))
 const providers = computed(() => [...new Set(models.value.map(m => m.provider))])
 
-const data = computed(() => (chat.threadId === draft.value.threadId ? chat.data : null))
+const data = computed(() => chat.data)
 const thread = computed(() => data.value?.thread)
 const messages = computed(() => data.value?.messages || [])
 const threadModel = computed(() => thread.value && models.value.find(m => m.instanceId === thread.value.instanceId && m.model === thread.value.model))
@@ -34,8 +36,6 @@ async function loadCatalog() {
     const [catalog, list] = await Promise.all([api('catalog'), api('threads')])
     models.value = catalog.models
     threads.value = list.threads
-    // Keep chat titles current; T3 may rename a thread.
-    for (const c of draft.value.chats) c.title = list.threads.find(t => t.id === c.id)?.title || c.title
     if (!selectedModel.value && models.value.length) {
       const m = models.value.find(x => x.instanceId === 'claudeAgent') || models.value[0]
       modelChoice.value = { instanceId: m.instanceId, model: m.model, effort: m.effort?.default || '' }
@@ -58,22 +58,22 @@ function pickModel(key) {
   if (m) modelChoice.value = { instanceId: m.instanceId, model: m.model, effort: m.effort?.default || '' }
 }
 
-function openChat(id) {
-  draft.value.threadId = id
+function pickChat(id) {
   error.value = ''
+  openChat(id)
   nextTick(() => input.value?.focus())
 }
 
 async function send() {
   if (!canSend.value) return
-  const { message, annotations, threadId } = draft.value
+  const { message, annotations } = draft.value
+  const open = threadId.value
   const m = selectedModel.value
   const body = {
     message,
     annotations,
-    threadId: threadId || null,
     current: { no: nav.currentSlideNo.value, clicks: nav.clicks.value, clicksTotal: nav.clicksTotal.value },
-    model: !threadId && m && {
+    model: !open && m && {
       instanceId: m.instanceId,
       model: m.model,
       ...(m.effort && modelChoice.value.effort ? { options: [{ id: m.effort.id, value: modelChoice.value.effort }] } : {}),
@@ -83,18 +83,14 @@ async function send() {
   chat.sending = {
     text: message.trim(),
     notes: annotations.map(a => ({ shotId: a.shotId, slide: a.slide, comment: a.comment })),
-    userCount: threadId ? messages.value.filter(x => x.role === 'user').length : 0,
+    userCount: open ? messages.value.filter(x => x.role === 'user').length : 0,
   }
   draft.value.message = ''
   draft.value.annotations = []
   error.value = ''
   scrollToEnd(true)
   try {
-    const result = await api('send', body)
-    if (!threadId) {
-      draft.value.chats = [{ id: result.threadId, title: result.title }, ...draft.value.chats].slice(0, 20)
-      draft.value.threadId = result.threadId
-    }
+    await api('send', body)
     await refreshChat({ fast: true })
   }
   catch (e) {
@@ -134,7 +130,7 @@ function scrollToEnd(force = false) {
   })
 }
 watch(() => [messages.value.length, messages.value.at(-1)?.html?.length, data.value?.activity?.length, chat.sending], () => scrollToEnd())
-watch(() => draft.value.threadId, () => scrollToEnd(true))
+watch(threadId, () => scrollToEnd(true))
 
 onMounted(() => {
   loadCatalog()
@@ -147,10 +143,10 @@ onMounted(() => {
 <template>
   <aside data-t3-annotate-ui class="tc-panel" aria-label="Chat with the deck's agent" @keydown.stop="onKey">
     <header class="tc-head">
-      <select class="tc-picker" :value="draft.threadId" aria-label="Chat" @change="openChat($event.target.value)">
+      <select class="tc-picker" :value="threadId" aria-label="Chat" @change="pickChat($event.target.value)">
         <option value="">New chat</option>
-        <optgroup v-if="draft.chats.length" label="This deck">
-          <option v-for="c in draft.chats" :key="c.id" :value="c.id">{{ c.title }}</option>
+        <optgroup v-if="chats.length" label="This session">
+          <option v-for="c in chats" :key="c.id" :value="c.id">{{ c.title }}</option>
         </optgroup>
         <optgroup v-if="otherThreads.length" label="Other open threads">
           <option v-for="t in otherThreads" :key="t.id" :value="t.id">{{ t.title }}</option>
@@ -161,7 +157,7 @@ onMounted(() => {
     </header>
 
     <div ref="scroller" class="tc-log" aria-live="polite">
-      <div v-if="!draft.threadId && !chat.sending" class="tc-empty">
+      <div v-if="!threadId && !chat.sending" class="tc-empty">
         <p><strong>Chat about this deck.</strong> The agent gets the deck file and the slide you are on with every message, and edits the sources directly. The dev server shows its changes as they land.</p>
         <p>Use <button type="button" class="tc-link" @click="ui.active = true">Annotate</button> to point at things on a slide. Each note attaches a screenshot.</p>
         <p v-if="signingIn" class="tc-dim">Signing in to T3 Code…</p>
@@ -224,7 +220,7 @@ onMounted(() => {
         </button>
         <textarea
           ref="input" v-model="draft.message" rows="1" class="tc-input"
-          :placeholder="draft.threadId ? 'Reply…' : `Ask about the deck (you are on slide ${nav.currentSlideNo.value})`"
+          :placeholder="threadId ? 'Reply…' : `Ask about the deck (you are on slide ${nav.currentSlideNo.value})`"
           @keydown="onInputKey"
         />
         <button type="submit" class="tc-send" :disabled="!canSend" :title="shotsPending ? 'Waiting for screenshots' : 'Send (Enter)'" aria-label="Send">
@@ -232,7 +228,7 @@ onMounted(() => {
         </button>
       </div>
       <div class="tc-foot">
-        <template v-if="!draft.threadId && models.length">
+        <template v-if="!threadId && models.length">
           <select :value="selectedModel ? modelKey(selectedModel) : ''" aria-label="Model" @change="pickModel($event.target.value)">
             <optgroup v-for="p in providers" :key="p" :label="p">
               <option v-for="m in models.filter(x => x.provider === p)" :key="modelKey(m)" :value="modelKey(m)">{{ m.label }}</option>

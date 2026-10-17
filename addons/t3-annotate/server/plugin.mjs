@@ -2,9 +2,9 @@
 // The browser never sees the T3 token: these routes call T3 from Node.
 import { execFile } from 'node:child_process'
 import { createHash, randomBytes } from 'node:crypto'
-import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { join, relative } from 'node:path'
+import { dirname, join, relative } from 'node:path'
 import { promisify } from 'node:util'
 import MarkdownIt from 'markdown-it'
 import { buildPrompt, userText } from './prompt.mjs'
@@ -21,6 +21,8 @@ const KEEP_SHOTS_MS = 14 * 24 * 60 * 60 * 1000
 const SENT_INDEX = join(SHOTS, 'sent.json')
 // Agent replies are rendered here so the page only gets HTML that cannot carry markup of its own.
 const markdown = new MarkdownIt({ html: false, linkify: true, breaks: true })
+// Agents embed screenshots by local path, which the browser cannot load. Show the alt text.
+markdown.renderer.rules.image = (tokens, i) => `<em>[${markdown.utils.escapeHtml(tokens[i].content || 'image')}]</em>`
 const BUSY = new Set(['starting', 'preparing', 'running', 'queued'])
 
 // Loopback, or a Tailscale address (100.64.0.0/10, fd7a:115c:a1e0::/48). The
@@ -92,6 +94,10 @@ const clipText = (text, max) => (text.length > max ? `${text.slice(0, max)}…` 
 
 export default function t3AnnotatePlugin(options) {
   let devUrl = null
+  // The chat belongs to this dev server, not to the browser: every tab on it shares one
+  // conversation, and a restarted or different server starts a new one.
+  const conversation = { threadId: '', chats: [] } // chats: [{ id, title }], newest first
+  const briefed = new Set() // threads this server has described the deck to
   let checkout = null
 
   async function resolveCheckout() {
@@ -129,8 +135,31 @@ export default function t3AnnotatePlugin(options) {
     return { file: s.source.filepath, start: s.source.start, end: s.source.end, title: s.title || s.frontmatter?.title }
   }
 
-  const deckInfo = () => ({ entry: options.entry, devUrl, slides: slideInfo })
   const deckTitle = () => options.data.config.title || rel(options.entry)
+
+  // Where the deck's parts live, so the agent can go straight to the right file.
+  function deckPlaces() {
+    const dir = dirname(options.entry)
+    const sources = [...new Set(options.data.slides.map((s) => s.source.filepath))]
+    const places = [{ label: sources.length > 1 ? 'slide sources' : 'slides', paths: sources }]
+    for (const [label, names] of [['deck styles', ['style.css', 'styles']], ['deck components', ['components']], ['layouts', ['layouts']], ['setup', ['setup']], ['static assets', ['public']]]) {
+      const paths = names.map((n) => join(dir, n)).filter(existsSync)
+      if (paths.length) places.push({ label, paths })
+    }
+    const theme = options.themeRoots?.[0]
+    if (theme) places.push({ label: `theme "${options.data.config.theme}", shared with the repo's other decks`, paths: [realpathSync(theme)] })
+    return places.map(({ label, paths }) => ({ label, paths: paths.map(rel) }))
+  }
+
+  const deckInfo = () => ({
+    entry: options.entry,
+    title: options.data.config.title,
+    devUrl,
+    canvas: canvas(),
+    places: deckPlaces(),
+    count: options.data.slides.length,
+    slides: slideInfo,
+  })
 
   function canvas() {
     const width = options.data.config.canvasWidth || 980
@@ -176,7 +205,8 @@ export default function t3AnnotatePlugin(options) {
   }
 
   async function send(body) {
-    const { message = '', annotations = [], threadId, model, current } = body
+    const { message = '', annotations = [], model, current } = body
+    const { threadId } = conversation
     if (!message.trim() && !annotations.length) throw new Error('Nothing to send.')
     const { project, workspaceStrategy } = await resolveProject()
 
@@ -191,7 +221,7 @@ export default function t3AnnotatePlugin(options) {
     const uploaded = []
     for (const a of attachments) uploaded.push(await t3.uploadImage(a.name, readFileSync(a.file)))
 
-    const prompt = buildPrompt({ message, annotations: withShots, current, first: !threadId, deck: deckInfo(), rel })
+    const prompt = buildPrompt({ message, annotations: withShots, current, first: !briefed.has(threadId), deck: deckInfo(), rel })
     const index = readSentIndex()
     index[messageKey(prompt)] = {
       at: Date.now(),
@@ -203,6 +233,7 @@ export default function t3AnnotatePlugin(options) {
     if (threadId) {
       if (uploaded.length) await t3.callTool('t3_thread_send_attachments', { threadId, message: prompt, attachments: uploaded })
       else await t3.callTool('t3_thread_send', { threadId, message: prompt, mode: 'auto' })
+      briefed.add(threadId)
       return { threadId }
     }
     const first = (message || annotations[0]?.comment || 'Slide notes').replace(/\s+/g, ' ').trim()
@@ -217,12 +248,23 @@ export default function t3AnnotatePlugin(options) {
       message: prompt,
       ...(uploaded.length ? { attachments: uploaded } : {}),
     })
-    return { threadId: launched.threadId || launched.thread?.threadId, title }
+    const id = launched.threadId || launched.thread?.threadId
+    briefed.add(id)
+    conversation.chats.unshift({ id, title })
+    conversation.threadId = id
+    return { threadId: id, title }
   }
 
-  /** The conversation in a thread, with the context the addon added hidden again. */
-  async function chat(threadId) {
-    if (!threadId) throw new Error('No thread.')
+  function openConversation({ threadId = '' }) {
+    if (typeof threadId !== 'string' || !/^[\w:.-]{0,200}$/.test(threadId)) throw new Error('Bad thread id.')
+    conversation.threadId = threadId
+    return conversation
+  }
+
+  /** This server's open conversation, with the context the addon added hidden again. */
+  async function chat() {
+    const { threadId } = conversation
+    if (!threadId) return { conversation, thread: null, messages: [], activity: [] }
     const items = []
     let thread = null
     let afterPosition = null
@@ -249,7 +291,10 @@ export default function t3AnnotatePlugin(options) {
       }
     }
     const busy = BUSY.has(thread.status)
+    const known = conversation.chats.find((c) => c.id === threadId)
+    if (known) known.title = thread.title
     return {
+      conversation,
       thread: { id: thread.threadId, title: thread.title, status: thread.status, busy, model: thread.model, instanceId: thread.providerInstanceId, pending: thread.pendingRequestCount || 0 },
       messages,
       // What the agent did since the last message, shown only while it works.
@@ -264,7 +309,8 @@ export default function t3AnnotatePlugin(options) {
     'GET threads': async () => ({ threads: await threads() }),
     'POST shot': shot,
     'POST send': send,
-    'GET chat': (_, query) => chat(query.get('threadId')),
+    'GET chat': chat,
+    'POST conversation': openConversation,
   }
 
   return {
@@ -294,8 +340,7 @@ export default function t3AnnotatePlugin(options) {
         const handler = routes[`${req.method} ${path}`]
         if (!handler) return sendJson(res, 404, { error: 'Not found.' })
         try {
-          const query = new URLSearchParams(req.url.split('?')[1] || '')
-          sendJson(res, 200, await handler(req.method === 'POST' ? await readBody(req) : {}, query))
+          sendJson(res, 200, await handler(req.method === 'POST' ? await readBody(req) : {}))
         } catch (error) {
           server.config.logger.error(`[t3-annotate] ${error.message}`)
           sendJson(res, 500, { error: error.message })

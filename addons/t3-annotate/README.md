@@ -23,8 +23,11 @@ Two buttons appear in the nav bar:
   - **Slide note**: a comment about the whole slide.
   - Type the change and press Enter to attach it. Esc clears, Esc again exits.
 - **Chat** (speech bubble) opens the chat panel.
-  - The header picks the conversation: a new chat, one of this deck's earlier
-    chats, or another open thread in the project.
+  - The chat belongs to the dev server, so every tab and view on it (presenter,
+    play) shows the same conversation. Restarting the dev server, or running
+    the deck on another one, starts a new chat.
+  - The header picks the conversation: a new chat, an earlier chat from this
+    dev server, or another open thread in the project.
   - While the agent works, the panel shows its current step (reading a file,
     running a command) and then its reply. The nav button pulses while it
     works and shows a dot when a reply arrives with the panel closed.
@@ -42,20 +45,31 @@ The agent's edits hot-reload, and the chat keeps going:
 - If slides are added, removed or reordered above a note, the note moves with
   its slide. An unfinished note also takes the view along, so it stays on the
   slide it describes.
-- Headmatter edits and dev server restarts reload the page. The message, the
-  notes and the deck's chats are in local storage (per deck). The open panels
-  and an unfinished note are in session storage (per tab), so they come back.
-  Screenshots that were still rendering are rendered again.
+- Headmatter edits and dev server restarts reload the page. The message and the
+  notes are in local storage (per deck). The open panels and an unfinished note
+  are in session storage (per tab), so they come back. Screenshots that were
+  still rendering are rendered again. After a restart the chat starts fresh.
 
 ## What the agent gets
 
 Every message ends with a short context block: the slide you are on and its
-source lines. The first message of a chat also names the deck file and the dev
-server URL. For each note the agent gets the slide number and click step,
-source file and line range, the comment, picked elements (selector, text,
-trimmed HTML, the Vue component that rendered them) and a reference to the
-attached screenshot. Up to 8 screenshots are attached. The chat shows only
-what you wrote.
+source lines. The first message a dev server sends to a thread also describes
+the deck, so the agent can go straight to the right lines:
+
+- the deck file, title and slide canvas size;
+- that the dev server is already running at its URL and hot-reloads, so the
+  agent must not start another one;
+- where the slide sources, styles, components, layouts, setup files, static
+  assets and theme are;
+- every slide with its title, source file and line range.
+
+For each note the agent gets the slide number and click step, source file and
+line range, the comment, picked elements (selector, text, trimmed HTML, the Vue
+component that rendered them) and a reference to the attached screenshot. Up to
+8 screenshots are attached. The chat shows only what you wrote.
+
+Replies are shown as Markdown. Images in them become their alt text, because
+agents link screenshots by local path.
 
 New threads open in the T3 project whose workspace is this repository (or a
 worktree of it) with **full-access** runtime mode, so the agent can edit and

@@ -21,8 +21,8 @@ function describeElement(el, rel) {
  * @param {string} input.message      what the presenter typed
  * @param {Array}  input.annotations  notes with slide, comment, elements, regions, strokes, shotName
  * @param {{no: number, clicks: number, clicksTotal: number}} [input.current]  the slide on screen when sending
- * @param {boolean} input.first       the message starts a new thread, so it carries the full deck context
- * @param {object} input.deck         { entry, devUrl, slides: (no) => { file, start, end, title } }
+ * @param {boolean} input.first       this dev server has not told the thread about the deck yet, so it carries the full context
+ * @param {object} input.deck         { entry, title, devUrl, canvas, places, count, slides: (no) => { file, start, end, title } }
  * @param {(path: string) => string} input.rel  makes absolute paths repository-relative
  */
 export function buildPrompt({ message, annotations, current, first, deck, rel }) {
@@ -62,9 +62,27 @@ export function buildPrompt({ message, annotations, current, first, deck, rel })
 
   out.push(CONTEXT_HEADING, '')
   if (first) {
+    const title = deck.title ? `"${deck.title}" ` : ''
     out.push(
-      `We are working on the Slidev deck \`${rel(deck.entry)}\`. Its dev server runs at ${deck.devUrl} and hot-reloads on save, so I see your changes immediately.`,
-      'Edit the deck sources and follow the repository AGENTS.md. Positions in slide notes refer to the slide canvas, not to my screen.',
+      `We are working on the Slidev deck ${title}in \`${rel(deck.entry)}\`, ${deck.count} slides.`,
+      `Its dev server is already running at ${deck.devUrl} and hot-reloads on save, so I see your edits straight away. Do not start another dev server. To look at slide n, open ${deck.devUrl}/n.`,
+      '',
+      'Where things are:',
+      ...deck.places.map(({ label, paths }) => `- ${label}: ${paths.map((p) => `\`${p}\``).join(', ')}`),
+      '',
+      'Slides:',
+    )
+    const files = new Set()
+    for (let no = 1; no <= deck.count; no++) files.add(deck.slides(no)?.file)
+    for (let no = 1; no <= deck.count; no++) {
+      const slide = deck.slides(no)
+      if (!slide) continue
+      const name = slide.title ? ` "${clip(oneLine(slide.title), 60)}"` : ''
+      out.push(`${no}.${name} ${files.size > 1 ? `\`${rel(slide.file)}\` ` : ''}lines ${slide.start + 1}-${slide.end}`)
+    }
+    out.push(
+      '',
+      `Edit the deck sources and follow the repository AGENTS.md. Positions in slide notes are slide canvas pixels (${deck.canvas.width} x ${deck.canvas.height}), not my screen.`,
     )
   }
   if (current?.no) {
