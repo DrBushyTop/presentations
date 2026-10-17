@@ -2,7 +2,7 @@
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { useNav } from '@slidev/client'
 import { chat, openChat, refreshChat } from './chat.mjs'
-import { api, draft, modelChoice, ui } from './store.mjs'
+import { api, draft, ui } from './store.mjs'
 
 const nav = useNav()
 const models = ref([])
@@ -14,7 +14,8 @@ const input = ref(null)
 const scroller = ref(null)
 
 const modelKey = m => `${m.instanceId}|${m.model}`
-const selectedModel = computed(() => models.value.find(m => m.instanceId === modelChoice.value.instanceId && m.model === modelChoice.value.model))
+const findModel = (instanceId, model) => models.value.find(m => m.instanceId === instanceId && m.model === model)
+const favorites = computed(() => models.value.filter(m => m.favorite))
 const chats = computed(() => chat.conversation.chats)
 const threadId = computed(() => chat.conversation.threadId)
 const otherThreads = computed(() => threads.value.filter(t => !chats.value.some(c => c.id === t.id)))
@@ -23,7 +24,26 @@ const providers = computed(() => [...new Set(models.value.map(m => m.provider))]
 const data = computed(() => chat.data)
 const thread = computed(() => data.value?.thread)
 const messages = computed(() => data.value?.messages || [])
-const threadModel = computed(() => thread.value && models.value.find(m => m.instanceId === thread.value.instanceId && m.model === thread.value.model))
+// The pickers show what T3 shows: the open chat's model and effort, or for a new chat
+// T3's default until another is picked.
+const defaultSelection = ref(null)
+const newChoice = ref({ instanceId: '', model: '', effort: '' })
+function toChoice(selection) {
+  const m = findModel(selection.instanceId, selection.model)
+  const effort = selection.options?.find(o => o.id === m?.effort?.id)?.value
+  return { instanceId: selection.instanceId, model: selection.model, effort: effort || m?.effort?.default || '' }
+}
+const choice = computed(() => {
+  const t = thread.value
+  if (!t) return newChoice.value
+  return toChoice(t.selection || { instanceId: t.instanceId, model: t.model })
+})
+const selectedModel = computed(() => findModel(choice.value.instanceId, choice.value.model))
+function resetNewChoice() {
+  const d = defaultSelection.value
+  const m = (d && findModel(d.instanceId, d.model)) || models.value.find(x => x.instanceId === 'claudeAgent') || models.value[0]
+  if (m) newChoice.value = toChoice(d && m.model === d.model && m.instanceId === d.instanceId ? d : { instanceId: m.instanceId, model: m.model })
+}
 const shotsPending = computed(() => draft.value.annotations.some(a => a.shotState === 'pending'))
 const canSend = computed(() => signedIn.value && !chat.sending && !shotsPending.value
   && (draft.value.message.trim() || draft.value.annotations.length))
@@ -35,11 +55,9 @@ async function loadCatalog() {
   try {
     const [catalog, list] = await Promise.all([api('catalog'), api('threads')])
     models.value = catalog.models
+    defaultSelection.value = catalog.defaultSelection
     threads.value = list.threads
-    if (!selectedModel.value && models.value.length) {
-      const m = models.value.find(x => x.instanceId === 'claudeAgent') || models.value[0]
-      modelChoice.value = { instanceId: m.instanceId, model: m.model, effort: m.effort?.default || '' }
-    }
+    if (!findModel(newChoice.value.instanceId, newChoice.value.model)) resetNewChoice()
     signedIn.value = true
     error.value = ''
   }
@@ -53,9 +71,28 @@ async function signOut() {
   ui.trayOpen = false
 }
 
+const selectionOf = (c) => {
+  const m = findModel(c.instanceId, c.model)
+  return { instanceId: c.instanceId, model: c.model, options: m?.effort && c.effort ? [{ id: m.effort.id, value: c.effort }] : [] }
+}
+
+// A new chat keeps the choice until it starts. An open chat changes in T3 from its next message.
+async function choose(next) {
+  const t = thread.value
+  if (!t) { newChoice.value = next; return }
+  const modelSelection = selectionOf(next)
+  t.selection = modelSelection // show it now; the next poll confirms it
+  try { await api('model', { threadId: t.id, modelSelection }) }
+  catch (e) { error.value = e.message }
+  refreshChat()
+}
+
 function pickModel(key) {
   const m = models.value.find(x => modelKey(x) === key)
-  if (m) modelChoice.value = { instanceId: m.instanceId, model: m.model, effort: m.effort?.default || '' }
+  if (!m) return
+  // Keep the effort when the new model has it too, like T3's composer.
+  const effort = m.effort?.choices.some(c => c.id === choice.value.effort) ? choice.value.effort : m.effort?.default || ''
+  choose({ instanceId: m.instanceId, model: m.model, effort })
 }
 
 function pickChat(id) {
@@ -73,11 +110,7 @@ async function send() {
     message,
     annotations,
     current: { no: nav.currentSlideNo.value, clicks: nav.clicks.value, clicksTotal: nav.clicksTotal.value },
-    model: !open && m && {
-      instanceId: m.instanceId,
-      model: m.model,
-      ...(m.effort && modelChoice.value.effort ? { options: [{ id: m.effort.id, value: modelChoice.value.effort }] } : {}),
-    },
+    model: !open && m && selectionOf(choice.value),
   }
   // Show the message right away; it is replaced once the thread has it.
   chat.sending = {
@@ -142,7 +175,10 @@ function openImage(e) {
   if (e.target instanceof HTMLImageElement) window.open(e.target.src, '_blank', 'noopener')
 }
 watch(() => [messages.value.length, messages.value.at(-1)?.html?.length, data.value?.activity?.length, chat.sending], () => scrollToEnd())
-watch(threadId, () => scrollToEnd(true))
+watch(threadId, (id) => {
+  if (!id) resetNewChoice() // a new chat starts from T3's default again
+  scrollToEnd(true)
+})
 
 onMounted(() => {
   loadCatalog()
@@ -240,17 +276,27 @@ onMounted(() => {
         </button>
       </div>
       <div class="tc-foot">
-        <template v-if="!threadId && models.length">
-          <select :value="selectedModel ? modelKey(selectedModel) : ''" aria-label="Model" @change="pickModel($event.target.value)">
+        <template v-if="models.length">
+          <select
+            class="tc-chip tc-model" :value="selectedModel ? modelKey(selectedModel) : ''" aria-label="Model"
+            :title="thread ? 'Model for this chat. A change applies from your next message.' : 'Model for the new chat'"
+            @change="pickModel($event.target.value)"
+          >
+            <option v-if="!selectedModel" value="" disabled>{{ choice.model || 'Pick a model' }}</option>
+            <optgroup v-if="favorites.length" label="Favorites">
+              <option v-for="m in favorites" :key="`fav-${modelKey(m)}`" :value="modelKey(m)">{{ m.label }}</option>
+            </optgroup>
             <optgroup v-for="p in providers" :key="p" :label="p">
               <option v-for="m in models.filter(x => x.provider === p)" :key="modelKey(m)" :value="modelKey(m)">{{ m.label }}</option>
             </optgroup>
           </select>
-          <select v-if="selectedModel?.effort" v-model="modelChoice.effort" aria-label="Effort">
+          <select
+            v-if="selectedModel?.effort" class="tc-chip" :value="choice.effort" aria-label="Effort" title="Reasoning effort"
+            @change="choose({ ...choice, effort: $event.target.value })"
+          >
             <option v-for="c in selectedModel.effort.choices" :key="c.id" :value="c.id">{{ c.label }}</option>
           </select>
         </template>
-        <span v-else-if="thread" class="tc-dim">{{ threadModel?.label || thread.model }}</span>
         <button v-if="signedIn" type="button" class="tc-link tc-signout" title="Revoke this slide server's T3 session now. Opening the chat signs in again." @click="signOut">Sign out</button>
       </div>
     </form>
@@ -317,8 +363,15 @@ onMounted(() => {
 .tc-send { all: unset; cursor: pointer; display: grid; place-items: center; width: 30px; height: 30px; border-radius: 9px; background: #2dd4bf; color: #0f172a; }
 .tc-send:disabled { opacity: 0.35; cursor: default; }
 .tc-foot { display: flex; align-items: center; gap: 6px; min-height: 22px; }
-.tc-foot select { min-width: 0; padding: 2px 4px; border: 1px solid #334155; border-radius: 6px; background: #0f172a; color: #cbd5e1; font: 12px system-ui, sans-serif; outline: none; }
-.tc-foot select:first-child { flex: 1; }
+/* Dropdown chips, like the model and effort pickers in T3's composer. */
+.tc-chip {
+  appearance: none; min-width: 0; max-width: 100%; padding: 3px 24px 3px 10px; border: 1px solid #475569; border-radius: 999px;
+  background: #0f172a url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E") no-repeat right 8px center / 12px;
+  color: #e2e8f0; font: 500 12px system-ui, sans-serif; text-overflow: ellipsis; cursor: pointer; outline: none;
+}
+.tc-chip:hover, .tc-chip:focus-visible { border-color: #5eead4; background-color: #134e4a; }
+.tc-chip option, .tc-chip optgroup { background: #0f172a; color: #e2e8f0; }
+.tc-model { flex: 0 1 auto; }
 .tc-signout { margin-left: auto; font-size: 11px; color: #94a3b8; }
 
 .tc-spin { flex: none; width: 12px; height: 12px; border: 2px solid #475569; border-top-color: #2dd4bf; border-radius: 50%; animation: tc-spin 0.8s linear infinite; }

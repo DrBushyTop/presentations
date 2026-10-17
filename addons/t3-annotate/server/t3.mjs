@@ -27,6 +27,11 @@ const IDLE_MS = 2 * 60 * 60 * 1000
 
 const t3Home = () => process.env.T3CODE_HOME || join(homedir(), '.t3')
 
+/** T3's own settings, read for the composer's favourite models and default selection. */
+export function t3Settings() {
+  try { return JSON.parse(readFileSync(join(t3Home(), 'userdata', 'settings.json'), 'utf8')) } catch { return {} }
+}
+
 export function t3Origin() {
   if (process.env.T3_ANNOTATE_URL) return process.env.T3_ANNOTATE_URL.replace(/\/+$/, '')
   const runtime = join(t3Home(), 'userdata', 'server-runtime.json')

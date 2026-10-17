@@ -36,7 +36,7 @@ export const pending = sessionState(
 export const draft = useLocalStorage(`slidev-t3-annotate:${deckId}`, { message: '', annotations: [] }, { mergeDefaults: true })
 delete draft.value.threadId // kept by earlier versions
 delete draft.value.chats
-export const modelChoice = useLocalStorage('slidev-t3-annotate:model', { instanceId: '', model: '', effort: '' }, { mergeDefaults: true })
+localStorage.removeItem('slidev-t3-annotate:model') // earlier versions kept their own model choice
 
 export function clearPending() {
   pending.slide = null

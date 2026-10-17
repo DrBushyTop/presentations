@@ -35,7 +35,10 @@ Two buttons appear in the nav bar:
     slide at that click step and the picks and drawings on it. Sent notes stay
     in the history as thumbnails that jump to their slide.
   - Enter sends, Shift+Enter adds a line. A message without notes is fine.
-  - Model and effort come from T3's live catalog and apply to new chats.
+  - The two dropdowns under the message box pick the model and effort. They
+    list the same models as T3's composer, favourites first. A new chat starts
+    with T3's default model. An open chat shows its current model, and a
+    change applies from the next message, as it does in T3.
 
 ### When the deck changes
 

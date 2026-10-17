@@ -201,17 +201,24 @@ export default function t3AnnotatePlugin(options) {
     return { width, height: Math.round(width / (options.data.config.aspectRatio || 16 / 9)) }
   }
 
+  // The same models as T3's composer (it already leaves out hidden ones), with its
+  // favourites and its default selection for new threads.
   async function catalog() {
     const caps = await t3.callTool('orchestrator_capabilities')
-    const models = caps.providers
-      .filter((p) => !p.constraints?.length && p.models?.length)
+    const settings = t3.t3Settings()
+    const favorites = new Set((settings.favorites || []).map((f) => `${f.provider}|${f.model}`))
+    const providers = caps.providers.filter((p) => !p.constraints?.length && p.models?.length)
+    const seen = new Set()
+    const models = providers
       .flatMap((p) => p.models.map((m) => {
         const effort = m.options?.find((o) => o.type === 'select' && ['effort', 'reasoningEffort', 'variant'].includes(o.id))
         return {
           instanceId: p.providerInstanceId,
           provider: p.displayName,
           model: m.id,
-          label: m.label,
+          // Several providers offer the same model, so name the provider when a label repeats.
+          label: seen.has(m.label) ? `${m.label} · ${p.displayName}` : (seen.add(m.label), m.label),
+          favorite: favorites.has(`${p.providerInstanceId}|${m.id}`),
           effort: effort && {
             id: effort.id,
             choices: effort.options.map((o) => ({ id: o.id, label: o.label })),
@@ -219,7 +226,17 @@ export default function t3AnnotatePlugin(options) {
           },
         }
       }))
-    return { models, runtimeMode: caps.runtimeMode }
+    return { models, defaultSelection: settings.defaultModelSelection || null, runtimeMode: caps.runtimeMode }
+  }
+
+  // Changes the model of this server's open chat. It applies from the next message on.
+  async function setModel({ threadId, modelSelection: m }) {
+    if (!threadId || threadId !== conversation.threadId) throw new Error('That chat is not open here.')
+    const text = (v) => typeof v === 'string' && /^[\w:./-]{1,200}$/.test(v)
+    const options = Array.isArray(m?.options) ? m.options.filter((o) => text(o?.id) && text(o?.value)) : []
+    if (!text(m?.instanceId) || !text(m?.model)) throw new Error('Pick a model from the list.')
+    await t3.callTool('t3_thread_configure', { threadId, modelSelection: { instanceId: m.instanceId, model: m.model, options } })
+    return {}
   }
 
   async function threads() {
@@ -300,6 +317,8 @@ export default function t3AnnotatePlugin(options) {
   async function chat() {
     const { threadId } = conversation
     if (!threadId) return { conversation, thread: null, messages: [], activity: [] }
+    // The model and effort T3 will use for the next message, which may have changed in T3 itself.
+    const configuration = t3.callTool('t3_thread_configuration', { threadId }).catch(() => null)
     const items = []
     let thread = null
     let afterPosition = null
@@ -330,7 +349,11 @@ export default function t3AnnotatePlugin(options) {
     if (known) known.title = thread.title
     return {
       conversation,
-      thread: { id: thread.threadId, title: thread.title, status: thread.status, busy, model: thread.model, instanceId: thread.providerInstanceId, pending: thread.pendingRequestCount || 0 },
+      thread: {
+        id: thread.threadId, title: thread.title, status: thread.status, busy,
+        model: thread.model, instanceId: thread.providerInstanceId, selection: (await configuration)?.modelSelection || null,
+        pending: thread.pendingRequestCount || 0,
+      },
       messages,
       // What the agent did since the last message, shown only while it works.
       activity: busy ? activity.slice(-4) : [],
@@ -346,6 +369,7 @@ export default function t3AnnotatePlugin(options) {
     'POST send': send,
     'GET chat': chat,
     'POST conversation': openConversation,
+    'POST model': setModel,
   }
 
   return {
