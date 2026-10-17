@@ -191,6 +191,8 @@ const busy = s => ['running', 'starting', 'preparing', 'queued'].includes(s)
 
 <style scoped>
 .tt-tray { position: fixed; top: 12px; right: 12px; bottom: 12px; width: 380px; z-index: 2147483001; display: flex; flex-direction: column; gap: 10px; padding: 14px; box-sizing: border-box; overflow-y: auto; border-radius: 14px; background: #1e293bf7; color: #e2e8f0; box-shadow: 0 16px 40px rgb(0 0 0 / 0.4); font: 13px/1.4 system-ui, -apple-system, sans-serif; }
+/* Keep every block its natural height and let the tray scroll; a long preview otherwise squashes the message box. */
+.tt-tray > * { flex-shrink: 0; }
 .tt-head { display: flex; align-items: center; gap: 8px; font-size: 15px; }
 .tt-x { all: unset; cursor: pointer; margin-left: auto; padding: 2px 6px; border-radius: 6px; color: #94a3b8; }
 .tt-x:hover { background: #334155; color: white; }
