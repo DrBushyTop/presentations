@@ -18,11 +18,16 @@ const findModel = (instanceId, model) => models.value.find(m => m.instanceId ===
 const favorites = computed(() => models.value.filter(m => m.favorite))
 const chats = computed(() => chat.conversation.chats)
 const threadId = computed(() => chat.conversation.threadId)
-const otherThreads = computed(() => threads.value.filter(t => !chats.value.some(c => c.id === t.id)))
 const providers = computed(() => [...new Set(models.value.map(m => m.provider))])
 
 const data = computed(() => chat.data)
 const thread = computed(() => data.value?.thread)
+// The list has only unsettled threads. Keep the open one in it after T3 settles it.
+const otherThreads = computed(() => {
+  const list = threads.value.filter(t => !chats.value.some(c => c.id === t.id))
+  const open = thread.value
+  return !open || [...chats.value, ...list].some(t => t.id === open.id) ? list : [{ id: open.id, title: open.title }, ...list]
+})
 const messages = computed(() => data.value?.messages || [])
 // The pickers show what T3 shows: the open chat's model and effort, or for a new chat
 // T3's default until another is picked.
@@ -63,12 +68,6 @@ async function loadCatalog() {
   }
   catch (e) { error.value = e.message }
   finally { signingIn.value = false }
-}
-
-async function signOut() {
-  await api('sign-out', {}).catch(() => {})
-  signedIn.value = false
-  ui.trayOpen = false
 }
 
 const selectionOf = (c) => {
@@ -259,45 +258,44 @@ onMounted(() => {
           <button type="button" class="tc-icon" aria-label="Remove note" @click="removeNote(a.id)">✕</button>
         </li>
       </ol>
-      <div class="tc-inputrow">
-        <button
-          type="button" class="tc-icon tc-annotate" :class="{ on: ui.active }"
-          :title="ui.active ? 'Stop annotating' : 'Annotate the slide'" aria-label="Annotate the slide" @click="ui.active = !ui.active"
-        >
-          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 2.5l9.5 4-4 1.5-1.5 4z" /><path d="M9 9l4 4" /></svg>
-        </button>
+      <div class="tc-box">
         <textarea
           ref="input" v-model="draft.message" rows="1" class="tc-input"
           :placeholder="threadId ? 'Reply…' : `Ask about the deck (you are on slide ${nav.currentSlideNo.value})`"
           @keydown="onInputKey"
         />
-        <button type="submit" class="tc-send" :disabled="!canSend" :title="shotsPending ? 'Waiting for screenshots' : 'Send (Enter)'" aria-label="Send">
-          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 13V3M3.5 7.5L8 3l4.5 4.5" /></svg>
-        </button>
-      </div>
-      <div class="tc-foot">
-        <template v-if="models.length">
-          <select
-            class="tc-chip tc-model" :value="selectedModel ? modelKey(selectedModel) : ''" aria-label="Model"
-            :title="thread ? 'Model for this chat. A change applies from your next message.' : 'Model for the new chat'"
-            @change="pickModel($event.target.value)"
+        <div class="tc-bar">
+          <button
+            type="button" class="tc-icon tc-annotate" :class="{ on: ui.active }"
+            :title="ui.active ? 'Stop annotating' : 'Annotate the slide'" aria-label="Annotate the slide" @click="ui.active = !ui.active"
           >
-            <option v-if="!selectedModel" value="" disabled>{{ choice.model || 'Pick a model' }}</option>
-            <optgroup v-if="favorites.length" label="Favorites">
-              <option v-for="m in favorites" :key="`fav-${modelKey(m)}`" :value="modelKey(m)">{{ m.label }}</option>
-            </optgroup>
-            <optgroup v-for="p in providers" :key="p" :label="p">
-              <option v-for="m in models.filter(x => x.provider === p)" :key="modelKey(m)" :value="modelKey(m)">{{ m.label }}</option>
-            </optgroup>
-          </select>
-          <select
-            v-if="selectedModel?.effort" class="tc-chip" :value="choice.effort" aria-label="Effort" title="Reasoning effort"
-            @change="choose({ ...choice, effort: $event.target.value })"
-          >
-            <option v-for="c in selectedModel.effort.choices" :key="c.id" :value="c.id">{{ c.label }}</option>
-          </select>
-        </template>
-        <button v-if="signedIn" type="button" class="tc-link tc-signout" title="Revoke this slide server's T3 session now. Opening the chat signs in again." @click="signOut">Sign out</button>
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 2.5l9.5 4-4 1.5-1.5 4z" /><path d="M9 9l4 4" /></svg>
+          </button>
+          <template v-if="models.length">
+            <select
+              class="tc-chip tc-model" :value="selectedModel ? modelKey(selectedModel) : ''" aria-label="Model"
+              :title="thread ? 'Model for this chat. A change applies from your next message.' : 'Model for the new chat'"
+              @change="pickModel($event.target.value)"
+            >
+              <option v-if="!selectedModel" value="" disabled>{{ choice.model || 'Pick a model' }}</option>
+              <optgroup v-if="favorites.length" label="Favorites">
+                <option v-for="m in favorites" :key="`fav-${modelKey(m)}`" :value="modelKey(m)">{{ m.label }}</option>
+              </optgroup>
+              <optgroup v-for="p in providers" :key="p" :label="p">
+                <option v-for="m in models.filter(x => x.provider === p)" :key="modelKey(m)" :value="modelKey(m)">{{ m.label }}</option>
+              </optgroup>
+            </select>
+            <select
+              v-if="selectedModel?.effort" class="tc-chip" :value="choice.effort" aria-label="Effort" title="Reasoning effort"
+              @change="choose({ ...choice, effort: $event.target.value })"
+            >
+              <option v-for="c in selectedModel.effort.choices" :key="c.id" :value="c.id">{{ c.label }}</option>
+            </select>
+          </template>
+          <button type="submit" class="tc-send" :disabled="!canSend" :title="shotsPending ? 'Waiting for screenshots' : 'Send (Enter)'" aria-label="Send">
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 13V3M3.5 7.5L8 3l4.5 4.5" /></svg>
+          </button>
+        </div>
       </div>
     </form>
   </aside>
@@ -355,24 +353,24 @@ onMounted(() => {
 .tc-note-body { display: grid; gap: 2px; min-width: 0; }
 .tc-note-body textarea { width: 100%; box-sizing: border-box; resize: vertical; border: 1px solid transparent; border-radius: 6px; padding: 2px 4px; background: transparent; color: #f1f5f9; font: inherit; outline: none; }
 .tc-note-body textarea:focus { border-color: #2dd4bf; }
-.tc-inputrow { display: flex; align-items: flex-end; gap: 6px; padding: 4px; border: 1px solid #334155; border-radius: 12px; background: #0f172a; }
-.tc-inputrow:focus-within { border-color: #2dd4bf; }
-.tc-input { flex: 1; min-height: 22px; max-height: 160px; padding: 5px 2px; border: 0; resize: none; background: transparent; color: #f1f5f9; font: 14px/1.4 system-ui, sans-serif; outline: none; }
+.tc-box { display: grid; min-width: 0; gap: 4px; padding: 8px 8px 6px 12px; border: 1px solid #334155; border-radius: 16px; background: #0f172a; }
+.tc-box:focus-within { border-color: #2dd4bf; }
+.tc-input { min-height: 22px; max-height: 160px; padding: 2px 0; border: 0; resize: none; background: transparent; color: #f1f5f9; font: 14px/1.4 system-ui, sans-serif; outline: none; }
+.tc-bar { display: flex; align-items: center; gap: 2px; margin-left: -6px; }
 .tc-annotate svg, .tc-send svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linejoin: round; stroke-linecap: round; }
 .tc-annotate.on { color: #2dd4bf; }
-.tc-send { all: unset; cursor: pointer; display: grid; place-items: center; width: 30px; height: 30px; border-radius: 9px; background: #2dd4bf; color: #0f172a; }
+.tc-send { all: unset; cursor: pointer; display: grid; place-items: center; flex: none; width: 30px; height: 30px; margin-left: 4px; border-radius: 50%; background: #2dd4bf; color: #0f172a; }
 .tc-send:disabled { opacity: 0.35; cursor: default; }
-.tc-foot { display: flex; align-items: center; gap: 6px; min-height: 22px; }
-/* Dropdown chips, like the model and effort pickers in T3's composer. */
+/* Model and effort pickers, plain text with a chevron as in T3's composer. */
 .tc-chip {
-  appearance: none; min-width: 0; max-width: 100%; padding: 3px 24px 3px 10px; border: 1px solid #475569; border-radius: 999px;
-  background: #0f172a url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E") no-repeat right 8px center / 12px;
-  color: #e2e8f0; font: 500 12px system-ui, sans-serif; text-overflow: ellipsis; cursor: pointer; outline: none;
+  appearance: none; field-sizing: content; min-width: 0; padding: 4px 22px 4px 8px; border: 0; border-radius: 8px;
+  background: transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E") no-repeat right 6px center / 12px;
+  color: #e2e8f0; font: 500 13px system-ui, sans-serif; text-overflow: ellipsis; cursor: pointer; outline: none;
 }
-.tc-chip:hover, .tc-chip:focus-visible { border-color: #5eead4; background-color: #134e4a; }
+.tc-chip:hover, .tc-chip:focus-visible { background-color: #334155; }
 .tc-chip option, .tc-chip optgroup { background: #0f172a; color: #e2e8f0; }
-.tc-model { flex: 0 1 auto; }
-.tc-signout { margin-left: auto; font-size: 11px; color: #94a3b8; }
+.tc-bar .tc-annotate { margin-right: auto; }
+.tc-chip:not(.tc-model) { flex: none; }
 
 .tc-spin { flex: none; width: 12px; height: 12px; border: 2px solid #475569; border-top-color: #2dd4bf; border-radius: 50%; animation: tc-spin 0.8s linear infinite; }
 @keyframes tc-spin { to { transform: rotate(360deg); } }

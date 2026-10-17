@@ -35,8 +35,9 @@ Two buttons appear in the nav bar:
     slide at that click step and the picks and drawings on it. Sent notes stay
     in the history as thumbnails that jump to their slide.
   - Enter sends, Shift+Enter adds a line. A message without notes is fine.
-  - The two dropdowns under the message box pick the model and effort. They
-    list the same models as T3's composer, favourites first. A new chat starts
+  - The bar inside the message box has the annotate button, the model and
+    effort pickers and send, as in T3's composer. The pickers list the same
+    models as T3, favourites first. A new chat starts
     with T3's default model. An open chat shows its current model, and a
     change applies from the next message, as it does in T3.
 
@@ -90,9 +91,8 @@ needs to be approved by hand.
 
 - The token is kept only in the dev server's memory. It is never written to
   disk or sent to the browser.
-- The T3 session is revoked when the dev server stops (Ctrl-C, SIGINT, SIGTERM, SIGHUP,
-  normal exit, Slidev restart), after 2 hours of no use, or with **Sign out** in
-  the chat panel.
+- The T3 session is revoked when the dev server stops (Ctrl-C, SIGINT, SIGTERM,
+  SIGHUP, normal exit, Slidev restart) or after 2 hours of no use.
 - If a dev server is killed hard (`kill -9`, crash), its session is left
   behind. The next sign-in revokes sessions from dead dev servers. They show in
   `t3 auth session list` as `Slidev annotate · pid <n>`.

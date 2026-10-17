@@ -362,7 +362,6 @@ export default function t3AnnotatePlugin(options) {
 
   const routes = {
     'GET status': async () => ({ signedIn: t3.isSignedIn() }),
-    'POST sign-out': async () => { await t3.signOut(); return { signedIn: false } },
     'GET catalog': catalog,
     'GET threads': async () => ({ threads: await threads() }),
     'POST shot': shot,
