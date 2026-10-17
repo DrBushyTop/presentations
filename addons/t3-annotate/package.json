@@ -3,6 +3,14 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "keywords": ["slidev-addon", "slidev"],
-  "engines": { "slidev": ">=52.19.1" }
+  "keywords": [
+    "slidev-addon",
+    "slidev"
+  ],
+  "engines": {
+    "slidev": ">=52.19.1"
+  },
+  "dependencies": {
+    "markdown-it": "^14.1.0"
+  }
 }

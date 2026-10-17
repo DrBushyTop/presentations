@@ -56,7 +56,7 @@ async function postJson(url, body) {
 /** @type {{ origin: string, token: string, sessionIds: string[] } | null} */
 let signedIn = null
 let signingIn = null
-let session = null
+let session = null // Promise<McpSession> tagged with the token and origin it was opened for
 
 function pidAlive(pid) {
   try { process.kill(pid, 0); return true } catch (error) { return error.code === 'EPERM' }
@@ -243,18 +243,21 @@ class McpSession {
 export async function callTool(name, args = {}) {
   for (let attempt = 0; attempt < 2; attempt++) {
     const { origin, token } = await ensureSignedIn()
+    let mcp
     try {
+      // Concurrent calls share one session and wait for it to finish opening.
       if (!session || session.token !== token || session.origin !== origin) {
-        session = new McpSession(origin, token)
-        await session.open()
+        const fresh = new McpSession(origin, token)
+        session = Object.assign(fresh.open().then(() => fresh), { token, origin })
       }
-      const result = await session.request('tools/call', { name, arguments: args })
+      mcp = session
+      const result = await (await mcp).request('tools/call', { name, arguments: args })
       const text = result.content?.find((c) => c.type === 'text')?.text
       if (result.isError) throw Object.assign(new Error(`${name}: ${text || 'failed'}`), { toolError: true })
       if (result.structuredContent) return result.structuredContent
       try { return JSON.parse(text) } catch { return text }
     } catch (error) {
-      session = null
+      if (session === mcp) session = null
       if (error.toolError || attempt > 0) throw error
       // Revoked or expired: sign in again. A restarted T3 server forgets MCP sessions: open a new one.
       if (error.unauthorized) await signOut()

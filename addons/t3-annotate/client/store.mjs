@@ -1,25 +1,43 @@
-// State shared by the nav button, the slide overlay and the tray. Module scope
-// keeps it alive when Slidev remounts the nav controls.
+// State shared by the nav button, the slide overlay and the chat. Module scope
+// keeps it alive when Slidev remounts the nav controls. Edits to the deck's
+// headmatter reload the page, so this tab's open panels and unfinished note
+// live in sessionStorage.
 import { useLocalStorage } from '@vueuse/core'
 import { configs } from '@slidev/client'
-import { reactive } from 'vue'
+import { reactive, watch } from 'vue'
 
 const deckId = configs.exportFilename || configs.title || 'presentation'
 
-export const ui = reactive({
+function sessionState(key, initial, save = (v) => v) {
+  let saved = null
+  try { saved = JSON.parse(sessionStorage.getItem(key)) } catch {}
+  const state = reactive({ ...initial, ...saved })
+  watch(state, () => sessionStorage.setItem(key, JSON.stringify(save(state))), { deep: true })
+  return state
+}
+
+export const ui = sessionState('slidev-t3-annotate:ui', {
   active: false, // the overlay captures the pointer on the current slide
   tool: 'select', // select | region | draw | erase
   trayOpen: false,
 })
 
-/** Marks made on the current slide that are not attached yet. Rects are in slide canvas pixels. */
-export const pending = reactive({ elements: [], regions: [], strokes: [], comment: '', wholeSlide: false })
+/**
+ * Marks not attached yet, on `slide` ({ no, clicks }). Rects are in slide canvas pixels.
+ * Picked elements hold their DOM node, which a reload loses.
+ */
+export const pending = sessionState(
+  'slidev-t3-annotate:pending',
+  { slide: null, elements: [], regions: [], strokes: [], comment: '', wholeSlide: false },
+  (p) => ({ ...p, elements: p.elements.map(({ node, ...rest }) => rest) }),
+)
 
-/** The message being composed. Survives reloads, one per deck. */
-export const draft = useLocalStorage(`slidev-t3-annotate:${deckId}`, { message: '', annotations: [], threadId: '' }, { mergeDefaults: true })
+/** The message being composed, the open chat and the deck's earlier chats. Survives reloads, one per deck. */
+export const draft = useLocalStorage(`slidev-t3-annotate:${deckId}`, { message: '', annotations: [], threadId: '', chats: [] }, { mergeDefaults: true })
 export const modelChoice = useLocalStorage('slidev-t3-annotate:model', { instanceId: '', model: '', effort: '' }, { mergeDefaults: true })
 
 export function clearPending() {
+  pending.slide = null
   pending.elements = []
   pending.regions = []
   pending.strokes = []
@@ -84,3 +102,23 @@ export function marksBounds({ elements = [], regions = [], strokes = [] }) {
   const y = Math.min(...rects.map((r) => r.y))
   return { x, y, w: Math.max(...rects.map((r) => r.x + r.w)) - x, h: Math.max(...rects.map((r) => r.y + r.h)) - y }
 }
+
+/** Renders the screenshot for an attached note and records the result on it. */
+export function takeShot(annotation) {
+  const labelled = annotation.elements.length > 1
+  const marks = {
+    boxes: [
+      ...annotation.elements.map((e, i) => ({ ...e.rect, kind: 'element', label: labelled ? String(i + 1) : '' })),
+      ...annotation.regions.map((r) => ({ ...r, kind: 'region' })),
+    ],
+    strokes: annotation.strokes.map((s) => ({ points: s.points })),
+  }
+  const update = (values) => Object.assign(draft.value.annotations.find((a) => a.id === annotation.id) || {}, values)
+  update({ shotState: 'pending' })
+  api('shot', { slide: annotation.slide, marks })
+    .then(({ id }) => update({ shotId: id, shotState: 'ready' }))
+    .catch(() => update({ shotState: 'failed' }))
+}
+
+// A reload while a screenshot rendered would leave the note waiting forever.
+draft.value.annotations.filter((a) => a.shotState === 'pending').forEach(takeShot)

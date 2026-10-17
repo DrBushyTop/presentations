@@ -1,8 +1,9 @@
 # slidev-addon-t3-annotate
 
-Point at things on a running deck, say what should change, and send it to a
-T3 Code agent thread. Works in the presenter view and the normal play view,
-only on the dev server (`slidev` without `build`).
+Chat with a T3 Code agent about the running deck. Point at things on a slide,
+say what should change, and watch the agent work and reply. Works in the
+presenter view and the normal play view, only on the dev server (`slidev`
+without `build`).
 
 Enable it in a deck's headmatter:
 
@@ -21,21 +22,40 @@ Two buttons appear in the nav bar:
   - **Draw** / **Erase**: freehand marks in red.
   - **Slide note**: a comment about the whole slide.
   - Type the change and press Enter to attach it. Esc clears, Esc again exits.
-- **Agent request** (speech bubble) opens the tray with the attached notes.
-  - Each note shows a screenshot of the slide at that click step, with the picks and drawings on it.
-  - The message box takes free text. A message with no notes is fine; the prompt then says which slide you are on.
-  - **Send to**: a new thread, or a follow-up to one of the project's open threads. After a send the tray keeps the thread selected for the next follow-up.
-  - Model and effort come from T3's live catalog and apply to new threads.
-  - **Preview prompt** shows exactly what the agent will receive.
+- **Chat** (speech bubble) opens the chat panel.
+  - The header picks the conversation: a new chat, one of this deck's earlier
+    chats, or another open thread in the project.
+  - While the agent works, the panel shows its current step (reading a file,
+    running a command) and then its reply. The nav button pulses while it
+    works and shows a dot when a reply arrives with the panel closed.
+  - Attached notes sit above the message box, each with a screenshot of the
+    slide at that click step and the picks and drawings on it. Sent notes stay
+    in the history as thumbnails that jump to their slide.
+  - Enter sends, Shift+Enter adds a line. A message without notes is fine.
+  - Model and effort come from T3's live catalog and apply to new chats.
 
-The draft survives reloads (local storage, per deck).
+### When the deck changes
+
+The agent's edits hot-reload, and the chat keeps going:
+
+- Slide content, frontmatter and styles update in place. Nothing is lost.
+- If slides are added, removed or reordered above a note, the note moves with
+  its slide. An unfinished note also takes the view along, so it stays on the
+  slide it describes.
+- Headmatter edits and dev server restarts reload the page. The message, the
+  notes and the deck's chats are in local storage (per deck). The open panels
+  and an unfinished note are in session storage (per tab), so they come back.
+  Screenshots that were still rendering are rendered again.
 
 ## What the agent gets
 
-The prompt names the deck file, the dev server URL, and for each note: the
-slide number and click step, source file and line range, the comment, picked
-elements (selector, text, trimmed HTML, the Vue component that rendered them)
-and a reference to the attached screenshot. Up to 8 screenshots are attached.
+Every message ends with a short context block: the slide you are on and its
+source lines. The first message of a chat also names the deck file and the dev
+server URL. For each note the agent gets the slide number and click step,
+source file and line range, the comment, picked elements (selector, text,
+trimmed HTML, the Vue component that rendered them) and a reference to the
+attached screenshot. Up to 8 screenshots are attached. The chat shows only
+what you wrote.
 
 New threads open in the T3 project whose workspace is this repository (or a
 worktree of it) with **full-access** runtime mode, so the agent can edit and
@@ -52,7 +72,7 @@ needs to be approved by hand.
   disk or sent to the browser.
 - The T3 session is revoked when the dev server stops (Ctrl-C, SIGINT, SIGTERM, SIGHUP,
   normal exit, Slidev restart), after 2 hours of no use, or with **Sign out** in
-  the tray.
+  the chat panel.
 - If a dev server is killed hard (`kill -9`, crash), its session is left
   behind. The next sign-in revokes sessions from dead dev servers. They show in
   `t3 auth session list` as `Slidev annotate · pid <n>`.
@@ -72,4 +92,6 @@ them.
 | `T3CODE_CLI_PATH` | `~/.t3/bin/t3`, then `t3` on `PATH` | T3 CLI used for pairing and revoking |
 
 Screenshots are rendered with Playwright Chromium (`playwright-chromium`) into
-the system temp directory and deleted after they are sent.
+the system temp directory. Sent ones stay there for 14 days so the chat
+history can show them. Replies are rendered from Markdown on the dev server
+with `markdown-it`, raw HTML off.

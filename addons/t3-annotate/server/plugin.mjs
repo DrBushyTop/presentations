@@ -1,12 +1,13 @@
 // Vite dev-server routes under /__t3-annotate/ that the presenter UI calls.
 // The browser never sees the T3 token: these routes call T3 from Node.
 import { execFile } from 'node:child_process'
-import { randomBytes } from 'node:crypto'
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { createHash, randomBytes } from 'node:crypto'
+import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, relative } from 'node:path'
 import { promisify } from 'node:util'
-import { buildPrompt } from './prompt.mjs'
+import MarkdownIt from 'markdown-it'
+import { buildPrompt, userText } from './prompt.mjs'
 import { closeRenderer, renderSlide } from './render.mjs'
 import * as t3 from './t3.mjs'
 
@@ -15,6 +16,12 @@ const PREFIX = '/__t3-annotate/'
 const SHOTS = join(tmpdir(), 'slidev-t3-annotate')
 const SHOT_ID = /^[a-f0-9]{16}$/
 const MAX_ATTACHMENTS = 8
+// Screenshots stay around so the chat can show them next to the message they went with.
+const KEEP_SHOTS_MS = 14 * 24 * 60 * 60 * 1000
+const SENT_INDEX = join(SHOTS, 'sent.json')
+// Agent replies are rendered here so the page only gets HTML that cannot carry markup of its own.
+const markdown = new MarkdownIt({ html: false, linkify: true, breaks: true })
+const BUSY = new Set(['starting', 'preparing', 'running', 'queued'])
 
 // Loopback, or a Tailscale address (100.64.0.0/10, fd7a:115c:a1e0::/48). The
 // decks bind 0.0.0.0, so anything else on the LAN must not reach these routes.
@@ -56,6 +63,33 @@ function sendJson(res, status, body) {
 
 const git = async (cwd, ...args) => (await run('git', args, { cwd })).stdout.trim()
 
+const messageKey = (text) => createHash('sha256').update(text.trim()).digest('hex').slice(0, 24)
+
+/** Maps a sent message to the notes and screenshots it carried. */
+function readSentIndex() {
+  try { return JSON.parse(readFileSync(SENT_INDEX, 'utf8')) } catch { return {} }
+}
+
+function pruneShots() {
+  if (!existsSync(SHOTS)) return
+  const cutoff = Date.now() - KEEP_SHOTS_MS
+  for (const name of readdirSync(SHOTS)) {
+    if (name.endsWith('.png') && statSync(join(SHOTS, name)).mtimeMs < cutoff) rmSync(join(SHOTS, name), { force: true })
+  }
+  const index = readSentIndex()
+  for (const [key, entry] of Object.entries(index)) if (entry.at < cutoff) delete index[key]
+  writeFileSync(SENT_INDEX, JSON.stringify(index))
+}
+
+// Summaries of what the agent is doing, for the status line under the chat.
+function activityLabel(item) {
+  if (item.type === 'reasoning') return 'Thinking'
+  const firstLine = (item.text || '').split('\n').find((l) => l.trim() && !l.startsWith('$ Preparing')) || ''
+  if (item.type === 'command_execution') return item.title && item.title !== 'Command' ? item.title : `Running ${clipText(firstLine.replace(/^\$\s*/, ''), 60)}`
+  return item.title || item.type.replace(/_/g, ' ')
+}
+const clipText = (text, max) => (text.length > max ? `${text.slice(0, max)}…` : text)
+
 export default function t3AnnotatePlugin(options) {
   let devUrl = null
   let checkout = null
@@ -81,12 +115,12 @@ export default function t3AnnotatePlugin(options) {
     throw new Error(`No T3 project for ${root}. Add it in T3 Code first.`)
   }
 
+  // A slide's own module is `<file>.md__slidev_<n>.md`. Its number goes stale when slides
+  // move, and the note already names the slide, so keep just the file.
   const rel = (path) => {
     if (!path) return ''
-    const slide = path.match(/^(.*\.md)__slidev_(\d+)\.md$/)
-    const file = slide ? slide[1] : path.split('?')[0]
-    const out = checkout && file.startsWith(checkout.root) ? relative(checkout.root, file) : file
-    return slide ? `${out} (slide ${slide[2]})` : out
+    const file = path.replace(/(\.md)__slidev_\d+\.md$/, '$1').split('?')[0]
+    return checkout && file.startsWith(checkout.root) ? relative(checkout.root, file) : file
   }
 
   function slideInfo(no) {
@@ -94,6 +128,9 @@ export default function t3AnnotatePlugin(options) {
     if (!s) return null
     return { file: s.source.filepath, start: s.source.start, end: s.source.end, title: s.title || s.frontmatter?.title }
   }
+
+  const deckInfo = () => ({ entry: options.entry, devUrl, slides: slideInfo })
+  const deckTitle = () => options.data.config.title || rel(options.entry)
 
   function canvas() {
     const width = options.data.config.canvasWidth || 980
@@ -154,36 +191,70 @@ export default function t3AnnotatePlugin(options) {
     const uploaded = []
     for (const a of attachments) uploaded.push(await t3.uploadImage(a.name, readFileSync(a.file)))
 
-    const prompt = buildPrompt({
-      message,
-      annotations: withShots,
-      deck: { entry: options.entry, devUrl, slides: slideInfo },
-      current,
-      rel,
-    })
+    const prompt = buildPrompt({ message, annotations: withShots, current, first: !threadId, deck: deckInfo(), rel })
+    const index = readSentIndex()
+    index[messageKey(prompt)] = {
+      at: Date.now(),
+      notes: annotations.map((a) => ({ shotId: SHOT_ID.test(a.shotId || '') ? a.shotId : null, slide: a.slide, comment: a.comment })),
+    }
+    mkdirSync(SHOTS, { recursive: true })
+    writeFileSync(SENT_INDEX, JSON.stringify(index))
 
-    let sentTo = threadId
-    let title = null
     if (threadId) {
       if (uploaded.length) await t3.callTool('t3_thread_send_attachments', { threadId, message: prompt, attachments: uploaded })
       else await t3.callTool('t3_thread_send', { threadId, message: prompt, mode: 'auto' })
-    } else {
-      const first = (annotations[0]?.comment || message).replace(/\s+/g, ' ').trim()
-      title = `Slides: ${first.length > 60 ? `${first.slice(0, 60)}…` : first}`
-      const launched = await t3.callTool('t3_thread_launch', {
-        projectId: project.id,
-        title,
-        ...(model?.instanceId && model?.model ? { modelSelection: model } : {}),
-        runtimeMode: 'full-access',
-        interactionMode: 'default',
-        workspaceStrategy,
-        message: prompt,
-        ...(uploaded.length ? { attachments: uploaded } : {}),
-      })
-      sentTo = launched.threadId || launched.thread?.threadId
+      return { threadId }
     }
-    for (const a of annotations) if (SHOT_ID.test(a.shotId || '')) rmSync(join(SHOTS, `${a.shotId}.png`), { force: true })
-    return { threadId: sentTo, title, prompt }
+    const first = (message || annotations[0]?.comment || 'Slide notes').replace(/\s+/g, ' ').trim()
+    const title = `${deckTitle()}: ${clipText(first, 60)}`
+    const launched = await t3.callTool('t3_thread_launch', {
+      projectId: project.id,
+      title,
+      ...(model?.instanceId && model?.model ? { modelSelection: model } : {}),
+      runtimeMode: 'full-access',
+      interactionMode: 'default',
+      workspaceStrategy,
+      message: prompt,
+      ...(uploaded.length ? { attachments: uploaded } : {}),
+    })
+    return { threadId: launched.threadId || launched.thread?.threadId, title }
+  }
+
+  /** The conversation in a thread, with the context the addon added hidden again. */
+  async function chat(threadId) {
+    if (!threadId) throw new Error('No thread.')
+    const items = []
+    let thread = null
+    let afterPosition = null
+    for (let page = 0; page < 10; page++) {
+      const read = await t3.callTool('t3_thread_read', { threadId, view: 'activity', limit: 100, maxCharsPerItem: 50000, ...(afterPosition === null ? {} : { afterPosition }) })
+      thread ??= read.thread
+      items.push(...read.items)
+      if (!read.hasMore) break
+      afterPosition = read.nextPosition
+    }
+    const index = readSentIndex()
+    const messages = []
+    let activity = []
+    for (const item of items) {
+      if (item.type === 'user_message') {
+        const entry = index[messageKey(item.text || '')]
+        messages.push({ id: item.itemId, role: 'user', text: userText(item.text || ''), notes: entry?.notes || [], at: item.updatedAt })
+        activity = []
+      } else if (item.type === 'assistant_message') {
+        messages.push({ id: item.itemId, role: 'assistant', html: markdown.render(item.text || ''), streaming: item.status !== 'completed', at: item.updatedAt })
+      } else if (item.type !== 'checkpoint') {
+        const label = activityLabel(item).replaceAll(`${checkout?.root}/`, '')
+        activity.push({ label, done: item.status === 'completed' })
+      }
+    }
+    const busy = BUSY.has(thread.status)
+    return {
+      thread: { id: thread.threadId, title: thread.title, status: thread.status, busy, model: thread.model, instanceId: thread.providerInstanceId, pending: thread.pendingRequestCount || 0 },
+      messages,
+      // What the agent did since the last message, shown only while it works.
+      activity: busy ? activity.slice(-4) : [],
+    }
   }
 
   const routes = {
@@ -193,16 +264,14 @@ export default function t3AnnotatePlugin(options) {
     'GET threads': async () => ({ threads: await threads() }),
     'POST shot': shot,
     'POST send': send,
-    'POST preview': async (body) => {
-      await resolveCheckout()
-      return { prompt: buildPrompt({ message: body.message || '', annotations: body.annotations || [], deck: { entry: options.entry, devUrl, slides: slideInfo }, current: body.current, rel }) }
-    },
+    'GET chat': (_, query) => chat(query.get('threadId')),
   }
 
   return {
     name: 'slidev-t3-annotate',
     apply: 'serve',
     configureServer(server) {
+      pruneShots()
       server.httpServer?.once('listening', () => {
         devUrl = `http://localhost:${server.httpServer.address().port}`
       })
@@ -225,7 +294,8 @@ export default function t3AnnotatePlugin(options) {
         const handler = routes[`${req.method} ${path}`]
         if (!handler) return sendJson(res, 404, { error: 'Not found.' })
         try {
-          sendJson(res, 200, await handler(req.method === 'POST' ? await readBody(req) : {}))
+          const query = new URLSearchParams(req.url.split('?')[1] || '')
+          sendJson(res, 200, await handler(req.method === 'POST' ? await readBody(req) : {}, query))
         } catch (error) {
           server.config.logger.error(`[t3-annotate] ${error.message}`)
           sendJson(res, 500, { error: error.message })

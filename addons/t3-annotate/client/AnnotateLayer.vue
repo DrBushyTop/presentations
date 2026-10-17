@@ -3,8 +3,8 @@ import { computed, markRaw, nextTick, onBeforeUnmount, onMounted, ref, watch } f
 import { useNav } from '@slidev/client'
 import { describeElement } from './pick.mjs'
 import {
-  api, canvasSize, clearPending, draft, hasPending, marksBounds, pending, slideElement,
-  toScreenRect, toSlidePoint, toSlideRect, ui,
+  canvasSize, clearPending, draft, hasPending, marksBounds, pending, slideElement,
+  takeShot, toScreenRect, toSlidePoint, toSlideRect, ui,
 } from './store.mjs'
 
 const nav = useNav()
@@ -141,7 +141,7 @@ function erase(pt) {
 
 function selectParent() {
   const last = pending.elements.at(-1)
-  const parent = last?.node.parentElement
+  const parent = last?.node?.parentElement // a reload drops the node
   if (!parent || parent === slideElement() || !slideElement()?.contains(parent)) return
   pending.elements.splice(pending.elements.length - 1, 1, elementEntry(parent))
 }
@@ -159,16 +159,8 @@ function noteWholeSlide() {
 
 function attach() {
   if (!hasPending() && !(pending.wholeSlide && pending.comment.trim())) return
-  const id = Math.random().toString(36).slice(2, 10)
-  const marks = {
-    boxes: [
-      ...pending.elements.map((p, i) => ({ ...p.rect, kind: 'element', label: pending.elements.length > 1 ? String(i + 1) : '' })),
-      ...pending.regions.map(r => ({ ...r, kind: 'region' })),
-    ],
-    strokes: pending.strokes.map(s => ({ points: s.points })),
-  }
   const annotation = {
-    id,
+    id: Math.random().toString(36).slice(2, 10),
     slide: { no: nav.currentSlideNo.value, clicks: nav.clicks.value, clicksTotal: nav.clicksTotal.value },
     comment: pending.comment.trim(),
     elements: pending.elements.map(({ node, ...rest }) => rest),
@@ -181,14 +173,7 @@ function attach() {
   draft.value.annotations.push(annotation)
   clearPending()
   hover.value = null
-  api('shot', { slide: annotation.slide, marks })
-    .then(({ id: shotId }) => patch(id, { shotId, shotState: 'ready' }))
-    .catch(() => patch(id, { shotState: 'failed' }))
-}
-
-function patch(id, values) {
-  const a = draft.value.annotations.find(x => x.id === id)
-  if (a) Object.assign(a, values)
+  takeShot(annotation)
 }
 
 function onEditorKey(e) {
@@ -205,7 +190,12 @@ onMounted(() => window.addEventListener('keydown', onWindowKey, true))
 onBeforeUnmount(() => window.removeEventListener('keydown', onWindowKey, true))
 
 // Marks belong to one slide and click state; moving on discards unattached ones.
-watch(() => [nav.currentSlideNo.value, nav.clicks.value], () => { clearPending(); hover.value = null })
+// When the deck changes above the slide, follow.mjs moves the note and the view together.
+const here = () => ({ no: nav.currentSlideNo.value, clicks: nav.clicks.value })
+const onNoteSlide = () => pending.slide?.no === here().no && pending.slide?.clicks === here().clicks
+watch(() => hasPending() || pending.wholeSlide, (has) => { if (has && !pending.slide) pending.slide = here() }, { immediate: true })
+watch(here, () => { if (!onNoteSlide()) clearPending(); hover.value = null })
+onMounted(() => { if (pending.slide && !onNoteSlide()) clearPending() })
 </script>
 
 <template>
@@ -247,8 +237,8 @@ watch(() => [nav.currentSlideNo.value, nav.clicks.value], () => { clearPending()
       </button>
       <button type="button" :class="{ on: pending.wholeSlide }" title="Comment on the whole slide" @click="noteWholeSlide">Slide note</button>
       <span class="ta-sep" />
-      <button type="button" title="Open the message tray" @click="ui.trayOpen = !ui.trayOpen">
-        Tray<span v-if="draft.annotations.length" class="ta-count">{{ draft.annotations.length }}</span>
+      <button type="button" title="Open the chat" @click="ui.trayOpen = !ui.trayOpen">
+        Chat<span v-if="draft.annotations.length" class="ta-count">{{ draft.annotations.length }}</span>
       </button>
       <button type="button" class="ta-done" title="Stop annotating (Esc)" @click="ui.active = false">Done</button>
     </div>
