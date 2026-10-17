@@ -129,6 +129,18 @@ function scrollToEnd(force = false) {
     if (el && (force || el.scrollHeight - el.scrollTop - el.clientHeight < 120)) el.scrollTop = el.scrollHeight
   })
 }
+// Images in replies load after the text. Keep the end in view if it was.
+let pinned = true
+function onScroll() {
+  const el = scroller.value
+  pinned = el.scrollHeight - el.scrollTop - el.clientHeight < 120
+}
+function onImageLoad() {
+  if (pinned) scrollToEnd(true)
+}
+function openImage(e) {
+  if (e.target instanceof HTMLImageElement) window.open(e.target.src, '_blank', 'noopener')
+}
 watch(() => [messages.value.length, messages.value.at(-1)?.html?.length, data.value?.activity?.length, chat.sending], () => scrollToEnd())
 watch(threadId, () => scrollToEnd(true))
 
@@ -156,7 +168,7 @@ onMounted(() => {
       <button type="button" class="tc-icon" title="Close (Esc)" aria-label="Close" @click="ui.trayOpen = false">✕</button>
     </header>
 
-    <div ref="scroller" class="tc-log" aria-live="polite">
+    <div ref="scroller" class="tc-log" aria-live="polite" @scroll="onScroll">
       <div v-if="!threadId && !chat.sending" class="tc-empty">
         <p><strong>Chat about this deck.</strong> The agent gets the deck file and the slide you are on with every message, and edits the sources directly. The dev server shows its changes as they land.</p>
         <p>Use <button type="button" class="tc-link" @click="ui.active = true">Annotate</button> to point at things on a slide. Each note attaches a screenshot.</p>
@@ -174,7 +186,7 @@ onMounted(() => {
           <p v-if="m.text" class="tc-text">{{ m.text }}</p>
         </div>
         <!-- Rendered on the dev server with raw HTML disabled. -->
-        <div v-else class="tc-msg agent tc-md" :class="{ streaming: m.streaming }" v-html="m.html" />
+        <div v-else class="tc-msg agent tc-md" :class="{ streaming: m.streaming }" @click="openImage" @load.capture="onImageLoad" v-html="m.html" />
       </template>
 
       <div v-if="chat.sending" class="tc-msg user sending">
@@ -283,6 +295,9 @@ onMounted(() => {
 .tc-md :deep(pre code) { padding: 0; background: none; }
 .tc-md :deep(a) { color: #5eead4; }
 .tc-md :deep(h1), .tc-md :deep(h2), .tc-md :deep(h3) { margin: 4px 0 6px; font-size: 14px; }
+.tc-md :deep(.tc-figure) { display: grid; gap: 6px; margin: 4px 0; }
+.tc-md :deep(.tc-figure img) { display: block; width: 100%; height: auto; border-radius: 10px; background: #020617; cursor: zoom-in; }
+.tc-md :deep(.tc-caption) { color: #94a3b8; font-size: 12px; }
 .tc-md.streaming::after { content: '▍'; color: #5eead4; animation: tc-blink 1s steps(2) infinite; }
 @keyframes tc-blink { 50% { opacity: 0; } }
 

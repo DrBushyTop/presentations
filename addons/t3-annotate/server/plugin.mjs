@@ -3,8 +3,8 @@
 import { execFile } from 'node:child_process'
 import { createHash, randomBytes } from 'node:crypto'
 import { existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, rmSync, statSync, writeFileSync } from 'node:fs'
-import { tmpdir } from 'node:os'
-import { dirname, join, relative } from 'node:path'
+import { homedir, tmpdir } from 'node:os'
+import { dirname, extname, isAbsolute, join, relative, resolve } from 'node:path'
 import { promisify } from 'node:util'
 import MarkdownIt from 'markdown-it'
 import { buildPrompt, userText } from './prompt.mjs'
@@ -21,8 +21,22 @@ const KEEP_SHOTS_MS = 14 * 24 * 60 * 60 * 1000
 const SENT_INDEX = join(SHOTS, 'sent.json')
 // Agent replies are rendered here so the page only gets HTML that cannot carry markup of its own.
 const markdown = new MarkdownIt({ html: false, linkify: true, breaks: true })
-// Agents embed screenshots by local path, which the browser cannot load. Show the alt text.
-markdown.renderer.rules.image = (tokens, i) => `<em>[${markdown.utils.escapeHtml(tokens[i].content || 'image')}]</em>`
+// Agents embed screenshots by local path. `env.localImage` turns such a path into a
+// URL this server serves, or null, and then the reply shows the alt text instead.
+const renderImage = markdown.renderer.rules.image
+markdown.renderer.rules.image = (tokens, i, options, env, self) => {
+  const src = tokens[i].attrGet('src') || ''
+  const url = /^https?:/i.test(src) ? src : env.localImage?.(src)
+  const alt = markdown.utils.escapeHtml(tokens[i].content || '')
+  if (!url) return `<em>[${alt || 'image'}]</em>`
+  tokens[i].attrSet('src', url)
+  // Like T3's own chat: the image as a card, its alt text as the caption.
+  const caption = alt ? `<span class="tc-caption">${alt}</span>` : ''
+  return `<span class="tc-figure">${renderImage(tokens, i, options, env, self)}${caption}</span>`
+}
+// Reply images the browser may load: raster files under the repository, T3's data or the temp directory.
+const IMAGE_TYPES = { '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.gif': 'image/gif', '.webp': 'image/webp' }
+const MAX_IMAGE_BYTES = 20 * 1024 * 1024
 const BUSY = new Set(['starting', 'preparing', 'running', 'queued'])
 
 // Loopback, or a Tailscale address (100.64.0.0/10, fd7a:115c:a1e0::/48). The
@@ -119,6 +133,27 @@ export default function t3AnnotatePlugin(options) {
     const main = live.find((p) => p.workspaceRoot === mainRoot || p.repositoryIdentity?.rootPath === mainRoot)
     if (main) return { project: main, workspaceStrategy: { type: 'existing_worktree', worktreePath: root, branch: branch || null } }
     throw new Error(`No T3 project for ${root}. Add it in T3 Code first.`)
+  }
+
+  // Images in replies are served by an id, so the browser only reaches files a reply showed.
+  const replyImages = new Map() // id -> real path
+  function localImage(src) {
+    try {
+      let path = decodeURI(src.replace(/^file:\/\//i, '')).split(/[?#]/)[0]
+      if (path.startsWith('~/')) path = join(homedir(), path.slice(2))
+      const base = checkout?.root || options.userRoot
+      const file = realpathSync(isAbsolute(path) ? path : resolve(base, path))
+      const type = IMAGE_TYPES[extname(file).toLowerCase()]
+      const roots = [base, checkout?.mainRoot, join(homedir(), '.t3'), tmpdir()].filter((r) => r && existsSync(r)).map((r) => realpathSync(r))
+      const inside = roots.some((root) => { const r = relative(root, file); return r && !r.startsWith('..') && !isAbsolute(r) })
+      const stat = statSync(file)
+      if (!type || !inside || !stat.isFile() || stat.size > MAX_IMAGE_BYTES) return null
+      const id = createHash('sha256').update(file).digest('hex').slice(0, 16)
+      replyImages.set(id, file)
+      return `${PREFIX}image/${id}${extname(file).toLowerCase()}`
+    } catch {
+      return null // missing or unreadable
+    }
   }
 
   // A slide's own module is `<file>.md__slidev_<n>.md`. Its number goes stale when slides
@@ -284,7 +319,7 @@ export default function t3AnnotatePlugin(options) {
         messages.push({ id: item.itemId, role: 'user', text: userText(item.text || ''), notes: entry?.notes || [], at: item.updatedAt })
         activity = []
       } else if (item.type === 'assistant_message') {
-        messages.push({ id: item.itemId, role: 'assistant', html: markdown.render(item.text || ''), streaming: item.status !== 'completed', at: item.updatedAt })
+        messages.push({ id: item.itemId, role: 'assistant', html: markdown.render(item.text || '', { localImage }), streaming: item.status !== 'completed', at: item.updatedAt })
       } else if (item.type !== 'checkpoint') {
         const label = activityLabel(item).replaceAll(`${checkout?.root}/`, '')
         activity.push({ label, done: item.status === 'completed' })
@@ -333,6 +368,15 @@ export default function t3AnnotatePlugin(options) {
           const file = join(SHOTS, `${shotMatch[1]}.png`)
           if (!existsSync(file)) return sendJson(res, 404, { error: 'Not found.' })
           res.setHeader('content-type', 'image/png')
+          res.setHeader('cache-control', 'private, max-age=86400')
+          return res.end(readFileSync(file))
+        }
+
+        const imageMatch = req.method === 'GET' && path.match(/^image\/([a-f0-9]{16})\.\w+$/)
+        if (imageMatch) {
+          const file = replyImages.get(imageMatch[1])
+          if (!file || !existsSync(file)) return sendJson(res, 404, { error: 'Not found.' })
+          res.setHeader('content-type', IMAGE_TYPES[extname(file).toLowerCase()])
           res.setHeader('cache-control', 'private, max-age=86400')
           return res.end(readFileSync(file))
         }

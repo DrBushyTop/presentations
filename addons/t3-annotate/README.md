@@ -68,8 +68,11 @@ line range, the comment, picked elements (selector, text, trimmed HTML, the Vue
 component that rendered them) and a reference to the attached screenshot. Up to
 8 screenshots are attached. The chat shows only what you wrote.
 
-Replies are shown as Markdown. Images in them become their alt text, because
-agents link screenshots by local path.
+Replies are shown as Markdown. Agents link screenshots by local path, so the
+dev server serves those images itself, shown with the alt text as a caption.
+Click one to open it full size. Only PNG, JPEG, GIF and WebP files under the
+repository, `~/.t3` or the temp directory are served, each under an id the
+reply gave it. Anything else shows as its alt text.
 
 New threads open in the T3 project whose workspace is this repository (or a
 worktree of it) with **full-access** runtime mode, so the agent can edit and
