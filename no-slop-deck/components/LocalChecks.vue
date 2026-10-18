@@ -1,6 +1,8 @@
 <!--
   The local check run after a slice, as terminal output. The lint rule and
   paths are the demo app's real ones (eslint.config.js, no-restricted-imports).
+  The message follows a fix / why / don't shape; the full text is in the
+  demo app's config, shortened here.
   0 the failing run, with the fix in the message · 1 where it runs · 2 the rerun
   Both runs share one grid cell and crossfade, so nothing shifts.
 -->
@@ -20,7 +22,12 @@ withDefaults(defineProps<{ step?: number }>(), { step: 0 })
           <div class="err">
             <p class="loc">src/client/TaskList.tsx:4</p>
             <p class="code">import { findTasks } from '../lib/tasks.js'</p>
-            <p class="msg">Browser code must use the HTTP API. Put shared request/response types in src/shared/contracts.ts.</p>
+            <p class="msg">Browser code must use the HTTP API.</p>
+            <dl>
+              <dt>Fix</dt><dd>Call the server through src/client/api.ts.</dd>
+              <dt>Why</dt><dd>Server modules read the database directly.</dd>
+              <dt>Don't</dt><dd>Add eslint-disable or edit the rule.</dd>
+            </dl>
             <p class="rule">no-restricted-imports</p>
           </div>
           <p class="st skip"><b>·</b> vitest <em>not run</em></p>
@@ -154,6 +161,30 @@ withDefaults(defineProps<{ step?: number }>(), { step: 0 })
   font-size: 21px !important;
   font-weight: 700;
   line-height: 1.35 !important;
+}
+
+.err dl {
+  display: grid;
+  grid-template-columns: 70px 1fr;
+  gap: 2px 10px;
+  margin: 6px 0 0;
+  font-family: var(--z-font-text);
+  font-size: 19px;
+  line-height: 1.35;
+}
+
+.err dt {
+  color: var(--ns-frozen);
+  font-weight: 700;
+}
+
+.err dd {
+  margin: 0;
+  color: #e6e6e6;
+}
+
+.err dt:nth-of-type(3) {
+  color: #ff9d8f;
 }
 
 .err .rule {

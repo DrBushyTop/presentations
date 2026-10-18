@@ -1,8 +1,9 @@
 <!--
   The plan has to work for the team, not only the author.
   Left: Honeycomb's Tenant team, before and after reviewing plans together.
-  Right: Anthropic's learning study, where debugging showed the largest gap.
-  0 producers and reviewers · 1 team plan review · 2 the debugging gap · 3 two questions
+  Right: the export three weeks later. Someone who didn't build it answers
+  from the decision record. Illustrative, from the running example.
+  0 producers and reviewers · 1 team plan review · 2 three weeks later · 3 the question
 -->
 <script setup lang="ts">
 withDefaults(defineProps<{ step?: number }>(), { step: 0 })
@@ -33,20 +34,22 @@ withDefaults(defineProps<{ step?: number }>(), { step: 0 })
       </div>
     </section>
 
-    <section class="an" :class="{ on: step >= 2 }">
-      <header>Anthropic learning study</header>
-      <small class="cap">Quiz after learning a new library</small>
-      <div class="bars">
-        <div class="bar"><span class="v ns-mono">67%</span><div style="height: 67%" /><small>Coded by hand</small></div>
-        <div class="bar ai"><span class="v ns-mono">50%</span><div style="height: 50%" /><small>With AI help</small></div>
+    <section class="later" :class="{ on: step >= 2 }">
+      <header>DOC-142, three weeks later</header>
+      <div class="msg q">
+        <small><Icon name="user" />Support</small>
+        <p>"Why does the export skip done tasks?"</p>
       </div>
-      <p>The largest gap was on <b>debugging</b> questions.</p>
+      <div class="msg a">
+        <small><Icon name="user" />On call, didn't build it</small>
+        <p>"It exports what the list shows. We decided that in plan review."</p>
+        <span class="ns-mono">docs/adr/0007-export-scope.md</span>
+      </div>
     </section>
 
     <div class="ask" :class="{ on: step >= 3 }">
       <b>Before approving a plan</b>
-      <span>What user problem justifies this code?</span>
-      <span>Could someone else explain it and debug a failure?</span>
+      <span>Could someone other than the author explain it and debug a failure?</span>
     </div>
   </div>
 </template>
@@ -55,7 +58,7 @@ withDefaults(defineProps<{ step?: number }>(), { step: 0 })
 .team {
   height: 510px;
   display: grid;
-  grid-template-columns: 1fr 400px;
+  grid-template-columns: 1fr 440px;
   grid-template-rows: 1fr auto;
   column-gap: 44px;
   row-gap: 22px;
@@ -147,11 +150,6 @@ header {
   border: 2px solid var(--z-ink);
 }
 
-.cap {
-  font-size: var(--ns-label);
-  color: var(--z-grey-600);
-}
-
 .plan {
   padding: 8px 12px;
   background: #e3f4f6;
@@ -164,60 +162,69 @@ header {
   color: var(--ns-teal);
 }
 
-.an {
+.later {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 18px;
   transition: opacity 600ms var(--ns-ease), transform 700ms var(--ns-ease);
 }
 
-.an:not(.on) {
+.later:not(.on) {
   opacity: 0;
   transform: translateY(12px);
 }
 
-.bars {
-  flex: 1;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 26px;
-  align-items: end;
-  padding-top: 10px;
-}
-
-.bar {
-  height: 100%;
+.msg {
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
-  gap: 6px;
+  gap: 8px;
+  padding: 16px 18px;
 }
 
-.bar div {
-  background: #9a9a97;
-  transition: height 1200ms var(--ns-ease);
-}
-
-.bar.ai div {
-  background: var(--ns-red);
-}
-
-.bar .v {
-  font-size: 28px;
-  font-weight: 700;
-}
-
-.bar small {
+.msg small {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-size: var(--ns-label);
   font-weight: 700;
   color: var(--z-grey-600);
 }
 
-.an p {
+.msg small :deep(.ns-icon) {
+  font-size: 20px;
+}
+
+.msg p {
   margin: 0;
-  font-size: 22px;
-  line-height: 1.3;
   max-width: none;
+  font-size: 23px;
+  line-height: 1.3;
+  font-weight: 700;
+}
+
+.msg.q {
+  background: #fff1ee;
+  border-left: 6px solid var(--ns-red);
+}
+
+.msg.a {
+  flex: 1;
+  background: #e6f4f6;
+  border-left: 6px solid var(--ns-teal);
+}
+
+.msg.a small :deep(.ns-icon) {
+  color: var(--ns-teal);
+}
+
+.msg.a span {
+  margin-top: auto;
+  align-self: flex-start;
+  padding: 4px 10px;
+  background: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ns-teal);
 }
 
 .ask {

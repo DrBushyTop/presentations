@@ -307,6 +307,11 @@
   max-width: 34ch;
 }
 
+.ns-statement .small.next {
+  color: #fff;
+  font-weight: 800;
+}
+
 /* ---------- Stop rules ---------- */
 
 .ns-rules {
@@ -412,9 +417,10 @@
 /* ---------- Thanks ---------- */
 
 .ns-thanks {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 60px;
   padding: 0 110px;
 }
 
@@ -423,8 +429,17 @@
   line-height: 0.95;
   letter-spacing: -0.045em;
   font-weight: 800;
-  margin: 0 0 30px;
+  margin: 0;
   color: #fff;
+}
+
+.ns-thanks .ask {
+  margin: 10px 0 44px;
+  font-size: 64px;
+  line-height: 1;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--ns-frozen);
 }
 
 .ns-thanks .who {
@@ -440,10 +455,45 @@
 }
 
 .ns-thanks .q {
-  margin: 70px 0 0;
-  font-size: 34px;
+  margin: 40px 0 0;
+  font-size: 26px;
+  font-weight: 600;
+  color: #bdbdbd;
+}
+
+/* Placeholder until the feedback QR code is added: put an <img> in .code. */
+.ns-thanks .qr {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.ns-thanks .qr .code {
+  width: 300px;
+  height: 300px;
+  display: grid;
+  place-items: center;
+  background: #fff;
+  color: #8f8f8f;
+  font-size: 22px;
   font-weight: 700;
-  color: var(--ns-frozen);
+  outline: 3px dashed var(--ns-frozen);
+  outline-offset: 10px;
+}
+
+.ns-thanks .qr .code img {
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+}
+
+.ns-thanks .qr figcaption {
+  margin-top: 8px;
+  font-size: 24px;
+  font-weight: 700;
+  color: #fff;
 }
 
 /* ---------- Sources ---------- */

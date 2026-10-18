@@ -1,9 +1,10 @@
 <!--
-  How many reviews? A small, deliberately illustrative model you can drive
-  live. Assumptions (in the speaker notes too): 6 real issues; each reviewer
-  catches a remaining issue with p = 0.35, extra reviewers only partly
-  independent; every fix adds 0.12 new issues; 2.5 noise findings per
-  reviewer per round; triage 3 min per finding, 8 min per real fix;
+  When does another review stop paying off? A small, deliberately
+  illustrative model you can drive live. Assumptions (in the speaker notes
+  too): 6 real issues; each reviewer catches a remaining issue with
+  p = 0.35, extra reviewers only partly independent; every fix adds 0.12
+  new issues; 2.5 noise findings per reviewer per round; triage 3 min per
+  finding, 8 min per real fix;
   €90 an hour for people, €0.60 per model review run; 300 PRs a month.
 
   0 one reviewer, one round · 1 three providers · 2 five rounds, the stop

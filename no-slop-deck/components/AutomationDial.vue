@@ -2,7 +2,7 @@
   The fair counterargument: some teams no longer read every line.
   1 people still approve every change · 2 machines approve some
   3 HumanLayer moved back: from reading only specs in 2025 to reading the code
-  4 what the teams that read less share
+  4 what the teams that read less share: cheap recovery
 -->
 <script setup lang="ts">
 withDefaults(defineProps<{ step?: number }>(), { step: 0 })
@@ -14,8 +14,8 @@ const teams = [
   { who: 'HumanLayer', what: 'Specs only in 2025. Reads the code again.', x: 0.16, left: 50, up: false, g: 3, back: true },
   { who: 'Honeycomb', what: 'Team reviews plans. Auto-approves 0%.', x: 0.27, left: 291, up: true, g: 1 },
   { who: 'Uber', what: 'People approve. Review bots tested on known bugs.', x: 0.42, left: 346, up: false, g: 1 },
-  { who: 'Spotify', what: 'Most automated changes merge after checks.', x: 0.6, left: 582, up: true, g: 2 },
-  { who: 'Intercom', what: '19% of PRs approved by AI. Narrow ones only.', x: 0.77, left: 744, up: false, g: 2 },
+  { who: 'Intercom', what: '19% of PRs approved by AI. Narrow ones only.', x: 0.6, left: 582, up: true, g: 2 },
+  { who: 'Spotify', what: 'Bot-made fleet changes merge after checks.', x: 0.77, left: 744, up: false, g: 2 },
   { who: 'OpenAI', what: 'Review optional. People own the lint rules.', x: 0.95, left: 874, up: true, g: 2 },
 ]
 const W = 1136
@@ -53,7 +53,7 @@ const TO = 0.16
       v-for="t in teams" :key="t.who + 'd'" class="pin"
       :class="{ on: step >= t.g, g2: t.g === 2, back: t.back }" :style="{ left: t.x * W + 'px' }"
     />
-    <p class="take" :class="{ on: step >= 4 }">Teams that read less add automated checks and make recovery cheap.</p>
+    <p class="take" :class="{ on: step >= 4 }">The less you read, the cheaper a bad merge has to be.</p>
   </div>
 </template>
 

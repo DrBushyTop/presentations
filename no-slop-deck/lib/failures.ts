@@ -12,12 +12,12 @@ export const failures: Failure[][] = [
   // Research
   [
     {
-      name: 'It guesses instead of looking',
+      name: 'The agent guesses instead of looking',
       seen: 'agent: "The list probably hides done tasks."',
       fix: 'Answer from the code, logs and tickets, with a reference',
     },
     {
-      name: 'It rediscovers the system every time',
+      name: 'The agent rereads the system every time',
       seen: '30 files read inside the implementation context',
       fix: 'Research once, hand on a short map',
     },
@@ -25,7 +25,7 @@ export const failures: Failure[][] = [
   // Design
   [
     {
-      name: 'It picks the meaning of the feature',
+      name: 'The agent picks what the feature means',
       seen: 'agent: "I assumed the export includes all tasks."',
       fix: 'Grill the open choices, record them in CONTEXT.md',
     },
@@ -51,7 +51,7 @@ export const failures: Failure[][] = [
   // Verify
   [
     {
-      name: 'It takes the shortcut',
+      name: 'The agent takes the shortcut',
       seen: "import { db } from '../server/storage'",
       fix: 'Rules that fail locally and say how to fix it',
     },
@@ -82,13 +82,13 @@ export const failures: Failure[][] = [
   // Production
   [
     {
-      name: 'It passes CI and breaks under real traffic',
+      name: 'The change passes CI and breaks under real traffic',
       seen: 'CREATE INDEX locks writes to orders at 38 a second',
       fix: 'Checks that know production, and a small blast radius',
     },
     {
       name: 'The same mistake comes back next week',
-      seen: 'Third review comment this month: "don\'t append to app.ts"',
+      seen: 'Third correction this month: "don\'t append to app.ts"',
       fix: 'Turn the correction into a check',
     },
   ],
@@ -100,7 +100,7 @@ export const bottlenecks: string[] = [
   'You answer the questions the code could answer',
   'Only you know what was decided',
   'You review four days of work in one sitting',
-  'You are the first to run it, and you copy the errors back',
+  'You run it first, and paste the errors back to the agent',
   'You relay the bot comments and decide when to stop',
-  'You repeat last month\'s review comment',
+  'You repeat last month\'s correction',
 ]

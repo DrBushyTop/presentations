@@ -1,9 +1,10 @@
-// The agenda and part dividers share these names and questions.
+// The agenda map and part dividers share these names. The map shows the
+// questions; the dividers take theirs from slides.md.
 // Divider logs illustrate each phase's work. They are not recorded agent runs.
 export const gates: { name: string, q: string, stream: { t: string }[] }[] = [
   {
     name: 'Research',
-    q: 'How does the system work today?',
+    q: 'What does the code do today?',
     stream: [
       { t: 'Session identifies a user and team' },
       { t: 'List route supplies the team filter' },
@@ -12,7 +13,7 @@ export const gates: { name: string, q: string, stream: { t: string }[] }[] = [
   },
   {
     name: 'Design',
-    q: 'Which decision is still open?',
+    q: 'What are we actually building?',
     stream: [
       { t: 'Ask about the open decisions' },
       { t: 'Explore code for factual answers' },
@@ -21,7 +22,7 @@ export const gates: { name: string, q: string, stream: { t: string }[] }[] = [
   },
   {
     name: 'Slice',
-    q: 'How do we cut the work?',
+    q: 'What can someone see and check today?',
     stream: [
       { t: 'Thin UI → API → data path' },
       { t: 'Check one usable behavior' },
@@ -30,7 +31,7 @@ export const gates: { name: string, q: string, stream: { t: string }[] }[] = [
   },
   {
     name: 'Verify',
-    q: 'Which claim did we test?',
+    q: 'Which claim did we actually test?',
     stream: [
       { t: 'Run types, lints and tests locally' },
       { t: 'Check the agreed behavior' },
@@ -39,16 +40,16 @@ export const gates: { name: string, q: string, stream: { t: string }[] }[] = [
   },
   {
     name: 'Review',
-    q: 'When do we stop?',
+    q: 'What still needs your eyes?',
     stream: [
-      { t: 'Local subagents review the diff' },
+      { t: 'Subagents review the slice' },
       { t: 'PR bots add a second opinion' },
-      { t: 'Fix within the agreed budget' },
+      { t: 'Stop by the written rule' },
     ],
   },
   {
     name: 'Production',
-    q: 'What stops a bad rollout?',
+    q: 'Who watches it, and what stops it?',
     stream: [
       { t: 'Roll out behind a flag' },
       { t: 'Watch the agreed signals' },

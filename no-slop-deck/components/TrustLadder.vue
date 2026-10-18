@@ -1,9 +1,10 @@
 <!--
   Poteto's trust ladder, worked backwards from "the agent merges its own
-  code". Each rung moves one job from the person to the environment.
-  The rung wording is mine, from the interview.
+  code". Each level moves one job from the person to the environment.
+  The level wording is mine, from the interview. The talk says "level", not
+  "rung", for an audience that doesn't all speak English as a first language.
   goal: 0 where most of us are · 1 where this goes
-  full: 1 the next two rungs · 2 the top two · 3 what never goes away, and where it stops
+  full: 1 the next two levels · 2 the top two · 3 what never goes away, and where it stops
 -->
 <script setup lang="ts">
 const props = withDefaults(defineProps<{ step?: number, mode?: 'goal' | 'full' }>(), { step: 0, mode: 'full' })
@@ -37,11 +38,10 @@ const rungs = [
     </div>
     <div v-if="mode === 'full'" class="always" :class="{ on: step >= 3 }">
       <Icon name="user" />
-      <p>On every rung, you still click through it yourself.</p>
+      <p>On every level, you still click through it before your users do.</p>
     </div>
     <div v-if="mode === 'full'" class="foot" :class="{ on: step >= 3 }">
-      <p>Only where a bad change is cheap to undo, and the work can be checked.</p>
-      <span>Poteto: "verifiability of the domain is an important aspect"</span>
+      <p>Pick the level per change. A text fix can merge itself. A migration can't.</p>
     </div>
   </div>
 </template>
@@ -96,7 +96,7 @@ const rungs = [
 }
 
 /* The opening only shows where we start and where this goes; the middle
-   rungs stay in place, faint, until the close fills them in. */
+   levels stay in place, faint, until the close fills them in. */
 .goal .rung:not(.on) {
   opacity: 0.16;
   transform: none;
@@ -168,7 +168,7 @@ const rungs = [
   display: flex;
   flex-direction: column;
   gap: 4px;
-  padding: 10px 22px;
+  padding: 14px 22px;
   background: var(--ns-red);
   color: #fff;
   transition: opacity 600ms var(--ns-ease);
@@ -185,8 +185,4 @@ const rungs = [
   font-weight: 800;
 }
 
-.foot span {
-  font-size: 17px;
-  color: #ffe2dc;
-}
 </style>

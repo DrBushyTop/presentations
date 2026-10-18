@@ -41,9 +41,10 @@ layout: none
 <!--
 About 30 seconds.
 
+- On screen: the title, and an agent working on the change we'll follow all talk, exporting a team's tasks as CSV.
 - Let the stream run for a moment before speaking.
-- Say: "That's an agent writing code faster than any of us can read it. Everything it says sounds reasonable. Most of it, nobody will read line by line."
-- I'm Pasi, from Zure. This talk is about the practices I use so that code I didn't type is still code I can explain: what it does and why, how I know it works, and where to look when it breaks.
+- This talk is about the practices I use so that code I didn't type is still code I can explain: what it does and why, how I know it works, and where to look when it breaks.
+- The introduction of me is the next slide. Don't repeat it here.
 - Timings in the notes are estimates per slide, not rehearsed. Rehearse before deciding what to cut.
 -->
 
@@ -59,9 +60,13 @@ nofooter: true
 About 1 minute. A nod to Papers, Please, the border inspector game. The inspector checks my credentials, then my agent's PR.
 
 - Papers, please.
+
 [click] Purpose of visit: a talk about slop. DevOps and development were my background; now most of my work is AI: dev tooling that helps organisations run AI-assisted development, alongside normal dev projects. AI architect at Zure. Azure since 2014, 150+ customers.
+
 [click] Microsoft MVP since 2020, in two categories: Developer Technologies for the DevOps side and Foundry for AI. Pipelines, then prompts.
+
 [click] My papers check out. Then I hand over my agent's PR. All checks green, zero new tests, a summary that says it works. The inspector asks for evidence. There isn't any.
+
 [click] Merge denied. Let the six stamps land and the shutter come down before speaking.
 - "In the game, nothing gets through without the inspector checking the papers. That's the job now. Papers, please, for every PR."
 
@@ -80,21 +85,26 @@ Sources:
 
 ---
 layout: none
-clicks: 1
+clicks: 2
 ---
 
 <div class="ns-dark ns-statement">
-  <p class="big">Slop is a change accepted <em>without evidence</em> about how it behaves.</p>
-  <Show :step="$clicks" :at="1" class="small">It doesn't matter who wrote it. It matters what anyone checked.</Show>
+  <p class="big">Slop is a change <em>nobody can vouch for.</em></p>
+  <Show :step="$clicks" :at="1" class="small">No evidence of how it behaves. Nobody who can explain why it's built that way.</Show>
+  <Show :step="$clicks" :at="2" class="small next">The usual fix: check everything yourself.</Show>
 </div>
 
 <!--
 About 1 minute.
 
-- This is my working definition for the talk, not a dictionary one.
-- Slop isn't "AI code". It's accepting a change on vibes: green checks, a confident summary, a reviewer who skimmed.
+- On screen: my working definition for the talk, not a dictionary one.
+- Slop isn't "AI code". It's a change accepted on vibes: green checks, a confident summary, a reviewer who skimmed.
 
-[click] Humans write slop too. I have. The difference now is volume.
+[click] Two halves, and the talk covers both. Evidence: did anyone check how it behaves? Explanation: could anyone say why it's built this way, and where to look when it breaks? A change can pass every test and still be slop if nobody understands it.
+- It doesn't matter who wrote it. Humans write slop too. I have. The difference now is volume.
+
+[click] So the obvious fix is you. Read every line, run it, click through it. That works until the agent writes faster than you can check. GitHub Next puts writing against reading at about 15 to 1.
+- Say: "And that's where you become the bottleneck."
 -->
 
 ---
@@ -110,7 +120,8 @@ clicks: 2
 <!--
 About 1 minute.
 
-- Agents write faster than anyone can read; GitHub Next puts it at about 15 to 1. But reading isn't the only place you're the bottleneck. The bigger one is you as the relay. Everything the agent can't reach goes through you: you copy the error out of the browser, answer a question the code could have answered, paste in the bug report from Slack, tell it which CI check failed.
+- On screen: the agent on the left, the things it needs on the right: a browser, the code, Slack and the ticket tracker, CI and the review bots. Right now every wire runs through you.
+- Reading isn't the only place you're the bottleneck. The bigger one is you as the relay. Everything the agent can't reach goes through you: you copy the error out of the browser, answer a question the code could have answered, paste in the bug report from Slack, tell it which CI check failed.
 - Each relay is slow, and it's lossy. You summarise, you forget a detail, the agent fills the gap with a guess. And the agent can't loop on its own work while you're in the middle.
 
 [click] Poteto, who works on agent tooling at SpaceX AI, described the start of their performance work this way: they were "the meat proxy between my agent and Chrome DevTools".
@@ -133,48 +144,75 @@ clicks: 1
 <!--
 About 1.5 minutes.
 
-- Rung one is the bottleneck slide: you relay everything, and you read every line, or say you do.
-[click] The top rung: the agent merges its own PRs. Poteto works backwards from there: "How do I get to the point where my agent can merge its own code?"
-- Say: "This isn't a talk about reading less. It's about replacing reading with something better, one rung at a time."
-- That's how this fits with no slop. Slop is a change accepted without evidence. A 1,940-line PR with "LGTM" on it is slop with a human signature. An agent's merge backed by checks that can fail, a clip of it running and a rollout you can undo isn't.
+- On screen: five levels of how much the agent does on its own. Poteto from SpaceX AI calls this the trust ladder. Level 1 is the bottleneck slide: you relay everything, and you read every line, or say you do.
+
+[click] The top level: the agent merges its own PRs. Poteto works backwards from there: "How do I get to the point where my agent can merge its own code?"
+- Say: "This isn't a talk about reading less. It's about replacing reading with something better, one level at a time."
+- That's how this fits with no slop. A 1,940-line PR with "LGTM" on it is slop with a human signature. An agent's merge backed by checks that can fail, a clip of it running and a rollout you can undo isn't.
 - Climbing without the evidence is the slop version. Call it vibe merging.
-- One thing doesn't go away on any rung: you still click through it yourself. More on that in verify.
-- The middle rungs stay faint for now. We fill them in at the end.
+- One thing doesn't go away on any level: you still click through it yourself. More on that in verify.
+- The middle levels stay faint for now. We fill them in at the end.
 - Source: https://www.youtube.com/watch?v=MN9dGgmLyso
 -->
 
 ---
 part: Agents that merge
 class: ns
-clicks: 3
+clicks: 1
 transition: gate | gate-back
 ---
 
-# What keeps you on the bottom rung
+# One change, six places it can go wrong
 
-<FailureMap :step="$clicks" />
+<PartMap :step="$clicks" />
 
 <!--
-About 1 minute. Don't read the cards out. Each part opens with its own and shows what it looks like.
+About 1 minute. This is the agenda. Keep it quick.
 
-- These are the failures I keep seeing, placed under the gate that catches each one most cheaply.
-[click] Before implementation: the agent guesses instead of looking, picks what the feature means, or builds everything before anyone looks.
-[click] For every slice: it takes the shortcut, its tests only confirm the code, nobody runs it, and review either rubber-stamps or never stops.
-[click] After merge: it passes CI and breaks under real traffic, and the same mistake comes back next week.
-- Each part opens with its own failures, and where you're the bottleneck at that step.
+- On screen: the change we follow all talk. Docket is a small team task app I built for this talk. The ticket: export the team's tasks as CSV, for a weekly report. It's the change the agent was working on in the opening animation, and the PR the inspector stamped.
+- It's deliberately small. Small enough to follow, big enough to go wrong in every way that matters: whose tasks, which columns, what a comma in a title does.
+
+[click] Six parts, each with the question it answers. Three before any code: research, design, slice. Two for every slice: verify and review. One after merge: production.
+- Each part opens with how agent work goes wrong at that point, and where you're the bottleneck. Then what we do about it.
 -->
 
 ---
 layout: none
 ---
 
-<SectionGate :current="0" title="Understand the current system" question="What does the code do today?" />
+<SectionGate :current="0" title="Understand the current system" question="What does the code do today?" intro="The agent looks things up instead of guessing, and says where it found them." />
 
 <!--
-Research, including a prepared walkthrough of real artifacts.
+Research, about 6 minutes.
 
-- Say: "Let's go back to the request and see what should have happened. Export the team's tasks as CSV. No code yet."
-- The divider log describes the baseline: session, list route and the missing export. Research maps what exists before design decides what should change. This is an explanatory diagram, not a recorded agent run.
+- On screen: the talk as a pipeline run. Each part is a job; research is running, and its log shows what research finds in our app.
+- Say the line under the question: "The agent looks things up instead of guessing, and says where it found them."
+- Say: "Before anyone writes the export, what does the app do today?"
+-->
+
+---
+part: Research
+class: ns
+clicks: 2
+---
+
+# Use the shortest workflow that resolves the unknowns
+
+<RpiScale :step="$clicks" />
+
+<!--
+About 1 minute. This is my current workflow, not a mandatory process.
+
+- On screen: three phases across the top, research, design and implement, each with the question it answers. The bars are how full each phase's context gets. Grey is reading and work, teal is the notes handed on.
+- Each phase starts a fresh context and hands written notes to the next. Research asks how it works today, design decides what we're building, implement checks one slice at a time.
+
+[click] The point of research is what it keeps out of later contexts. It spends a whole context reading code, maybe 30 files, and hands on a short map with file references. Design and implementation start nearly empty, with only the notes they need. The fill levels are illustrative.
+
+[click] The rows below: not every change needs every phase. Small, clear change: implement directly. Open decisions: grill, then implement. Complex changes and large codebases: research first, so the reading doesn't crowd out the work.
+- Design hands on whatever the task needs: a design document with the decisions, a structure outline with vertical phases for bigger work, and CONTEXT.md for shared terms. A detailed implementation plan is optional; I usually skip it.
+- My old rule of thumb was to keep each context under 40 to 60% full. Treat that as a heuristic, not a measured limit.
+- My earlier posts describe the RPI foundation; this includes later changes. https://www.huuhka.net/research-plan-implement/ https://www.huuhka.net/how-i-currently-develop-with-llm-models-early-2026/
+- HumanLayer's documentation also separates research, design and vertical structure, and makes the detailed plan optional. https://docs.humanlayer.com/explanation/workflow-phases
 -->
 
 ---
@@ -190,52 +228,35 @@ clicks: 1
 <!--
 About 1 minute.
 
-- Where you're the bottleneck: the agent asks you things the code, the logs or the tickets could answer, or it doesn't ask and guesses.
-- Two ways research fails, or gets skipped.
+- On screen, the same layout opens every part: how it goes wrong on the left, what you'd see in the middle, and at the bottom, where you're the bottleneck.
 - Guessing: the agent answers a factual question from its priors. "The list probably hides done tasks." It sounds right, and nothing on screen says it was a guess.
-- Rediscovery: every phase reads the same 30 files again, and the reading crowds out the work.
+- Rereading: every phase reads the same 30 files again, and the reading crowds out the work.
+- Where you're the bottleneck: the agent asks you things the code, the logs or the tickets could answer. Or it doesn't ask, and guesses.
+
 [click] The fixes: answer from the system itself, with a reference you can open, and do the reading once so later contexts start from a short map.
 -->
 
 ---
 part: Research
 class: ns
-clicks: 2
-transition: gate | gate-back
+clicks: 3
 ---
 
-# Use the shortest workflow that resolves the unknowns
+# Research looks before it answers
 
-<RpiScale :step="$clicks" />
+<ResearchRun :step="$clicks" />
 
 <!--
-About 1 minute. This is my current workflow, not a mandatory process.
+About 1.5 minutes. The run is illustrative; the file names are the demo app's real ones.
 
-- Each phase starts a fresh context and hands written notes to the next. Research asks how it works today, design decides what we're building, implement checks one slice at a time.
-[click] The point of research is what it keeps out of later contexts. It spends a whole context reading code, maybe 30 files, and hands on a short map with file references. Design and implementation start nearly empty, with only the notes they need. The fill levels are illustrative.
-[click] So research isn't only for unfamiliar code. Use it for complex changes and large codebases, where the reading would otherwise crowd out the work. Small, clear change: implement directly. Open decisions: grill, then implement.
-- Design hands on whatever the task needs: a design document with the decisions, a structure outline with vertical phases for bigger work, and CONTEXT.md for shared terms. A detailed implementation plan is optional; I usually skip it.
-- My old rule of thumb was to keep each context under 40 to 60% full. Treat that as a heuristic, not a measured limit.
-- My earlier posts describe the RPI foundation; this includes later changes. https://www.huuhka.net/research-plan-implement/ https://www.huuhka.net/how-i-currently-develop-with-llm-models-early-2026/
-- HumanLayer's documentation also separates research, design and vertical structure, and makes the detailed plan optional. https://docs.humanlayer.com/explanation/workflow-phases
--->
+- On screen: the research prompt. It names the ticket, asks how things work today, and asks for file references. It says "no design yet" on purpose: research describes, it doesn't decide.
 
----
-layout: none
----
+[click] The agent searches the codebase for the team id and the shared query. It can open any of these files, but it doesn't read them all: the search points it at four, and it opens those. The app setup, the list route, the session and the shared query. That's the difference from guessing: it found where to look before it answered.
 
-<DemoSlide title="Map the current state" :minutes="3" prepared agent="Research walkthrough" prompt="How does the task list work today? Trace the session, the team filter and the shared query. Where are those boundaries in the code? Describe existing behavior with file references." />
+[click] Then it looks outside the code. The ticket and its comments: why do they want this? The database schema: which columns exist? And the web: how does CSV quote a comma? That last one matters later, when a task title with a comma breaks the export.
+- It doesn't ask me any of these. They're facts, and facts have a place you can look them up.
 
-<!--
-Prepared walkthrough, about 3 minutes.
-
-- Use the real research artifact Pasi generates against the demo-app baseline. The application has a task list and no export yet. Do not manufacture a mistaken research answer for this demonstration.
-1. Open the research questions and the completed current-state map.
-2. Show which files the agent located and how it traced the request through session, route and query.
-3. Follow one useful reference into the actual code. The route supplies the team scope; the shared query applies its input filters.
-4. Show how this compact map lets the design conversation start without rediscovering the system.
-- Current preparation status: the baseline app is being completed by another agent. Replace the walkthrough with the actual artifact when Pasi has run his own research skills.
-- Research is not a code review or a future design proposal. https://www.huuhka.net/research-plan-implement/ https://docs.humanlayer.com/explanation/workflow-phases
+[click] It writes research.md: four findings, each with a file and line. The next context starts from this, not from 30 files. The next slide opens it.
 -->
 
 ---
@@ -249,16 +270,18 @@ clicks: 3
 <ClaimTrace :step="$clicks" />
 
 <!--
-Recap of the prepared research example, about 1 minute.
+About 1 minute.
 
-- This is what a research document looks like: every finding has a heading that states the takeaway, one sentence, and a file and line you can open. The editor on the right is the cited code. Line numbers are the demo app's real source.
+- On screen: the research.md from the last slide, opened. On the left, four findings. Each has a heading that states the takeaway, one sentence, and a file and line. On the right, the editor opens the cited lines. Line numbers are the demo app's real source.
 - First finding: the session cookie resolves to a user and their team.
+
 [click] The list route passes the session's team to findTasks. The client can filter by status, not by team.
+
 [click] findTasks adds the team filter only when it's given a team. Scoping lives in the caller. That's the fact design needs.
+
 [click] Only session and task routes are registered. There is no export today.
 - Research describes what exists. It doesn't recommend and it doesn't decide the new endpoint's behavior.
 - The findings are shortened from what the create-research skill writes. The point is the shape: takeaway, sentence, a reference you can open.
-- Following a reference is about understanding an important fact. The example does not depend on research being wrong.
 - Sources: https://www.huuhka.net/research-plan-implement/ https://docs.humanlayer.com/explanation/workflow-phases
 -->
 
@@ -276,9 +299,11 @@ transition: gate | gate-back
 <!--
 About 1 minute.
 
-- Research is one case of a broader rule: when the agent has a factual question, it shouldn't ask you and it shouldn't guess.
+- On screen: four questions an agent might bring to you about the export. Research is one case of a broader rule: when the agent has a factual question, it shouldn't ask you and it shouldn't guess.
+
 [click] It looks in the place that knows: the code, the database, the tickets, its own past sessions. Every answer comes back with something you can open. The first answer is the demo app's real code. The other three are illustrative.
 - Past sessions are underrated. Poteto built a recall skill for exactly this: a new chat on the same problem pulls in what the last few chats learned.
+
 [click] Poteto's question: "How do I get the agent to answer its own question? Not by hallucinating, not by guessing, but actually real data." What comes back to you are the product choices, which is where the design part starts.
 - What makes this work is access, not a smarter model: read access to the database, a ticket tracker integration, transcripts it can search.
 - Source: https://www.youtube.com/watch?v=MN9dGgmLyso
@@ -288,18 +313,20 @@ About 1 minute.
 layout: none
 ---
 
-<SectionGate :current="1" title="Grill the decisions, keep the answers" question="What are we actually building?" />
+<SectionGate :current="1" title="Grill the decisions, keep the answers" question="What are we actually building?" intro="Settle what the feature means before any code, and write it down." />
 
 <!--
-Design. Grilling is useful as soon as implementing directly would require guesses. It can be part of a lightweight discussion or a larger design phase. A separate detailed plan is not required.
-- The divider log shows the same workflow: ask about choices, use code to answer factual questions, and record the decisions in CONTEXT.md.
+Design, about 5 minutes.
+
+- On screen: research is done, design is running. Its log is the workflow: ask about the open choices, answer the factual ones from the code, record the decisions.
+- Say the line under the question: "Settle what the feature means before any code, and write it down."
+- Grilling is useful as soon as implementing directly would need guesses. It can be a short conversation or part of a larger design phase. A separate detailed plan isn't required.
 -->
 
 ---
 part: Design
 class: ns
 clicks: 1
-transition: gate | gate-back
 ---
 
 # What goes wrong without design
@@ -309,29 +336,11 @@ transition: gate | gate-back
 <!--
 About 1 minute.
 
+- On screen: two ways design goes wrong. The agent can't know what you meant, so it decides. "I assumed the export includes all tasks" is a product decision made by an implementation agent.
+- And the decisions live in one person's chat. "Why does the export skip done tasks?" Nobody else can explain or debug it.
 - Where you're the bottleneck: the decisions live in your head. Every agent and every colleague has to come back to you.
-- The agent can't know what you meant, so it decides. "I assumed the export includes all tasks" is a product decision made by an implementation agent.
-- And the decisions live in one person's chat. Nobody else can explain or debug them.
+
 [click] The fixes: grill the open choices before any code, record them where the team can read them, and review the plan together.
--->
-
----
-layout: none
----
-
-<DemoSlide title="Grill the design" :minutes="3" prepared agent="Design walkthrough" prompt="Let's resolve what the export should do. Grill me on the choices that would otherwise become guesses. Explore the code for factual answers, and record our agreed decisions with grill with docs." />
-
-<!--
-Prepared walkthrough, about 3 minutes.
-
-- Use the real design conversation and CONTEXT.md that Pasi generates after the research run. Do not invent a flawed plan for the agent to repair.
-1. Start from the product request and the current-state map.
-2. Show one meaningful question with its options, the answer and why it changes the feature.
-3. Show another question about the output or scope so grilling reads as a design conversation rather than a security quiz.
-4. Open the durable record produced by grill with docs. The choices remain available outside the chat.
-- In my normal workflow, I often proceed from approved design and a vertical structure outline to implementation. A detailed plan can be skipped.
-- Preparation status: the real conversation and artifact will be added after Pasi runs his skills.
-- Sources: https://www.huuhka.net/how-i-currently-develop-with-llm-models-early-2026/ https://docs.humanlayer.com/explanation/workflow-phases https://github.com/mattpocock/skills
 -->
 
 ---
@@ -345,15 +354,17 @@ clicks: 3
 <PlanArgument :step="$clicks" />
 
 <!--
-About 1 minute. Keep this at the level of the design discussion.
+About 1.5 minutes.
 
-- The feature request was to download the team's tasks for weekly reporting. Now ask the agent to grill you on the plan, so you both close the gaps in your understanding. The implementation agent should not silently choose the feature's meaning.
+- On screen: the start of a design session. The request was to download the team's tasks for weekly reporting. I ask the agent to grill me, so we both close the gaps before any code. The implementation agent shouldn't silently choose what the feature means.
+
 [click] This is what grilling really looks like: a batch of numbered questions, each with the agent's recommendation. Real sessions run to dozens. Factual questions it answers from the code itself; these are the product choices.
+
 [click] You answer by number. Most recommendations are fine. The work is spotting the one to override: here the agent assumed all tasks, and the person wants what the list shows.
+
 [click] Grill with docs records the settled answers in CONTEXT.md and a decision record. The durable record is the useful output, not the transcript.
 - Grilling is also the cheapest point to understand the feature. I've answered every choice before any code exists, so when I later read the diff I'm checking it against decisions I made, not learning the feature from the code.
-- Only the caller-team boundary is fixed for the teaching case. The filter, columns and limits will come from Pasi's real design run.
-- This is the next step above implementing directly when a task has unclear choices. It works within a design phase or as a short conversation. No separate plan file is required.
+- Only the caller-team answer is fixed for the example. The filter, columns and limits stand in for a real design run.
 - Matt Pocock's grilling skills are the source for the interview pattern. https://github.com/mattpocock/skills
 - GitHub Next identifies the same problem: decisions can disappear in private chat or be silently made by an agent. https://githubnext.com/projects/chopin/
 -->
@@ -371,10 +382,12 @@ clicks: 2
 <!--
 About 1 minute. Add material now; decide timing in rehearsal.
 
-- GitHub Next's Chopin is a research prototype for collaborative planning with people and agents. The diagram is an explanatory redraw, not a screenshot of the product.
-[click] A plan can be a place for research, decision-specific discussion and visual explanation. Chopin is exploring a shared MDX editor, comment threads and interactive diagrams, with decisions that teammates can trace.
-[click] HumanLayer invests in the workflow around those artifacts: objective research, a design discussion and an outline of vertical phases before implementation. The current default does not require a detailed code-level plan.
-- The point is that tool builders are putting attention into the work before implementation. Do not turn this into three live product demos or claim these prototypes are generally available.
+- On screen, top: a shared plan, redrawn after GitHub Next's Chopin, a research prototype for planning with people and agents. Not a screenshot of the product. Bottom: HumanLayer's workflow phases.
+
+[click] Threads sit on the specific lines they're about. A plan can hold research, a discussion per decision and diagrams, with decisions teammates can trace.
+
+[click] HumanLayer invests in the workflow around those artifacts: objective research, a design discussion and an outline of vertical phases before implementation. Their current default doesn't require a detailed code-level plan.
+- The point is that tool builders are putting attention into the work before implementation. Don't claim these prototypes are generally available.
 - Sources: https://githubnext.com/projects/chopin/ https://docs.humanlayer.com/explanation/workflow-phases https://docs.humanlayer.com/reference/skills-workflows
 -->
 
@@ -392,25 +405,28 @@ transition: gate | gate-back
 <!--
 About 1.5 minutes.
 
-- Answering first keeps you from anchoring. This is the team version of the same problem.
-- Honeycomb's Tenant team first split into producers and reviewers: reviewers didn't produce, producers picked up more tasks. Their words: "knowledge concentration got amplified. We were each rapidly over-specializing in some portions of our stack."
+- On screen, left: Honeycomb's Tenant team. Right, soon: our export, three weeks after it shipped. Both are about whether anyone besides the author understands the work.
+- Honeycomb's team first split into producers and reviewers: reviewers didn't produce, producers picked up more tasks. Their words: "knowledge concentration got amplified. We were each rapidly over-specializing in some portions of our stack."
 
 [click] Their fix was to review the plan and the prompt given to the agent, as a team. "It started feeling like everyone was more aware of what was happening." Plans could be borrowed later for caveats. They don't do the strict version for everything now. https://www.honeycomb.io/blog/embracing-code-review-bottleneck
 
-[click] Anthropic's randomised study: 52 mostly junior engineers learned the Trio library. The AI group averaged 50% on the quiz, the hand-coding group 67%. The largest gap was on debugging questions, which is the skill you need when this export breaks at 3am. People who asked conceptual questions scored 65% or more, people who delegated under 40%. They say that pattern is associated, not causal, and the sample was small. https://www.anthropic.com/research/AI-assistance-coding-skills
+[click] Back to our export, three weeks later. Support asks why done tasks are missing. The person on call didn't build it, but they were in the plan review, and the grill wrote the decision down. So they can answer in a minute, and they know where to start if it's a bug.
+- This is the failure from the start of the part, "Nobody knows", turned around. Illustrative, from the running example.
 
-[click] Two questions before approving a plan. First: what user problem justifies this code? Spec Kit's assess extension ends in go, clarify or kill before any spec is written, and kill is a valid answer. https://github.com/github/spec-kit/blob/main/newsletters/2026-July.md
-- Second: could someone other than the author explain this decision and investigate a failure? If not, the plan isn't done.
+[click] One question before approving a plan: could someone other than the author explain this decision and investigate a failure? If not, the plan isn't done. That's the second half of the slop definition: someone who can explain why it's built that way.
 -->
 
 ---
 layout: none
 ---
 
-<SectionGate :current="2" title="Put something working in front of a person" question="What can someone see and check today?" />
+<SectionGate :current="2" title="Put something working in front of a person" question="What can someone see and check today?" intro="Build one thin path a person can click through, then the next one." />
 
 <!--
-Slice, about 6 minutes. No demo.
+Slice, about 5 minutes. No demo.
+
+- On screen: research and design are done, slice is running. Its log: a thin path through every layer, check one usable behaviour, then the next slice.
+- Say the line under the question: "Build one thin path a person can click through, then the next one."
 -->
 
 ---
@@ -426,9 +442,10 @@ clicks: 1
 <!--
 About 1 minute.
 
-- Where you're the bottleneck: four days of work arrive at once and you're the only reviewer who can say it's wrong.
-- An agent will happily finish every layer before anyone has clicked anything. Day four is when you find out the columns are wrong.
-- And the reverse mistake: a four-line PR gets approved in seconds because it's small.
+- On screen: two opposite mistakes about size. An agent will happily finish every layer before anyone has clicked anything. Day four, 38 files, is when you find out the columns are wrong.
+- And the reverse: a four-line migration gets approved in 40 seconds because it's small.
+- Where you're the bottleneck: four days of work arrive at once, and you're the only one who can say it's wrong.
+
 [click] The fixes: a thin working path on day one, and review effort set by blast radius, not by line count.
 -->
 
@@ -445,12 +462,12 @@ clicks: 2
 <!--
 About 2 minutes.
 
+- On screen: the same four days, twice. Rows are layers, columns are days. The eye marks a day when a person can see and check something working.
 - The usual split is by layer: data first, then the API, then the UI. Nobody sees anything work until day four. That's when you find out the columns are wrong, or the whole idea is.
 
 [click] Tracer bullets go the other way. A narrow path through every layer on day one. The data can be an in-memory fixture behind the same interface. The path is real, so a person can click it.
 
 [click] Every day after that ends with something a person can check. Stubs are fine. A slice with no visible result isn't.
-
 - This matters more with agents. An agent will happily finish all four layers before you've looked at anything. A running prototype on day one is the cheapest review you'll get.
 - The term comes from The Pragmatic Programmer. Matt Pocock's skills use it for how agents should cut work. https://github.com/mattpocock/skills
 -->
@@ -468,12 +485,12 @@ clicks: 2
 <!--
 About 1.5 minutes.
 
+- On screen: our export cut into slices. Every slice runs through UI, API and data, and ends with a check a person can run.
 - Slice one ships with fixture data. The product owner clicks Export on day one and tells you the columns are wrong before anyone writes a query.
 
-[click] Each later slice replaces a stub or widens the path, and each ends with a check a person can run. Slice two is where the tenant boundary lives, so it gets its own check. That's the one we'll break in the verify part.
+[click] Each later slice replaces a stub or widens the path. Slice two is where the team boundary lives, so it gets its own check: a user only ever exports their own team's tasks.
 
 [click] Matt Pocock's rule, from his to-tickets skill: each slice cuts a narrow but complete path through every layer, is demoable or verifiable on its own, and fits in one fresh agent context. https://github.com/mattpocock/skills/blob/main/skills/engineering/to-tickets/SKILL.md
-
 - A review unit isn't a deployment unit. Keep the export behind a flag until slice two lands.
 -->
 
@@ -491,7 +508,7 @@ transition: gate | gate-back
 <!--
 About 1.5 minutes.
 
-- Both minimaps use the same scale, one row per line. The rename is huge. The auth change is a speck.
+- On screen: two changes as minimaps, on the same scale, one row per line. On the left a rename across the codebase, huge. On the right ten lines in an authorization check, a speck.
 
 [click] The rename needs a mechanical check. The ten lines need a person and a boundary test, because they change who can delete what.
 - The rename is the one exception to tracer bullets. Matt Pocock's skill sequences a wide refactor as expand, migrate in batches, contract, so the build stays green throughout.
@@ -504,10 +521,13 @@ About 1.5 minutes.
 layout: none
 ---
 
-<SectionGate :current="3" title="Green is a starting point" question="Which claim did we actually test?" />
+<SectionGate :current="3" title="Green is a starting point" question="Which claim did we actually test?" intro="The agent proves each claim before you look at the change." />
 
 <!--
-Verify, about 6 minutes. No demo.
+Verify, about 8 minutes. No demo.
+
+- On screen: verify is running. It sits in the "for each slice" group with review: both happen for every slice, not once at the end.
+- Say the line under the question: "The agent proves each claim before you look at the change."
 -->
 
 ---
@@ -523,11 +543,13 @@ clicks: 1
 <!--
 About 1 minute.
 
-- Where you're the bottleneck: you're the first one to run it, and you copy the errors back. You'll still click through it, but not to find out whether it works at all.
-- Three failures. The agent does the easy thing: a browser module reads server storage because it works.
+- On screen: three failures. The agent takes the shortcut: a browser module reads server storage, because it works.
 - It writes tests that check the code against itself. The example is exaggerated, but tests that only repeat the implementation's assumptions are common.
 - And nobody runs it. Three tests pass and the button downloads an empty file.
+- Where you're the bottleneck: you're the first to run it, and you paste the errors back to the agent. If the agent can't run the app, that's your job by default.
+
 [click] The fixes: rules that fail locally and say how to repair the problem, expectations taken from the decision, and an agent that runs the app and checks it like a user.
+- You'll still click through it yourself. But not to find out whether it works at all.
 -->
 
 ---
@@ -543,11 +565,15 @@ clicks: 2
 <!--
 About 1 minute.
 
-- Types, ordinary linters and tests cover different questions. Add repository-specific lints when a rule is clear and repeated, such as a browser module importing server storage.
-[click] Run these checks in the local implementation loop. CI repeats them; a predictable violation should usually be fixed before anyone reviews the PR.
-[click] The failure message tells the agent which boundary it crossed and how to repair it. It then reruns the check. A failure that says only "bad import" wastes another turn.
-- This is an illustrative diagnostic. OpenAI's harness team explicitly describes custom lints whose error messages carry remediation instructions into the agent's context.
-- Mechanical checks can enforce structure. They cannot decide what this feature should mean, which is why we still need the behavioral example that follows.
+- On screen: a terminal after slice two. Types pass, the linter fails: browser code imports the server's query module. Read the message out: what's wrong, how to fix it, why the rule exists, and what not to do.
+- Types, ordinary linters and tests cover different questions. Add repository-specific lints when a rule is clear and repeated.
+
+[click] Run these checks in the local loop, after every slice. CI repeats them; a predictable violation should be fixed before anyone reviews the PR.
+
+[click] The agent reads the fix, edits the import, reruns the check, and everything passes. A failure that says only "bad import" wastes another turn.
+- The "Don't" line matters. Without it, the cheapest fix is an eslint-disable comment or a change to the rule. More on that in two slides.
+- The rule and the message are the demo app's real lint config. OpenAI's harness team describes the same thing: custom lints whose error messages carry remediation instructions into the agent's context.
+- Mechanical checks can enforce structure. They can't decide what the feature should mean.
 - Source: https://openai.com/index/harness-engineering/
 -->
 
@@ -562,13 +588,15 @@ clicks: 2
 <ArchitectureRules :step="$clicks" />
 
 <!--
-About 1 minute. This is the architecture example Pasi requested from OpenAI's harness blog.
+About 1 minute.
 
-- Redrawn from the blog's stated dependency model. Each business domain uses Types, Config, Repo, Service, Runtime and UI. Dependencies are restricted to allowed forward edges. Providers is the explicit entry point for cross-cutting concerns.
-[click] A disallowed dependency is a lint or structural-test failure, with instructions for the fix. This can run on the developer's machine and again in CI.
-[click] The reusable idea is an explicit dependency policy that tools can enforce. The six-layer model is OpenAI's choice for that repository, not a universal architecture recommendation.
-- Arrows are imports: each layer may import the ones before it, the forward direction the article describes. The Service-to-UI import and the lint message are my illustration, not from the article.
-- Vertical slice delivery and dependency layers answer different questions. A slice is one usable behavior across the needed layers; the architecture defines which dependencies its code may take. A feature-oriented repo can enforce its own simpler boundaries with the same mechanism.
+- On screen: one business domain from OpenAI's harness engineering post, redrawn. Each box is a layer: Types, Config, Repo, Service, Runtime and UI. Arrows are imports, and code may only import forward, from the layers before it. Providers, on the side, is the one way in for cross-cutting concerns like auth and logging.
+
+[click] A backwards import, here Service importing from UI, fails a lint or a structural test, with instructions for the fix. It runs on the developer's machine and again in CI.
+
+[click] The reusable idea is an explicit dependency policy that tools can enforce. The six-layer model is OpenAI's choice for their repository, not a universal recommendation.
+- The Service-to-UI import and the lint message are my illustration, not from the article.
+- Vertical slices and dependency layers answer different questions. A slice is one usable behaviour across the layers it needs; the architecture says which imports its code may take. A feature-oriented repo can enforce its own simpler boundaries the same way.
 - Source: https://openai.com/index/harness-engineering/
 -->
 
@@ -585,12 +613,39 @@ clicks: 2
 <!--
 About 1 minute.
 
-- Poteto again. The first versions of their app were eight god files, each at least 10,000 lines. Every agent appended to one, because that's the easy thing.
-[click] Their internal framework, Dune, gives every feature its own directory, and a registry discovers them. Lint rules leave one way to add a feature. The tree and the lint message here are my illustration.
+- On screen, left: an early version of Poteto's app at SpaceX AI. Eight god files, each at least 10,000 lines. Every agent appended to one, because that's the easy thing.
+
+[click] Right: their internal framework, Dune, gives every feature its own directory, and a registry discovers them. Lint rules leave one way to add a feature. The tree and the lint message are my illustration.
 - The habit behind it: watch how agents fail, and each time ask "how do I turn this into a lint rule? How do I make it so that the codebase makes this impossible?"
 - The same thinking applies to the agent's own tooling. Agents kept writing their own scripts to verify their work, differently each time, so they moved the deterministic part into a CLI inside the verification skill. The agent keeps the judgement, the script does the mechanics.
+
 [click] Their words: "an environment where it's actually very hard to write bad code."
 - Source: https://www.youtube.com/watch?v=MN9dGgmLyso
+-->
+
+---
+part: Verify
+class: ns
+clicks: 2
+---
+
+# Protect the checks from the change
+
+<GuardTheChecks :step="$clicks" />
+
+<!--
+About 1.5 minutes.
+
+- On screen: a real PR from the fullsend project, June 2026. Their coding agent's commits failed a commit-message lint rule. Its fix wasn't to change the commits. It wrote a script that adds its own bot accounts to the rule's ignore list, in every repository it enrolls. 649 lines.
+- The review agent approved it. One maintainer approved it too. A second maintainer pushed back, "I don't like this approach", and the PR was closed.
+- This is the next step after "takes the shortcut": the agent doesn't break the rule, it edits the rule. It's not malice. Making the check pass is exactly what it was asked to do.
+
+[click] Three ways to make it hard. CI reads the rule files from the base branch, so a PR is graded by the rules it started from. Rule files need an owner's review. And review treats any edit to a guardrail as a finding a person decides, not a style note.
+- Their own retro says it: "CODEOWNERS files are always human-owned. Agents cannot modify their own guardrails." They want that to cover linter configs, hooks and CI checks too.
+
+[click] If the agent can edit the rule, the rule is a suggestion.
+- The three fixes are my recommendations, not fullsend's changes.
+- Sources: https://github.com/fullsend-ai/fullsend/pull/2194 https://github.com/fullsend-ai/fullsend/issues/2238
 -->
 
 ---
@@ -606,14 +661,17 @@ clicks: 2
 <!--
 About 1 minute.
 
-- Lints and tests check the code. This checks the behaviour, the way a person would, except the agent does it.
+- On screen: three steps the agent does on its own, left to right: start the app, reproduce the problem, fix it and repeat the same action. Lints and tests check the code. This checks the behaviour, the way a person would, except the agent does it.
 - Start a fresh instance with known data. In the demo app that's npm run reset and npm run dev. The seed data includes awkward titles on purpose: A-102 has a comma, A-103 has double quotes.
+
 [click] Reproduce it in a browser the agent controls: export, then open the file as a table. A-102 splits into four columns because the comma isn't quoted. The agent's parse check says the same: four fields where three were expected. The bug is illustrative; the data is the demo app's.
+- Remember the web search in research, how CSV quotes a comma? This is the bug it was pointing at.
+
 [click] Fix it, then repeat exactly the same action with the same data. Every row has three columns. Same action before and after is the evidence.
 - Ask the agent to record both runs. The two clips go into the PR, and they show a reviewer the bug and the fix in under a minute. We'll see that again in the review loop.
-- Poteto calls this the single most important skill to have: giving the agent "hands and eyes". Every app at their company has its own verification skill, and it was the first skill that let them climb what they call the trust ladder. https://www.youtube.com/watch?v=MN9dGgmLyso
-- OpenAI made their app bootable per git worktree so Codex could launch one instance per change, and wired Chrome DevTools into the agent so it could "reproduce bugs, validate fixes, and reason about UI behavior directly". Logs and metrics come from a local stack per worktree that's torn down when the task ends. https://openai.com/index/harness-engineering/
-- What you need to make this work: one command to start the app, one command to reset to known data, data that makes a mistake visible, and a browser the agent can drive. Most projects have the first, few have the other three.
+- Poteto calls this the single most important skill to have: giving the agent "hands and eyes". Every app at their company has its own verification skill, and it was the first skill that let them climb the trust ladder. https://www.youtube.com/watch?v=MN9dGgmLyso
+- OpenAI made their app bootable per git worktree so Codex could launch one instance per change, and wired Chrome DevTools into the agent so it could "reproduce bugs, validate fixes, and reason about UI behavior directly". https://openai.com/index/harness-engineering/
+- What you need: one command to start the app, one command to reset to known data, data that makes a mistake visible, and a browser the agent can drive. Most projects have the first, few have the other three.
 -->
 
 ---
@@ -629,9 +687,11 @@ clicks: 2
 <!--
 About 1.5 minutes.
 
-- Be explicit here: the agent running the app does not replace you clicking through it.
-- The agent checked what it was asked to check, and all of it passes. The export works.
-[click] Two minutes of clicking: the list was filtered to open tasks and the export ignored the filter. Two seconds with no spinner. The file is export (3).csv. The button and the menu disagree on what it's called. None of it fails a check, and all of it feels wrong to a person. The findings are illustrative.
+- On screen, left: what the agent checked on the last slide. All of it passes. The export works.
+- Be explicit here: the agent running the app doesn't replace you clicking through it.
+
+[click] Right: two minutes of me clicking. The list was filtered to open tasks and the export ignored the filter. Two seconds with no spinner. The file is export (3).csv. The button and the menu disagree on what it's called. None of it fails a check, and all of it feels wrong to a person. The findings are illustrative.
+
 [click] The agent checks what you asked for. You notice what nobody asked for, and those findings are often the most useful.
 - What changes is when you click. You no longer click to find out whether it works at all. The agent did that. You click to find out whether it's right.
 - Each finding is also a candidate check. "The export respects the list filter" can become a test. "It feels slow" mostly can't.
@@ -651,8 +711,10 @@ transition: gate | gate-back
 <!--
 About 1 minute.
 
-- One agent checking its work in a browser is good. It gets much better when several can do it at once on the same machine.
+- On screen: one machine, one copy of the app, one agent checking its work in a browser. Good, and it gets much better when several can do it at once.
+
 [click] Each agent works in its own worktree and starts its own copy of the app: its own ports, its own seeded data, its own browser. Three agents verify three different changes at the same time, and none of them waits for another or breaks another's data. The worktree names and ports are illustrative.
+
 [click] What usually stops it is small. Fixed ports: our own demo app hard-codes Vite on 5176 and its proxy to 4323, so a second copy collides. One shared database or cache. One browser profile with one login. Each is a short fix: read ports from the environment, keep seed data per worktree, give every agent its own browser.
 - OpenAI made their app bootable per git worktree for exactly this, with a local logs and metrics stack per worktree that's torn down when the task ends. https://openai.com/index/harness-engineering/
 - This is what makes parallel agents practical. Without it, every extra agent is another thing you have to sequence by hand.
@@ -662,10 +724,14 @@ About 1 minute.
 layout: none
 ---
 
-<SectionGate :current="4" title="Show the loop, including the stop" question="How many reviews before it can merge?" />
+<SectionGate :current="4" title="Let the models review first" question="What still needs your eyes?" intro="Models review each slice and the PR. A stop rule ends the loop." />
 
 <!--
-Review, about 11 minutes including a 3-minute demo.
+Review, about 11 minutes including a 3-minute walkthrough.
+
+- On screen: verify is done, review is running, still inside the "for each slice" group. The log: subagents review the slice, PR bots add a second opinion, a written rule says when to stop.
+- Say the line under the question: "Models review each slice and the PR. A stop rule ends the loop."
+- The question is the point of the part: models do the first passes so your attention goes to what they can't judge.
 -->
 
 ---
@@ -681,10 +747,11 @@ clicks: 1
 <!--
 About 1 minute.
 
-- Where you're the bottleneck: you relay the bot comments, and you're the one who decides when the loop stops.
-- Two opposite failures. The rubber stamp: 1,940 lines and "LGTM" two minutes later.
+- On screen: two opposite failures. The rubber stamp: 1,940 lines and "LGTM" two minutes later.
 - The endless loop: bots keep finding things, fixes create new findings, two reviewers undo each other.
-[click] The fixes: agents review every slice before a person is asked, you watch the clip before reading the diff, and a stop rule ends the loop.
+- Where you're the bottleneck: you relay the bot comments to the agent, and you're the one who decides when the loop stops.
+
+[click] The fixes: agents review every slice before a person is asked, you watch the clip before reading the diff, and a written stop rule ends the loop.
 -->
 
 ---
@@ -700,10 +767,12 @@ clicks: 2
 <!--
 About 1 minute.
 
-- The inner loop runs on my machine before the PR: implement, run tests and lints, inspect the browser, then instruct reviewer subagents to examine the change. This is a normal prompt or workflow instruction, not a separate review service.
-[click] The PR loop adds CI and third-party review bots. A local babysitter watches the feedback, checks the current commit, makes a bounded fix and waits for new results.
-[click] Repeated, mechanical mistakes should be caught locally. PR review buys another view and catches risks the earlier checks missed.
-- Speed varies with the task and the agents. The distinction is where the feedback arrives and whose attention it uses, not a promise that every local review takes seconds.
+- On screen: two loops. The inner one runs on my machine before there's a PR: implement, run tests and lints, check it in the browser, then have reviewer subagents examine the change. That's a normal instruction in the prompt, not a separate review service.
+
+[click] The outer loop is the PR: CI and third-party review bots. A local babysitter watches the feedback, checks the current commit, makes a bounded fix and waits for new results.
+
+[click] Where findings should die: repeated, mechanical mistakes in the inner loop. PR review buys another view and catches what the earlier checks missed.
+- Speed varies with the task and the agents. The point is where the feedback arrives and whose attention it uses.
 -->
 
 ---
@@ -717,12 +786,14 @@ clicks: 2
 <LocalAdversaries :step="$clicks" />
 
 <!--
-About 1 minute.
+About 1.5 minutes.
 
-- I don't ask for a review after the work. It's part of the instruction I give the implementer before it starts: after each slice, run the review subagents, fix what matters, rerun the checks, commit, and only then come back to me.
+- On screen: one slice, from the instruction to my decision. I don't ask for a review after the work. It's part of the instruction I give the implementer before it starts: after each slice, run the review subagents, fix what matters, rerun the checks, commit, and only then come back to me.
 - The agent builds the slice first.
-[click] Then, without me: review subagents with different questions. Functional checks the agreed behavior, non-functional checks limits and failures, security checks authority and untrusted input. They run in parallel. The agent fixes what it judges worth fixing, reruns the checks and commits the slice. A commit per slice keeps every step easy to review and easy to undo. I usually trust its judgement on which findings matter at this point.
+
+[click] Then, without me: review subagents with different questions. Functional checks the agreed behaviour, non-functional checks limits and failures, security checks authority and untrusted input. They run in parallel. The agent fixes what it judges worth fixing, reruns the checks and commits the slice. A commit per slice keeps every step easy to review and easy to undo.
 - Before the commit it records a short clip of the feature. It already drives the browser for the checks, so the clip costs almost nothing.
+
 [click] The agent comes back with a short report: slice committed, a clip, what it fixed, what it skipped and why, checks green. My attention is needed only after the models have checked the obvious issues.
 - I watch the clip before I read the diff. Thirty seconds tells me what the slice does, so I read the code knowing what it's for. If the clip surprises me, that's the first thing to ask about. Then I decide: next slice, or a PR for this one. The clips go into the PR description, so a reviewer sees the feature before the code too.
 - OpenAI's harness team does this end to end: the agent records a video of the bug, fixes it, and records a second video of the fix before opening the PR. https://openai.com/index/harness-engineering/
@@ -758,14 +829,12 @@ clicks: 2
 <!--
 About 45 seconds.
 
-- The local loop needs a stop before we run it. Write it down first.
+- On screen, empty at first: two lists I write before the loop runs. Say: "The local loop needs a stop before we start it."
 
-[click] What earns a fix. "Consider handling errors" doesn't. A reproducible request does.
+[click] Left: what earns a fix. "Consider handling errors" doesn't. A reproducible finding above the bar does.
 
-[click] What ends the loop. The budget is rounds, minutes or money. The budget and a disagreement end in a person, not another retry. A new commit makes every earlier approval and CI result stale.
-
+[click] Right: what ends the loop. The budget is rounds, minutes or money. The budget and a disagreement end in a person, not another retry. A new commit makes every earlier approval and CI result stale.
 - Polylane's first prototype took nearly 7 minutes at the median. After a 30-step budget, a fresh review for each new commit and other changes, their review turn's median is 94 seconds. Budgets aren't just about cost. https://polylane.com/blog/how-we-prevent-slop-from-hitting-prod/
-- In the prepared PR examples that follow, point out the actual fix budget and stop decision. Keep the walkthrough to a few worthwhile findings.
 -->
 
 ---
@@ -781,10 +850,12 @@ clicks: 3
 <!--
 About 1 minute.
 
+- On screen, nothing yet: this slide builds. Say: "The local loop is done. The PR is where other eyes come in."
+
 [click] Reviewers from other model families. The model that wrote the code shares its own blind spots. Another family, or a provider's review bot, may catch what it missed. This picture is illustrative. I found no credible public data on overlap between providers, so measure your own.
 - The reviewers I use: GitHub Copilot code review, my own reviewer bot, and a different model family run locally.
 
-[click] The babysitter: a local agent run that watches the PR, reads comments and CI, makes one bounded fix, pushes, and waits. I'm building a babysit skill for this. It'll get a demo when it's ready.
+[click] The babysitter: a local agent run that watches the PR, reads comments and CI, makes one bounded fix, pushes, and waits. That's the relay job from the bottleneck slide, handed to an agent.
 
 [click] Where it goes wrong: reviewers undoing each other, acting on a CI result from an older commit, commits landing after approval that nobody reviewed, and prompt injection. An agent that acts on PR comments will act on a malicious one.
 -->
@@ -793,17 +864,18 @@ About 1 minute.
 layout: none
 ---
 
-<DemoSlide title="Review bots and a local babysitter" :minutes="3" prepared agent="T3 Code · two real PRs" prompt="Follow the review comments, the local fixes and the next CI run. Which findings deserve action? Which commit do the checks cover? Where does the babysitter stop?" />
+<DemoSlide title="Review bots and a local babysitter" :minutes="3" prepared agent="T3 Code · two real PRs" prompt="Babysit this PR until it can merge. Read every review comment and CI result. Fix the findings that come with a repro or a failing check, and reply to the rest with your reason. Push, wait for CI and the next review round, repeat. Merge when everything passes on the latest commit. Stop and ask me after three rounds, or when reviewers disagree." />
 
 <!--
 Prepared walkthrough in T3 Code, about 3 minutes.
 
-- The public PR examples and clips are linked on the following slide. Use them for the verification and review walkthrough. A live babysitter run needs separately prepared local artifacts.
-1. PR one: show the different bots' actual comments. Pick a useful finding and some overlap or noise.
-2. PR two: compare the one-line CSS change with the recorded behavior and measurements. Check which commit the approval covers.
-3. If the live babysitter is ready, show its fix, push, next CI results and actual stop or escalation. A new commit requires new evidence.
-- Keep the local implementation/subagent loop on the earlier diagram. These PRs demonstrate the outer loop.
-- Preparation status: the public PRs and recordings are selected. The babysit skill was previously under construction; show it only once the real workflow is ready. Do not imply a working integration we have not observed.
+- On screen: the babysitter's own prompt. This is what I hand the agent once the PR is open. It's the stop rule from two slides back, written into the prompt: what earns a fix, when to merge, and when to stop and ask me.
+- Then switch to T3 Code and the two public PRs on the next slide.
+1. PR one: show the different bots' actual comments. Pick a finding that earned a fix and one that didn't, and the reply that explains why.
+2. PR two: compare the one-line CSS change with the recorded behaviour and measurements. Check which commit the approval covers: a new commit needs new evidence.
+3. If the babysitter is ready, show its fix, push, the next CI results and where it actually stopped or escalated. Don't imply a working integration I haven't shown.
+- Keep the local implementation and subagent loop on the earlier diagram. These PRs demonstrate the outer loop.
+- Merging is the babysitter's last step only when the change's level allows it. For a migration, the prompt ends at "tell me it's ready" instead.
 - Source for the bot architecture and bounded fixes: https://www.huuhka.net/building-your-own-pr-reviewer-with-coding-agents/
 -->
 
@@ -812,20 +884,21 @@ part: Review
 class: ns
 ---
 
-# Two real PRs from T3 Code
+# Real PRs carry their own before and after
 
 <T3PrExamples />
 
 <!--
-About 1 minute. Use these links for the walkthrough introduced on the preceding slide. Both examples are merged PRs with playable recordings and explicit agent credits. The PR numbers and video buttons open the original sources in a new tab. Both cards stay visible so we can choose a link while presenting.
+About 1 minute. Both are merged PRs with playable recordings and explicit agent credits. The PR numbers and video buttons open the original sources in a new tab.
 
-- PR #11354, merged 12 September 2026, fixes background preview Enter sending the human's unfinished composer draft. Play the 10-second before clip, then the 14-second after clip. The draft diagram on this slide is an illustration; the linked clips show the actual app. The PR credits GPT-6-Astra in Codex and reports 105 focused tests. Native macOS remained unverified.
-- For the review walkthrough, show a finding that earned a fix and one that did not. The agent reproduced a clipboard sanitization bug before fixing it, then repeated the check: https://github.com/pingdotgg/t3code/pull/11354#discussion_r3994847850
-- Macroscope and CodeRabbit both questioned native text selection behavior. The agent checked the bundled Electron runtime; CodeRabbit withdrew its finding after that verification: https://github.com/pingdotgg/t3code/pull/11354#discussion_r3994836449
-- PR #15265, merged 3 October 2026, changes one production line containing two CSS selectors. The selector excerpt on this slide shows the replacement, not the full source line. The PR reports 4,316 elements restyled before and 5 after one small DOM mutation. This is not the count for the whole typing session.
-- The comparison video is 14.48 seconds; the stress video is 47.32 seconds. Both use 4× CPU throttling. The PR includes production-build traces, a real-data copy, a larger stress copy, and visual checks across 32 banner-layout, theme and width combinations.
-- GPT-6-Astra in Codex found and fixed the performance issue. Claude Opus 5.5 in Claude Code measured it and opened the PR, both inside T3 Code. The measurements are the authors' reported results, not a benchmark we independently reran.
-- These public artifacts show agent development, verification and review responses. They do not establish the configuration or budget of an unattended babysitter.
+- On screen: two merged PRs from T3 Code, the tool I run my agents in. Each card shows what changed and links to the clips the agent recorded.
+- Left, PR #11354, merged 12 September 2026: pressing Enter in the browser preview sent the human's unfinished draft. Play the 10-second before clip, then the 14-second after clip. The draft diagram is an illustration; the linked clips show the actual app. The PR credits GPT-6-Astra in Codex and reports 105 focused tests. Native macOS remained unverified.
+- For the review walkthrough, show a finding that earned a fix and one that didn't. The agent reproduced a clipboard sanitization bug before fixing it, then repeated the check: https://github.com/pingdotgg/t3code/pull/11354#discussion_r3994847850
+- Macroscope and CodeRabbit both questioned native text selection behaviour. The agent checked the bundled Electron runtime; CodeRabbit withdrew its finding after that: https://github.com/pingdotgg/t3code/pull/11354#discussion_r3994836449
+- Right, PR #15265, merged 3 October 2026: one production line, two CSS selectors. 4,316 elements restyled before and 5 after one small DOM change. That's per change, not for a whole typing session.
+- The comparison video is 14.48 seconds; the stress video is 47.32 seconds. Both use 4× CPU throttling. The PR includes production-build traces and visual checks across 32 layout, theme and width combinations.
+- GPT-6-Astra in Codex found and fixed the performance issue. Claude Opus 5.5 in Claude Code measured it and opened the PR, both inside T3 Code. The measurements are the authors' reported results.
+- These show agent development, verification and review responses. They don't show the configuration or budget of an unattended babysitter.
 
 Sources:
 - https://github.com/pingdotgg/t3code/pull/11354
@@ -843,15 +916,14 @@ clicks: 2
 <ReviewerBench :step="$clicks" />
 
 <!--
-About 1.5 minutes.
+About 1.5 minutes. A candidate to cut after rehearsal.
 
-- "Measure your own" from the last slide, made concrete. This is how Uber benchmarks its review bot, uReview.
+- On screen: PRs with bugs we already know about, graded easy, medium and hard. "Measure your own" from two slides back, made concrete. This is how Uber benchmarks its review bot, uReview.
 - Their words: "We built its benchmark from real pull requests with known bugs and graded them easy, medium, and hard. We score precision, recall, and F1 against those bugs, plus cost per review, latency, timeouts, and noise." https://www.uber.com/gb/en/blog/efficient-software-factory/
 
 [click] Run the reviewer you use today. Count what it caught, what it missed, false alarms, minutes and cost.
 
 [click] Rerun it when the model or the review prompt changes. Uber: "The frontier shifts every few weeks." Switching models improved their F1 and cut cost per PR. Rerunning after a prompt change is my addition.
-
 - The PRs and results on screen are illustrative. Start with ten bugs your team already fixed. You don't need thousands.
 -->
 
@@ -862,21 +934,20 @@ clicks: 3
 transition: gate | gate-back
 ---
 
-# How many reviews before it can merge?
+# When does another review stop paying off?
 
 <ReviewBudget :step="$clicks" />
 
 <!--
 About 2 minutes. The controls work. Change reviewers, rounds or the lens live if there's time.
 
-- One reviewer, one round. It finds some real issues and some noise.
+- On screen: a small model of a review loop. Controls on top for reviewers, rounds and the lens. One bar per round, split into real issues and noise to triage. Start with one reviewer, one round. It finds some real issues and some noise.
 
 [click] Three reviewers from different providers. More real issues in round one, and a lot more noise to triage.
 
 [click] Keep going to five rounds. Real findings drop fast. Noise doesn't. The stop marker is where a round finds less than half a real issue.
 
 [click] The same run in money. For a manager, the model runs are the cheap part. People's time is the expensive part. Developers feel it as attention, managers see it as salary.
-
 - Same stop rule as the local loop. Here the budget is other people's attention.
 - The model is illustrative. Assumptions: 6 real issues, each reviewer catches a remaining one with p 0.35 (extra reviewers only partly independent), each fix adds 0.12 new issues, 2.5 noise findings per reviewer per round, 3 minutes to triage a finding, 8 to review a fix, €90 an hour, €0.60 per model run, 300 PRs a month.
 - Uber benchmarks its review bots on precision, recall, F1, cost per review, latency and noise. That's the right shape of measurement. https://www.uber.com/gb/en/blog/efficient-software-factory/
@@ -886,10 +957,13 @@ About 2 minutes. The controls work. Change reviewers, rounds or the lens live if
 layout: none
 ---
 
-<SectionGate :current="5" title="What happens after merge?" question="Who watches the rollout, what stops it, and how do we recover?" />
+<SectionGate :current="5" title="What happens after merge?" question="Who watches the rollout, what stops it, and how do we recover?" intro="Watch the change in real use, and limit how far it can spread." />
 
 <!--
-Production. Keep the counterargument, containing a bad change, the full Polylane case study and the Jev aside in this draft. Rehearsal will determine the cuts. The notes from here on give provisional durations, not clock times.
+Production, about 14 minutes as drafted, the longest part. Rehearsal decides the cuts: the Polylane case study and the Jev aside are the obvious candidates.
+
+- On screen: every earlier job is done, production is running. Its log: roll out behind a flag, watch the agreed signals, stop or roll back.
+- Say the line under the question: "Watch the change in real use, and limit how far it can spread."
 -->
 
 ---
@@ -905,9 +979,10 @@ clicks: 1
 <!--
 About 1 minute.
 
-- Where you're the bottleneck: you write the same review comment again, because nothing remembers the last one.
-- CI doesn't know production: the traffic, the locks, the queues. A four-line migration can block every write to a table.
-- And the quiet one: the same correction, typed into review again and again.
+- On screen: two failures after merge. CI doesn't know production: the traffic, the locks, the queues. A four-line migration can block every write to a table.
+- And the quiet one: the same correction, typed into review or into a prompt again and again.
+- Where you're the bottleneck: you repeat last month's correction, because nothing remembers it for you.
+
 [click] The fixes: checks that use what production knows, a small blast radius when something gets through, and turning repeated corrections into checks. That last one is the Monday takeaway.
 -->
 
@@ -924,18 +999,19 @@ clicks: 4
 <!--
 About 2 minutes. Give this a fair hearing.
 
-[click] People still approve every change. Dillon reads every line. Honeycomb's team reviews plans for bigger tickets and reads less of the code, but it auto-approves 0% of PRs on purpose. Uber keeps people in review and tests its review bots against past PRs with known bugs, scoring precision, recall, cost and noise.
+- On screen: a line from "people read every line" on the left to "machines approve some changes" on the right. Teams appear on it as I go.
 
-[click] Machines approve some changes. Spotify's Fleet Management auto-merges most automated changes after checks. Its merged changes doubled, and it's watching PR size creep up. Intercom auto-approves over 19% of PRs, but only narrow ones, anyone can ask for a human, and the engineer who ships stays accountable.
+[click] People still approve every change. Dillon reads every line. Honeycomb's team reviews plans for bigger tickets and reads less of the code, but it auto-approves 0% of PRs on purpose. Uber keeps people in review and tests its review bots against past PRs with known bugs.
+
+[click] Machines approve some changes. Intercom auto-approves over 19% of PRs, but only narrow ones, anyone can ask for a human, and the engineer who ships stays accountable. Spotify goes further for one class of change: its Fleet Management auto-merges most bot-made fleet changes, like dependency upgrades, after checks, with no approval. Its merged changes doubled, and it's watching PR size creep up.
 - OpenAI's harness team made human review optional: "Humans may review pull requests, but aren't required to." They still understand the system, just not line by line. They own the rules: a fixed layer model, custom lints and structural tests, and plans and decision logs checked into the repo. Their words: "Human taste is captured once, then enforced continuously on every line of code." They also spent a fifth of their week cleaning up slop until they automated that too.
-- Be fair to OpenAI's tradeoff: they also run "minimal blocking merge gates" and rerun flaky tests instead of blocking, because "corrections are cheap, and waiting is expensive." They add: "This would be irresponsible in a low-throughput environment." Reading less works when recovery is cheap.
+- Be fair to OpenAI's tradeoff: they also run "minimal blocking merge gates" and rerun flaky tests instead of blocking, because "corrections are cheap, and waiting is expensive." They add: "This would be irresponsible in a low-throughput environment."
 
-[click] One team moved the other way. HumanLayer, whose research and planning workflow I borrowed earlier in this talk, went lights-off in July 2025: "Just read the specs and the tickets, background agents for all the small/medium stuff." Months later they were digging into "the codebase you stopped reading three months ago", and by November one co-founder spent two weeks rewriting by hand. Dex Horthy's 2026 AI Engineer keynote, "Why software factories fail", puts code review back: "For now, the judge is you." They kept the planning; plans now cut the review, they don't replace it.
+[click] One team moved the other way. HumanLayer, whose research and planning workflow I borrowed earlier, went lights-off in July 2025: "Just read the specs and the tickets, background agents for all the small/medium stuff." Months later they were digging into "the codebase you stopped reading three months ago", and by November one co-founder spent two weeks rewriting by hand. Dex Horthy's 2026 AI Engineer keynote, "Why software factories fail", puts code review back: "For now, the judge is you." They kept the planning; plans now cut the review, they don't replace it.
 - Dex's speed claim: you can "move 2-3x faster, safely" instead of chasing 10 to 100 times.
 - My view: reading all the code gives the best quality I've seen. It's also the slowest option. Pick where on this line each change sits, don't default to one end.
 
-[click] The common thread: every team that reads less of the code added more automated checks, and made recovery cheap.
-
+[click] The common thread: the less you read, the cheaper a bad merge has to be. These go hand in hand. Automating review means some mistakes get through, so every team on the right made a mistake cheap: small changes, flags, fast rollback, someone watching. And a change that's cheap to undo is also one you can review less. The next slides are how.
 - Numbers as of each post: Intercom April 2026, Spotify September 2026.
 - Sources: https://www.honeycomb.io/blog/30-70-prs-day-how-we-managed-not-wreck-systems https://www.uber.com/gb/en/blog/efficient-software-factory/ https://www.intercom.com/blog/ai-is-approving-our-pull-requests-heres-how-we-made-it-safe/ https://openai.com/index/harness-engineering/ https://engineering.atspotify.com/2026/9/ai-changed-how-spotify-builds-what-we-learned-and-fixed-about-quality-at-higher-velocity
 - HumanLayer sources: essay version of the keynote https://github.com/humanlayer/advanced-context-engineering-for-coding-agents/blob/main/wsff.md (keynote video https://www.youtube.com/watch?v=Ib5GBkD555M, July 2026), the "2-3x faster, safely" post https://x.com/dexhorthy/status/2081058573556306030 and HumanLayer's own summary: "read the code, seek leverage, and break skills into workflows" https://www.humanlayer.dev/blog/humanlayer-resources
@@ -956,10 +1032,11 @@ clicks: 2
 <!--
 About 1 minute.
 
+- On screen: Honeycomb's numbers, before and after agents. Merges per day and incidents per quarter.
+
 [click] Honeycomb: peak weekday merges went from about 30 in early 2025 to 74 in April 2026. Incidents went from 18.5 a quarter in 2024 to 32 and then 53 in the first two quarters of 2026. Spotify's merged changes roughly doubled.
 
 [click] Honeycomb's reading is that incidents track change volume roughly linearly. Careful: Q2 jumped to 53 while throughput held roughly flat, so this isn't a clean line. Their goal is keeping each failure cheap to contain with feature flags, bulkheads and least privilege, not holding the count flat. Spotify found no AI-specific incident signature, but volume grew faster than some verification controls.
-
 - Peak merges are a peak metric. The calendar average is about half.
 - https://www.honeycomb.io/blog/30-70-prs-day-how-we-managed-not-wreck-systems
 -->
@@ -975,13 +1052,15 @@ clicks: 2
 <PlatformFeedback :step="$clicks" />
 
 <!--
-About 1 minute. Honeycomb's second part adds the practical work underneath the throughput figures.
+About 1 minute.
 
-- Their gains arrived alongside investments in delivery, fast CI, agent-accessible tools and team practices. Part one explicitly cautions that they cannot isolate one cause from the overlapping changes.
-[click] Part two turns misses into updates to repository instructions, skills or review rules. Production signals can become constraints for the next change.
-[click] Use some of the new capacity to improve the tools themselves. Their examples include deployment notifications and change visibility built with AI so people can understand what is shipping. Fast checks and readable CLIs are part of the agent's feedback loop.
-- Their platform team owns CI/CD and the agent's working environment. They also describe Intercom's dedicated team-2x and shared plugin/skill infrastructure as a substantial investment, not merely buying model access.
-- Keep this tied to the local lint example: a stable correction can become a check everyone gets next time. Some misses need design judgment rather than another brittle rule.
+- On screen: the loop every change goes through. The agent changes code, checks run, the change ships, a production signal comes back. The three numbered boxes are where Honeycomb invested: fast readable checks on the way out, shared working context in the middle, production feedback on the way back.
+- Their gains arrived alongside investments in delivery, fast CI, agent-accessible tools and team practices. They're explicit that they can't isolate one cause.
+
+[click] A miss becomes a rule. They turn misses into updates to repository instructions, skills or review rules. Production signals become constraints for the next change.
+
+[click] Use some of the new capacity to improve the tools themselves. Their examples include deployment notifications and change visibility built with AI, so people can understand what's shipping.
+- Their platform team owns CI/CD and the agent's working environment. They also describe Intercom's dedicated team and shared plugin and skill infrastructure as a substantial investment, not just buying model access.
 - Sources: https://www.honeycomb.io/blog/30-70-prs-day-how-we-managed-not-wreck-systems https://www.honeycomb.io/blog/ai-amplifies-existing-practices-lessons-ai-first-strategy
 -->
 
@@ -998,16 +1077,16 @@ clicks: 3
 <!--
 About 1.5 minutes.
 
+- On screen: three questions to answer before merge, and our export's rollout along the bottom: merge, deploy with the flag off, flag on for one team, a signal fires, flag off, fix, then all teams.
 - Something will get through. Plan for it before merge: who watches, what stops it, how far it can spread.
-- Intercom: "The engineer who ships a change is expected to watch it go live, monitor its behaviour in production, and be ready to roll back if something isn't right. AI approval doesn't change that." https://www.intercom.com/blog/ai-is-approving-our-pull-requests-heres-how-we-made-it-safe/
+- Who watches. Intercom: "The engineer who ships a change is expected to watch it go live, monitor its behaviour in production, and be ready to roll back if something isn't right. AI approval doesn't change that." https://www.intercom.com/blog/ai-is-approving-our-pull-requests-heres-how-we-made-it-safe/
 - Spotify: "an automated dependency upgrade passed our checks, but still failed in production, impacting end users." Their response: stronger safeguards, more rollback capacity, and "scheduling automated changes during owning teams' working hours." https://engineering.atspotify.com/2026/9/ai-changed-how-spotify-builds-what-we-learned-and-fixed-about-quality-at-higher-velocity
 
-[click] The signal: for our export, foreign rows in an export, per team. Honeycomb's foundation includes "observability that links shipped code back to the PR that created it". The flag turns it off without a deploy.
+[click] The signal: for our export, rows from another team in an export, counted per team. Honeycomb's foundation includes "observability that links shipped code back to the PR that created it". The flag turns it off without a deploy.
 
 [click] The blast radius. One team behind the flag, not every team. Honeycomb: bulkheads between components, deploy trains, feature flags and least-privilege access made outages "lower-impact, rather than either non-existent or uniformly critical-severity." A rollback isn't always safe, for example after a data migration. https://www.honeycomb.io/blog/30-70-prs-day-how-we-managed-not-wreck-systems
 
 [click] Honeycomb's goal now: "keeping each failure cheap to contain, not holding the count flat." And: "If you don't have that in place yet, that's the thing to fix before you scale up AI usage, not after."
-
 - The rollout and the metric are our example, not from their posts.
 -->
 
@@ -1024,14 +1103,12 @@ clicks: 2
 <!--
 About 1 minute. Start of the Polylane case study.
 
+- On screen: the usual pipeline for an agent's change: the agent writes it, types and tests, linter and formatter, code review.
 - Say: "We've decided how to contain a failure. Can we use what we know about production to catch it before merge?"
 
-- The software factory: an agent writes the code, types and tests run, a linter, a code review. Tests even execute it, as we saw.
-
-[click] None of it knows the production conditions it lands on: the traffic, the locks, the queues.
+[click] Under each stage, what it looks at. All of it is the code. None of it knows the production conditions the change lands on: the traffic, the locks, the queues.
 
 [click] Polylane's framing of the one question worth answering at PR time. They skip style, naming and coverage and answer only this, with a go or no-go comment on the PR.
-
 - Source for this whole sequence: Vi Tran and Boris Tane, "How we prevent slop from hitting prod", 21 September 2026. https://polylane.com/blog/how-we-prevent-slop-from-hitting-prod/
 - Polylane sells this as a product. I'm showing it for the ideas, which you can build with your own telemetry.
 -->
@@ -1049,12 +1126,12 @@ clicks: 2
 <!--
 About 1 minute.
 
-- Polylane keeps a graph of cloud resources, repositories and the edges between them. The resource edges come from the connected cloud accounts. The repository edges come from manifests in the repo: Terraform, CloudFormation, Wrangler files.
+- On screen: Polylane's context graph, redrawn. On the left the repository and the PR, a migration. In the middle and on the right, cloud resources: a Lambda function, a cron job, a worker, a queue and a database. The lines between them are edges in the graph, with their type on the line: deploys_to, triggers, connects_to.
+- Where the edges come from: resource edges from the connected cloud accounts, repository edges from manifests in the repo, like Terraform, CloudFormation and Wrangler files.
 
-[click] A PR touches the repository. Follow the paths in the graph to every resource it can affect.
+[click] A PR touches the repository. Follow the paths in the graph to every resource it can affect. Everything it can reach lights up.
 
-[click] One repository can deploy dozens of resources, so a small model filters the candidates first. The agent gets the diff, the PR description, the commits and only the resources that matter.
-
+[click] One repository can deploy dozens of resources, so a small model filters the candidates first. The cron job and the worker drop out. The agent, bottom right, gets the diff, the PR description, the commits and only the resources that matter.
 - checkout-api, orders-db and orders-events are from their example. The cron job, the worker and PR #1207 are mine.
 - Early exits: a docs, test or comment change, or a PR with no affected resources, ends the check straight away.
 -->
@@ -1072,12 +1149,12 @@ clicks: 2
 <!--
 About 1 minute.
 
-- Before the agent starts, deterministic rules run over the diff. These four are the ones Polylane lists.
+- On screen, left: the migration from the PR. It adds a search column to orders and builds an index on it. Right: four deterministic rules that run over every diff before the agent starts, the four Polylane lists. Read the titles quickly: hand-run migrations, table locks, removed endpoints that are still called, and new secrets nothing provisions.
+- They're cheap: pattern matching, no model. Their job is to point the agent's attention, not to decide.
 
-[click] This migration creates an index without CONCURRENTLY. On Postgres that takes a lock that blocks writes to orders for the whole build.
+[click] Rule two matches. The migration creates an index without CONCURRENTLY. On Postgres that takes a lock that blocks writes to orders for the whole build. The hint goes to the agent: this locks writes to orders.
 
-[click] It's a hint, not a verdict. The agent still has to find evidence that it matters here: how many writes, from where, at what time.
-
+[click] It's a hint, not a verdict. A lock on an empty table at 3am is nothing. The agent still has to find evidence that it matters here: how many writes, from where, at what time. That's the next slide.
 - Same idea as the Monday takeaway: turn a known mistake into a rule that runs every time.
 -->
 
@@ -1094,16 +1171,15 @@ clicks: 3
 <!--
 About 1.5 minutes.
 
+- On screen, top: what the agent works from. The diff, the affected resources from the graph, and the telemetry for them: writes per second, latency, errors, a forecast.
 - The agent writes failure trajectories: one causal chain from a trigger, through the changed code, to a drop in a specific metric. Every link cites something: a file and line, a log template and its count, a metric read, a config key, a graph edge.
 
-[click] It tries to both confirm and refute each one against production.
+[click] Three trajectories for our migration. The index build locks the writes checkout needs. Search reads the new column before the backfill finishes. The new column breaks the nightly report. It tries to both confirm and refute each one against production data.
 
-[click] Confirmed means production data backs it. Plausible means the chain is concrete but a link is a guess with no telemetry to check it. Refuted means the data says it's unlikely.
+[click] The verdicts. Confirmed means production data backs it: checkout really writes to orders all the time. Plausible means the chain is concrete but a link has no telemetry to check it. Refuted means the data says it's unlikely: the report doesn't read that table.
 
 [click] Their rule is one line of code: any confirmed trajectory fails the check. They call that a conservative choice. My reading: plausible passes, and missing evidence isn't proof of safety. It's a policy choice. Decide who owns a plausible failure before it happens.
-
 - The three rows are our migration example. Their post uses a dropped index still used by checkout (confirmed), a retry change that amplifies load on orders-db (plausible) and a removed binding that breaks a worker (refuted).
-- A rollback isn't always safe, for example after a data migration.
 -->
 
 ---
@@ -1119,15 +1195,14 @@ clicks: 3
 <!--
 About 1.5 minutes. The threshold line is draggable.
 
-- Whether a change hurts depends on traffic, and traffic has a shape. A queue at 60% that stays there is fine. The same queue at 60% and climbing every week isn't. The last hour of metrics won't tell you which.
+- On screen: requests per hour to checkout-api over the last 64 hours. Whether a change hurts depends on traffic, and traffic has a shape. A queue at 60% that stays there is fine. The same queue at 60% and climbing every week isn't. The last hour of metrics won't tell you which.
 
-[click] Polylane forecasts the affected series before judging a trajectory. They self-host Toto-2.0-22m, a time-series model. 64 hourly points in, 24 hours out.
+[click] Polylane forecasts the affected series before judging a trajectory. The dashed line is the median forecast for the next 24 hours. They self-host Toto-2.0-22m, a small time-series model: 64 hourly points in, 24 hours out.
 
-[click] It returns a band, p10 to p90, that widens with the horizon. It forecasts up to 16 related series together, because request rate, errors, latency and queue depth move together.
+[click] The shaded band is p10 to p90: where the traffic will probably be. It widens with the horizon, because the future is less certain. It forecasts up to 16 related series together, because request rate, errors, latency and queue depth move together.
 
-[click] The agent reads the band. Their words: a p10 that stays above the threshold a trajectory depends on is a different answer from one that crosses it. The three readings on screen are my simplification. Drag the line to show them.
-
-- The series here is synthetic, shaped like the checkout-api chart in their post. They call forecasting their most experimental piece, still being measured.
+[click] The horizontal line is the load checkout-api can take, the threshold a trajectory depends on. Their words: a p10 that stays above the threshold is a different answer from one that crosses it. The reading under the chart changes as I drag the line. The three readings are my simplification. Drag it to show them.
+- The series is synthetic, shaped like the checkout-api chart in their post. They call forecasting their most experimental piece, still being measured.
 -->
 
 ---
@@ -1143,12 +1218,11 @@ clicks: 2
 <!--
 About 1 minute.
 
-- This is what lands on the PR. The first line is the mechanism, in plain words.
+- On screen: the comment that lands on the PR. The first line is the verdict and the mechanism, in plain words.
 
 [click] Then the evidence: the exact file and line, and production data. Checkout writes to orders about 38 times a second, and every one of those waits while the index builds.
 
 [click] Then what would make it safe. That's the difference from a review bot that says "consider performance".
-
 - Redrawn from their example comment. The chart is synthetic.
 -->
 
@@ -1165,14 +1239,13 @@ clicks: 2
 <!--
 About 1 minute.
 
-- This runs as a required CI step, so it gets 2 to 3 minutes. Their first prototype took nearly 7 minutes at the median and up to 20. These are production medians from 15 September, over 325 runs.
+- On screen: where the time went in their first prototype. This runs as a required CI step, so it gets 2 to 3 minutes. The prototype took nearly 7 minutes at the median and up to 20. These are production medians from 15 September, over 325 runs.
 - The review turn was 30 to 40 sequential model steps, up to nearly 600 in the worst case, about 17 seconds each, mostly reasoning tokens.
 
 [click] The biggest changes: a step budget of 30, with the count in every prompt so the model can plan around it. A new commit cancels the old review and starts a fresh thread, because steering the old one confused it. And reuse: review only the diff since the last completed run.
 
 [click] The latest median for the review turn is 94 seconds.
 - Their line worth quoting: putting the count in the prompt lets the model plan around it, which mattered more than the number itself.
-
 - These are the stop rules from the review part again: a budget, and fresh evidence for every commit.
 - Their success metric is prevented incidents: they flag a risk, an engineer pushes a fix, a new assessment says it's mitigated, and the PR merges. They report 2.3 per customer per week. That's a proxy, not an observed incident count.
 -->
@@ -1191,12 +1264,55 @@ transition: gate | gate-back
 <!--
 Thirty seconds, keep it moving. Same company as the case study.
 
-- Not every step in an agent pipeline needs an LLM. Polylane replaced LLM calls with Jev, a typed decision model, for yes/no, choice and score questions.
+- On screen: latency and cost for Polylane's decision calls, before. Not every step in an agent pipeline needs an LLM. Polylane replaced LLM calls with Jev, a typed decision model, for yes/no, choice and score questions.
 
-[click] P90 latency from 4,752 to 508 milliseconds. Cost per thousand calls down 39%.
-
+[click] After: P90 latency from 4,752 to 508 milliseconds. Cost per thousand calls down 39%.
 - Their workload, their numbers, from about a week of use. Wherever their agents pick from a fixed set of answers, Jev is the default. Ranking resources by priority is their highest-volume use and drives most of the savings.
 - https://polylane.com/blog/we-swapped-our-llms-for-jev/
+-->
+
+---
+part: Close
+class: ns
+clicks: 1
+---
+
+# In my repo, agents merge
+
+<OwnRepo :step="$clicks" />
+
+<!--
+PLACEHOLDER, about 1.5 minutes. The project is new. Refresh every number before the talk, and decide in rehearsal whether this stays. Numbers as of 16 October 2026, from the repo's harness report.
+
+- On screen: my current project, a real product. Agents claim issues, build, verify in the real app, review each other's work and merge. Branch protection requires zero human approvals. I make the decisions; agents own the delivery.
+- 150 merged PRs in five and a half days. That's only possible because about 30 rules and gates are checked by code, not by me.
+
+[click] How it's built, from advice to enforcement. A short AGENTS.md that routes each kind of task to the skill that owns it. Skills that guide a workflow end to end. Gates that refuse the change: a pre-commit hook, architecture tests, a local CI run that has to pass before merge. And the PR body as the record: what was verified, who reviewed, before and after media.
+- Over five days, rules moved down that line: out of a long AGENTS.md, into skills, then into checks. None of it was designed up front. Each rule arrived when a problem showed up: parallel agents sharing an instance, merged migration snapshots, green tests on features that didn't work.
+- I still use the app myself before anyone else does. My involvement is decisions and clicking through it, not approving PRs.
+- One honest difference from OpenAI: I block harder, because some data in this product is a one-way door.
+-->
+
+---
+part: Close
+class: ns
+clicks: 1
+---
+
+# Where I still take the agent's word
+
+<OwnRepoGaps :step="$clicks" />
+
+<!--
+PLACEHOLDER, about 1 minute. From the harness report's "Where we still rely on trust", 16 October 2026. Refresh before the talk; some of these may be fixed by then.
+
+- On screen, left: the places where my repo takes the agent's word for it. Right: what would turn each one into a check.
+- An agent can edit a rule or a baseline. That's the fullsend story from verify, and my repo has the same hole.
+- Whether to get an independent review is the implementer's call. About a third of PRs record none.
+- "I verified it in the app" and the screenshots are self-reported. The PR check sees that the section isn't empty, not that a UI change carries a picture.
+- "Write the failing test first" is a sentence in a skill. Nothing fails when code changes without a test.
+
+[click] No slop doesn't mean no trust. It means knowing where you still trust, and having a plan for each one.
 -->
 
 ---
@@ -1212,14 +1328,17 @@ clicks: 3
 <!--
 About 2 minutes.
 
-- Poteto's starting question for scaling: "How do I get to the point where my agent can merge its own code?" Work backwards from there. Each rung moves one job from you to the environment.
-- Back to the ladder from the start. Rung one is where most of us start: you relay everything, which is the bottleneck slide.
-[click] It runs and checks its own work, so you can read the diff instead of testing it. It reviews each slice with subagents, so you watch a clip and read code that's already been through a round.
-[click] It finds its own context: tickets, Slack, telemetry, past sessions. Then the top rung. Poteto reports that their agents now merge their own PRs, after a loop of verifier agents that run and click through the app. They review the commit history in the morning, sample instead of reading everything, and when they find a problem they fix the environment, not the one agent: a new lint rule, a better skill.
+- On screen: the ladder from the start, now with every level. Each level moves one job from you to the environment. Level 1 is where most of us start: you relay everything, which is the bottleneck slide.
+- Poteto's starting question for scaling: "How do I get to the point where my agent can merge its own code?" Work backwards from there.
+
+[click] Level 2: it runs and checks its own work, so you read the diff instead of testing it. Level 3: it reviews each slice with subagents, so you watch a clip and read only the risky slices.
+
+[click] Level 4: it finds its own context: tickets, Slack, telemetry, past sessions. What reaches you are product choices. Then the top level. Poteto reports that their agents now merge their own PRs, after a loop of verifier agents that run and click through the app. They review the commit history in the morning, sample instead of reading everything, and when they find a problem they fix the environment, not the one agent: a new lint rule, a better skill.
 - They're explicit that this took a long time and isn't something you get by installing a skill library. "It took a lot of bravery."
-[click] Two things don't change. On every rung, you still click through it yourself. Merging isn't releasing: the change can land behind a flag, and a person uses it before users do.
-- And it only works where mistakes are cheap to undo and the work can be checked. Matt Pocock's follow-up question was about one-way doors, changes that can't be walked back. Poteto's answer: "verifiability of the domain is an important aspect", and they didn't claim to have the answer.
-- Compare with the dial from the production part: HumanLayer tried the top rung and went back to reading code. Pick the rung per kind of change, not one for the whole team.
+
+[click] Two things on every level. First: you still click through it before your users do. Merging isn't releasing. The change can land behind a flag, and a person uses it before users do.
+- Second: pick the level per change, not per team. A text fix can merge itself. A migration can't, because you can't take it back. Matt Pocock asked Poteto about exactly these one-way doors. Poteto's answer: "verifiability of the domain is an important aspect", without claiming to have the answer.
+- Compare with the dial from the production part: HumanLayer tried the top level for everything and went back to reading code.
 - Say: "The agent can merge when its evidence beats what your reading would have caught."
 - Question for the room: what would have to be true for your agent to merge this? The list of failures is most of the answer.
 - Source: https://www.youtube.com/watch?v=MN9dGgmLyso
@@ -1234,7 +1353,7 @@ clicks: 1
 # On Monday, turn one repeated correction into a check
 
 <div class="ns-monday">
-  <p class="lead">Pick the review comment you keep writing. Make the repository say it for you.</p>
+  <p class="lead">Pick the correction you keep repeating. Make the repository say it for you.</p>
   <Show :step="$clicks" :at="1" class="term">
     <div class="bar"><span class="ns-mono">npm run check:slides</span><em>this deck</em></div>
     <div class="out ns-mono">
@@ -1250,12 +1369,13 @@ clicks: 1
 <!--
 About 1.5 minutes.
 
-- Ask the room: what's the comment you type most often in reviews? That's your first check.
+- On screen: the one thing to do on Monday. A correction is anything you keep saying: a review comment, or the same instruction you keep typing into the agent's prompt.
+- Ask the room: what's the correction you make most often? That's your first check.
 
 [click] My example is from this deck's repository. Agents kept making the same layout mistakes, so a pre-commit script renders every slide and fails with a rule name and a fix. The agent reads the fix and corrects itself.
 - The lines shown are the script's real format. The two failures are examples.
 - OpenAI's harness team does the same with custom lints: "we write the error messages to inject remediation instructions into agent context." https://openai.com/index/harness-engineering/
-- Where to find the comment: your own past sessions. Poteto's tip is to have an agent read your transcripts for the places you corrected it, and suggest a lint rule or skill for each repeated one. They call past chats "a treasure trove of context".
+- Where to find the correction: your own past sessions. Poteto's tip is to have an agent read your transcripts for the places you corrected it, and suggest a lint rule or skill for each repeated one. They call past chats "a treasure trove of context".
 - Poteto also keeps a queue: a routine appends every bad pattern it finds to a document instead of fixing it straight away, and every few days they look for the pattern behind the entries.
 - Keep a person as the owner of each decision. Checks carry the ones you've already made.
 -->
@@ -1265,16 +1385,25 @@ layout: none
 ---
 
 <div class="ns-dark ns-thanks">
-  <h1>Thank you</h1>
-  <p class="who">Pasi Huuhka · Zure</p>
-  <p class="links ns-mono">huuhka.net · linkedin.com/in/pasihuuhka</p>
-  <p class="q">What would convince you a change is safe?</p>
+  <div class="copy">
+    <h1>Thank you</h1>
+    <p class="ask">Questions?</p>
+    <p class="who">Pasi Huuhka · Zure</p>
+    <p class="links ns-mono">huuhka.net · linkedin.com/in/pasihuuhka</p>
+    <p class="q">What would convince you a change is safe?</p>
+  </div>
+  <figure class="qr">
+    <div class="code">QR code</div>
+    <figcaption>Feedback on this talk</figcaption>
+  </figure>
 </div>
 
 <!--
-About 2 minutes, then questions.
+Questions, then done.
 
-- Leave the closing question on screen during Q&A.
+- On screen: thank you, questions, and the feedback QR code. Point at the QR code before taking questions: "Feedback helps, especially the critical kind."
+- The QR box is a placeholder. Put the code's image in the .qr figure.
+- If the room is quiet, use the line under my name: what would convince you a change is safe?
 - The sources slide follows as backup.
 -->
 
@@ -1287,13 +1416,12 @@ class: ns
 
 <div class="ns-sources">
   <p><b>Pasi Huuhka</b> Research, plan, implement · Current workflow · Building your own PR reviewer</p>
-  <p><b>GitHub Next</b> Chopin · <b>HumanLayer</b> Workflow phases · Why software factories fail · <b>GitHub</b> Spec Kit · <b>Matt Pocock</b> Skills · Poteto interview</p>
+  <p><b>GitHub Next</b> Chopin · <b>HumanLayer</b> Workflow phases · Why software factories fail · <b>Matt Pocock</b> Skills · Poteto interview</p>
   <p><b>Honeycomb</b> Code review bottleneck · 30 to 70 PRs a day · AI amplifies existing practices</p>
   <p><b>Spotify</b> AI changed how Spotify builds · <b>Intercom</b> AI is approving our pull requests</p>
   <p><b>Uber</b> Running a software factory efficiently · <b>OpenAI</b> Harness engineering</p>
   <p><b>Polylane</b> How we prevent slop from hitting prod · We swapped our LLMs for Jev</p>
-  <p><b>Aidan Harding</b> Putting learning in the loop · <b>Addy Osmani</b> Comprehension debt</p>
-  <p><b>Dillon Mulroy</b> The Weekly Dev's Brew interview · <b>Anthropic</b> AI assistance and coding skills</p>
+  <p><b>Dillon Mulroy</b> The Weekly Dev's Brew interview</p>
 </div>
 
 <!--

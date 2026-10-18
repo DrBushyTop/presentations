@@ -25,7 +25,6 @@
         </div>
       </div>
 
-      <p class="lesson">Check a review finding against the running app.</p>
       <nav aria-label="PR 11354 videos">
         <a href="https://github.com/user-attachments/assets/8b4c07cf-9f9d-408a-9bd7-cc88a29f961e" target="_blank" rel="noopener noreferrer">▶ Before · 10 s</a>
         <a href="https://github.com/user-attachments/assets/736c3026-9744-4446-8b7e-49eb8a8c2888" target="_blank" rel="noopener noreferrer">▶ After · 14 s</a>
@@ -52,7 +51,6 @@
         </div>
       </div>
 
-      <p class="lesson">A small diff, backed by before/after measurements.</p>
       <nav aria-label="PR 15265 videos">
         <a href="https://gh-file-drop-api-prod-galwoqjslzlnws6s.oliver-boorstein.workers.dev/f/394e1521973c46e6/pr-b-real-4x.mp4" target="_blank" rel="noopener noreferrer">▶ Compare · 15 s</a>
         <a href="https://gh-file-drop-api-prod-galwoqjslzlnws6s.oliver-boorstein.workers.dev/f/78e9787a48b5e37a/pr-b-stress-4x.mp4" target="_blank" rel="noopener noreferrer">▶ Stress test · 47 s</a>
@@ -96,7 +94,6 @@ header span {
 
 .example h2 {
   margin: 16px 0 0;
-  min-height: 72px;
   font-size: 28px;
   line-height: 1.2;
   letter-spacing: -0.02em;
@@ -184,7 +181,7 @@ kbd {
 }
 
 .counts strong {
-  font-size: 72px;
+  font-size: 88px;
   line-height: 1.1;
   letter-spacing: -0.04em;
 }
@@ -204,17 +201,10 @@ kbd {
 .removed { color: #ff9a8a; }
 .added { color: var(--z-teal-300); }
 
-.example .lesson {
-  min-height: 58px;
-  margin: 18px 0 12px;
-  font-size: 23px;
-  line-height: 1.25;
-  font-weight: 600;
-}
-
 nav {
   display: flex;
   gap: 12px;
+  margin-top: 20px;
 }
 
 nav a {

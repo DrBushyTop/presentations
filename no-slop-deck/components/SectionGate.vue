@@ -12,7 +12,9 @@ import { useSlideContext } from '@slidev/client'
 import { useIsActive } from '../lib/active'
 import { gates } from '../lib/gates'
 
-const props = defineProps<{ current: number, title: string, question: string }>()
+// intro: one plain sentence on what the part's practice is, so the failures
+// that follow have something to hang on.
+const props = defineProps<{ current: number, title: string, question: string, intro?: string }>()
 const active = useIsActive()
 const { $renderContext } = useSlideContext()
 const still = computed(() => !['slide', 'presenter'].includes($renderContext.value as string))
@@ -55,6 +57,7 @@ const log = computed(() => gates[props.current].stream)
     <div class="copy">
       <h1>{{ title }}</h1>
       <p>{{ question }}</p>
+      <p v-if="intro" class="intro">{{ intro }}</p>
     </div>
 
     <section class="run" aria-label="Parts of the talk as a pipeline run">
@@ -176,6 +179,16 @@ p {
   margin: 0;
   max-width: 30ch;
   text-wrap: balance;
+}
+
+p.intro {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 2px solid #333;
+  font-size: 24px;
+  font-weight: 500;
+  color: #d4d4d4;
+  max-width: 34ch;
 }
 
 /* ---------- Run ---------- */
@@ -376,7 +389,7 @@ p {
   grid-column: 2 / -1;
   display: grid;
   grid-template-rows: 0fr;
-  transition: grid-template-rows 900ms var(--ns-ease) 1100ms;
+  transition: grid-template-rows 900ms var(--ns-ease) 2600ms;
 }
 
 .log > div {
@@ -394,8 +407,8 @@ p {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  transition: opacity 500ms var(--ns-ease);
-  transition-delay: calc(1500ms + var(--k) * 260ms);
+  transition: opacity 800ms var(--ns-ease);
+  transition-delay: calc(3000ms + var(--k) * 700ms);
 }
 
 .run-slide:not(.go) .ln {
@@ -452,7 +465,10 @@ p {
   flex: none;
 }
 
-/* ---------- Entrance ---------- */
+/* ---------- Entrance ----------
+   Paced for reading while the speaker talks: the title, then the question,
+   then the intro line, then the log of the running job, one line at a time.
+   The whole build takes about five seconds. */
 
 h1,
 p {
@@ -467,7 +483,8 @@ p {
 }
 
 .go h1 { transition-delay: 450ms; }
-.go p { transition-delay: 700ms; }
+.go p { transition-delay: 1100ms; }
+.go p.intro { transition-delay: 1900ms; }
 
 .still,
 .still * {

@@ -50,7 +50,7 @@ const edges = [
     <div class="small-model">A small model drops the rest</div>
 
     <div class="agent">
-      <small>Agent gets</small>
+      <small><Icon name="bot" />Agent gets</small>
       <b>The diff, description and commits</b>
       <b>Only the three that matter</b>
     </div>
@@ -143,12 +143,7 @@ const edges = [
 }
 
 .node.repo {
-  background: var(--z-ink);
-  color: #fff;
-}
-
-.node.repo small {
-  color: #bdbdbd;
+  border-width: 4px;
 }
 
 .walk .node:not(.repo) {
@@ -211,9 +206,8 @@ const edges = [
   width: 256px;
   height: 182px;
   padding: 16px 18px;
-  background: #e8f6f8;
-  border: 2px solid var(--ns-teal);
-  color: var(--z-ink);
+  background: var(--z-ink);
+  color: #fff;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -227,9 +221,17 @@ const edges = [
 }
 
 .agent small {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   font-size: var(--ns-label);
-  color: var(--ns-teal);
+  color: var(--ns-frozen);
   font-weight: 700;
+}
+
+.agent small :deep(.ns-icon) {
+  font-size: 24px;
+  color: var(--ns-teal);
 }
 
 .agent b {
