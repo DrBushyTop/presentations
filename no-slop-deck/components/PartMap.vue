@@ -107,7 +107,7 @@ const groups = [
 .group {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 20px;
   min-width: 0;
 }
 
@@ -144,9 +144,11 @@ header svg {
   gap: 16px;
 }
 
+/* The frame sits outside the cards, so they keep the same size as the
+   others and have room to rise into place. */
 .loop .parts {
-  padding: 12px;
-  margin: -12px -12px 0;
+  padding: 10px;
+  margin: -12px;
   border: 2px dashed var(--ns-teal);
 }
 
@@ -164,7 +166,7 @@ header svg {
 
 .groups:not(.on) .part {
   opacity: 0.12;
-  transform: translateY(16px);
+  transform: translateY(8px);
 }
 
 .n {

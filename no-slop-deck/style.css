@@ -68,6 +68,18 @@
   filter: blur(6px);
 }
 
+/* The booth's pixel art renders softer inside a 3D or blurred layer and
+   visibly sharpens when the turn ends, so its page only slides and fades. */
+.slidev-page:has(.ppb):is(.shift-enter-from, .shift-back-leave-to) {
+  transform: translateX(10%);
+  filter: none;
+}
+
+.slidev-page:has(.ppb):is(.shift-leave-to, .shift-back-enter-from) {
+  transform: translateX(-10%);
+  filter: none;
+}
+
 .gate-enter-active,
 .gate-leave-active,
 .gate-back-enter-active,

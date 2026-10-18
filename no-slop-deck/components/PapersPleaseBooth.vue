@@ -614,15 +614,19 @@ watch(active, (on) => { if (on) setTimeout(measure, 700) })
   flex-direction: column;
   background-color: #ebe5dc;
   background-image: repeating-linear-gradient(135deg, transparent 0 7px, rgba(222, 30, 5, 0.06) 7px 8px);
+  background-clip: padding-box;
   border: 4px solid #1a1a1a;
   color: #2b2626;
 }
 
+/* The header covers the top of the border, so the paper can't show through
+   as a hairline between them. */
 .ph {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 14px;
+  margin: -4px -4px 0;
+  padding: 14px 18px 10px;
   background: #1a1a1a;
   color: #f3f3f2;
 }

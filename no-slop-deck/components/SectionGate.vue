@@ -1,225 +1,260 @@
 <!--
-  Part divider drawn as a CI run of the talk. Parts already covered have
-  passed, the current part is running with its log open,
-  the rest are queued. Verify and review sit in a "for each slice" group.
-  On entry the previous job finishes, the connector fills and the current
-  job starts. After that only the spinner moves. Outside the live slide
-  (overview, print) it shows the finished state without motion.
+  Part divider. The six parts sit on one track across the screen so the room
+  sees where the talk is: the part just finished ticks to done, the track
+  fills to this part and it lights up. An arc under the track runs from
+  review back to verify: both repeat for the next slice. Then the row zooms into this
+  part, which becomes the headline, and its question fades in underneath.
+  Outside the live slide (overview, print) it shows the zoomed-in state
+  without motion.
 -->
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useSlideContext } from '@slidev/client'
 import { useIsActive } from '../lib/active'
 import { gates } from '../lib/gates'
 
-// intro: one plain sentence on what the part's practice is, so the failures
-// that follow have something to hang on.
-const props = defineProps<{ current: number, title: string, question: string, intro?: string }>()
+const props = defineProps<{ current: number }>()
 const active = useIsActive()
 const { $renderContext } = useSlideContext()
 const still = computed(() => !['slide', 'presenter'].includes($renderContext.value as string))
 
-// Slidev often mounts this slide at the moment it becomes active, so start
-// the entrance a frame later or the transitions never run.
-const go = ref(false)
-// The previous job finishes once the page turn has landed, so it's seen.
-const settled = ref(false)
-let timer: ReturnType<typeof setTimeout> | undefined
-watch(active, (on) => {
-  clearTimeout(timer)
+// Two hidden copies of the row give the offsets: the whole row centred, and
+// the row with this part at headline size and centred on it. They also give
+// the middle of the review-to-verify arc, where its label goes.
+const whole = ref<HTMLElement>()
+const zoomed = ref<HTMLElement>()
+const xWhole = ref(0)
+const xZoom = ref(0)
+const labelWhole = ref(0)
+const labelZoom = ref(0)
+const centre = (row: HTMLElement | undefined, i: number) => {
+  const el = row?.querySelector<HTMLElement>(`[data-i="${i}"]`)
+  return el ? el.offsetLeft + el.offsetWidth / 2 : 0
+}
+async function measure() {
+  await nextTick()
+  await document.fonts?.ready
+  if (whole.value) xWhole.value = 640 - whole.value.offsetWidth / 2
+  xZoom.value = 640 - centre(zoomed.value, props.current)
+  labelWhole.value = (centre(whole.value, 3) + centre(whole.value, 4)) / 2
+  labelZoom.value = (centre(zoomed.value, 3) + centre(zoomed.value, 4)) / 2
+}
+onMounted(measure)
+
+// arrive: the whole row, the previous part still running
+// handoff: the previous part done, this part running
+// zoom: this part is the headline
+type Phase = 'arrive' | 'handoff' | 'zoom'
+const phase = ref<Phase>('arrive')
+let timers: ReturnType<typeof setTimeout>[] = []
+const later = (ms: number, fn: () => void) => timers.push(setTimeout(fn, ms))
+const clear = () => { timers.forEach(clearTimeout); timers = [] }
+
+// Slidev mounts the next slide hidden, so measure again once it's on screen.
+// On leaving, wait for the page turn before resetting, or the reset shows.
+watch(active, async (on) => {
+  clear()
   if (!on) {
-    go.value = false
-    settled.value = false
+    later(1500, () => { phase.value = 'arrive' })
     return
   }
-  requestAnimationFrame(() => requestAnimationFrame(() => { go.value = true }))
-  timer = setTimeout(() => { settled.value = true }, 900)
+  phase.value = 'arrive'
+  await measure()
+  later(900, () => { phase.value = 'handoff' })
+  later(2900, () => { phase.value = 'zoom' })
 }, { immediate: true })
-onBeforeUnmount(() => clearTimeout(timer))
+onBeforeUnmount(clear)
 
-const on = computed(() => go.value || still.value)
-const done = computed(() => settled.value || still.value)
-
-type State = 'done' | 'run' | 'queued'
-// Before the entrance, the previous job is still running and this one is queued.
-function state(i: number): State {
-  if (i < props.current - 1) return 'done'
-  if (i === props.current - 1) return done.value ? 'done' : 'run'
-  if (i === props.current) return done.value ? 'run' : 'queued'
+const shown = computed<Phase>(() => (still.value ? 'zoom' : phase.value))
+const reached = computed(() => (shown.value === 'arrive' ? props.current - 1 : props.current))
+function state(i: number) {
+  if (i < reached.value) return 'done'
+  if (i === reached.value) return 'run'
   return 'queued'
 }
-
-const log = computed(() => gates[props.current].stream)
+const x = computed(() => (shown.value === 'zoom' ? xZoom.value : xWhole.value))
+const labelX = computed(() => (shown.value === 'zoom' ? labelZoom.value : labelWhole.value))
 </script>
 
 <template>
-  <div class="ns-dark run-slide" :class="{ go: on, still, live: go && !still }">
-    <div class="copy">
-      <h1>{{ title }}</h1>
-      <p>{{ question }}</p>
-      <p v-if="intro" class="intro">{{ intro }}</p>
+  <div class="ns-dark gate" :class="['p-' + shown, { still }]">
+    <div class="window">
+      <div class="row" :style="{ transform: `translateX(${x}px)` }">
+        <div
+          v-for="(g, i) in gates" :key="g.name"
+          class="st" :class="['s-' + state(i), { big: shown === 'zoom' && i === current }]"
+        >
+          <b class="w">{{ g.name }}</b>
+          <i class="fill l" />
+          <i class="fill r" />
+          <span class="node" aria-hidden="true">
+            <i class="ping" />
+            <i class="dot" />
+            <svg viewBox="0 0 24 24"><path d="M6.5 12.5l3.8 3.8L17.5 9" /></svg>
+          </span>
+          <span v-if="i === 3" class="loop to" aria-hidden="true" />
+          <span v-if="i === 4" class="loop from" aria-hidden="true" />
+        </div>
+        <span class="loop-label ns-mono" :style="{ left: `${labelX}px` }">next slice</span>
+      </div>
+
+      <div ref="whole" class="row measure" aria-hidden="true">
+        <div v-for="(g, i) in gates" :key="g.name" class="st" :data-i="i"><b class="w">{{ g.name }}</b></div>
+      </div>
+      <div ref="zoomed" class="row measure" aria-hidden="true">
+        <div v-for="(g, i) in gates" :key="g.name" class="st" :data-i="i" :class="{ big: i === current }">
+          <b class="w">{{ g.name }}</b>
+        </div>
+      </div>
     </div>
 
-    <section class="run" aria-label="Parts of the talk as a pipeline run">
-      <header>
-        <span class="ns-mono">talk.yml · The no slop engineer</span>
-        <b class="status"><i class="dot" />{{ current + 1 }} of 6 running</b>
-      </header>
-
-      <ol class="jobs">
-        <li
-            v-for="i in [0, 1, 2]" :key="i"
-            class="job" :class="['s-' + state(i), { open: i === current }]"
-            :aria-current="i === current ? 'step' : undefined"
-          >
-            <span class="ic" aria-hidden="true">
-              <svg v-if="state(i) === 'done'" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" class="fill" /><path d="M7 12.5l3.2 3.2L17 9" class="tick" /></svg>
-              <svg v-else-if="state(i) === 'run'" viewBox="0 0 24 24" class="spin"><circle cx="12" cy="12" r="9" class="track" /><path d="M12 3a9 9 0 0 1 9 9" class="arc" /></svg>
-              <svg v-else viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" class="ring" /></svg>
-            </span>
-            <b class="name">{{ gates[i].name }}</b>
-            <span class="meta ns-mono">{{ state(i) === 'done' ? 'Done' : state(i) === 'run' ? 'Running' : 'Queued' }}</span>
-            <div v-if="i === current" class="log">
-              <div>
-                <div v-for="(l, k) in log" :key="k" class="ln ns-mono" :class="{ now: k === log.length - 1 }" :style="{ '--k': k }">
-                  <span class="lk">{{ k === log.length - 1 ? '›' : '✓' }}</span>{{ l.t }}
-                </div>
-              </div>
-            </div>
-          </li>
-        <li class="group">
-          <span class="group-label">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 0 1 13.7-5.6M20 12a8 8 0 0 1-13.7 5.6" /><path d="M18 2.5v4h-4M6 21.5v-4h4" /></svg>
-            For each slice
-          </span>
-          <ol class="jobs inner">
-            <li
-            v-for="i in [3, 4]" :key="i"
-            class="job" :class="['s-' + state(i), { open: i === current }]"
-            :aria-current="i === current ? 'step' : undefined"
-          >
-            <span class="ic" aria-hidden="true">
-              <svg v-if="state(i) === 'done'" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" class="fill" /><path d="M7 12.5l3.2 3.2L17 9" class="tick" /></svg>
-              <svg v-else-if="state(i) === 'run'" viewBox="0 0 24 24" class="spin"><circle cx="12" cy="12" r="9" class="track" /><path d="M12 3a9 9 0 0 1 9 9" class="arc" /></svg>
-              <svg v-else viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" class="ring" /></svg>
-            </span>
-            <b class="name">{{ gates[i].name }}</b>
-            <span class="meta ns-mono">{{ state(i) === 'done' ? 'Done' : state(i) === 'run' ? 'Running' : 'Queued' }}</span>
-            <div v-if="i === current" class="log">
-              <div>
-                <div v-for="(l, k) in log" :key="k" class="ln ns-mono" :class="{ now: k === log.length - 1 }" :style="{ '--k': k }">
-                  <span class="lk">{{ k === log.length - 1 ? '›' : '✓' }}</span>{{ l.t }}
-                </div>
-              </div>
-            </div>
-          </li>
-          </ol>
-        </li>
-        <li
-            v-for="i in [5]" :key="i"
-            class="job" :class="['s-' + state(i), { open: i === current }]"
-            :aria-current="i === current ? 'step' : undefined"
-          >
-            <span class="ic" aria-hidden="true">
-              <svg v-if="state(i) === 'done'" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" class="fill" /><path d="M7 12.5l3.2 3.2L17 9" class="tick" /></svg>
-              <svg v-else-if="state(i) === 'run'" viewBox="0 0 24 24" class="spin"><circle cx="12" cy="12" r="9" class="track" /><path d="M12 3a9 9 0 0 1 9 9" class="arc" /></svg>
-              <svg v-else viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" class="ring" /></svg>
-            </span>
-            <b class="name">{{ gates[i].name }}</b>
-            <span class="meta ns-mono">{{ state(i) === 'done' ? 'Done' : state(i) === 'run' ? 'Running' : 'Queued' }}</span>
-            <div v-if="i === current" class="log">
-              <div>
-                <div v-for="(l, k) in log" :key="k" class="ln ns-mono" :class="{ now: k === log.length - 1 }" :style="{ '--k': k }">
-                  <span class="lk">{{ k === log.length - 1 ? '›' : '✓' }}</span>{{ l.t }}
-                </div>
-              </div>
-            </div>
-          </li>
-      </ol>
-    </section>
+    <p class="q">{{ gates[current].q }}</p>
   </div>
 </template>
 
 <style scoped>
-.run-slide {
+.gate {
   --ok: var(--z-teal-300);
   --live: var(--ns-frozen);
-  --dim: #5a5a5a;
+  --ease: var(--ns-ease);
+  --gap: 44px;
+  --track: #3d3d3d;
+  --arc: #666;
 }
 
-/* ---------- Copy ---------- */
-
-.copy {
+/* Once zoomed, the row runs off both edges, so the edges fade. */
+.window {
   position: absolute;
-  left: 72px;
-  top: 52px;
-  bottom: 64px;
-  width: 560px;
+  inset: 0;
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 72px, #000 1208px, transparent 1280px);
+  mask-image: linear-gradient(to right, transparent 0, #000 72px, #000 1208px, transparent 1280px);
+}
+
+/* The track runs through the node centres at y 384. Each part draws the half
+   of the track on either side of its node. */
+.row {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 398px;
+  display: flex;
+  align-items: flex-end;
+  gap: var(--gap);
+  white-space: nowrap;
+  transition: transform 1300ms var(--ease);
+}
+
+.measure {
+  visibility: hidden;
+}
+
+.st {
+  position: relative;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  align-items: center;
 }
 
-h1 {
+.st::before,
+.st::after,
+.fill {
+  content: '';
+  position: absolute;
+  bottom: 12px;
+  height: 4px;
+  background: var(--track);
+}
+
+/* The halves overlap by a pixel so the joins don't show. */
+.st::before,
+.fill.l {
+  left: calc(var(--gap) / -2 - 1px);
+  right: 50%;
+}
+
+.st::after,
+.fill.r {
+  left: 50%;
+  right: calc(var(--gap) / -2);
+}
+
+.st:first-of-type::before,
+.st:last-of-type::after,
+.st:first-of-type .fill.l,
+.st:last-of-type .fill.r,
+.measure .st::before,
+.measure .st::after {
+  display: none;
+}
+
+/* The filled track sits above every grey half and fills left to right. */
+.fill {
+  z-index: 1;
+  background: var(--ok);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 400ms linear;
+}
+
+.s-done .fill,
+.s-run .fill.l {
+  transform: scaleX(1);
+}
+
+/* The track reaches this part after the previous half has filled. */
+.s-run .fill.l {
+  transition-delay: 400ms;
+}
+
+.w {
   font-family: var(--z-font-display);
-  font-size: 80px;
-  line-height: 0.96;
+  font-size: 36px;
+  line-height: 1;
   font-weight: 800;
-  letter-spacing: -0.04em;
-  color: #fff;
-  margin: 0 0 26px;
-  text-wrap: balance;
+  letter-spacing: -0.02em;
+  color: #5a5a5a;
+  transition: font-size 1300ms var(--ease), letter-spacing 1300ms var(--ease), color 600ms var(--ease);
 }
 
-p {
-  font-size: 28px;
-  line-height: 1.3;
-  color: var(--live);
-  font-weight: 600;
-  margin: 0;
-  max-width: 30ch;
-  text-wrap: balance;
+.big .w {
+  font-size: 168px;
+  letter-spacing: -0.045em;
 }
 
-p.intro {
-  margin-top: 22px;
-  padding-top: 18px;
-  border-top: 2px solid #333;
-  font-size: 24px;
-  font-weight: 500;
-  color: #d4d4d4;
-  max-width: 34ch;
+.s-done .w { color: var(--ok); }
+.s-run .w { color: #fff; transition-delay: 0ms, 0ms, 800ms; }
+
+/* ---------- Nodes ---------- */
+
+.node {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  margin-top: 18px;
+  border-radius: 50%;
+  background: var(--z-ink);
+  box-shadow: inset 0 0 0 3px #4a4a4a;
+  transition: background-color 400ms var(--ease), box-shadow 400ms var(--ease);
 }
 
-/* ---------- Run ---------- */
-
-.run {
-  position: absolute;
-  top: 52px;
-  right: 64px;
-  bottom: 64px;
-  width: 540px;
-  display: flex;
-  flex-direction: column;
+.node > * {
+  grid-area: 1 / 1;
 }
 
-.run header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding-bottom: 14px;
-  margin-bottom: 14px;
-  border-bottom: 2px solid #333;
-  font-size: 16px;
-  color: #8f8f8f;
-}
-
-.status {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 18px;
-  color: var(--live);
+.node svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: var(--z-ink);
+  stroke-width: 3.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 16;
+  stroke-dashoffset: 16;
+  transition: stroke-dashoffset 450ms var(--ease) 150ms;
 }
 
 .dot {
@@ -227,279 +262,136 @@ p.intro {
   height: 10px;
   border-radius: 50%;
   background: var(--live);
-  box-shadow: 0 0 0 4px rgba(5, 195, 222, 0.2);
+  opacity: 0;
+  transition: opacity 300ms var(--ease);
 }
 
-.jobs {
-  flex: 1;
-  position: relative;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
+.ping {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px var(--live);
+  opacity: 0;
 }
 
-.jobs li {
-  margin: 0;
+.s-done .node {
+  background: var(--ok);
+  box-shadow: inset 0 0 0 3px var(--ok);
 }
 
-.jobs li::before {
-  display: none !important;
+.s-done .node svg {
+  stroke-dashoffset: 0;
 }
 
-/* The connector: a thick spine through every status icon. */
-.job {
-  position: relative;
-  display: grid;
-  grid-template-columns: 34px 1fr auto;
-  align-items: center;
-  column-gap: 18px;
-  padding: 9px 18px;
-  margin-bottom: 8px !important;
-  background: #262626;
-  border: 2px solid #303030;
-  transition: background 700ms var(--ns-ease), border-color 700ms var(--ns-ease), box-shadow 700ms var(--ns-ease);
+.s-run .node {
+  box-shadow: inset 0 0 0 3px var(--live);
+  transition-delay: 800ms;
 }
 
-.job::after {
+.s-run .dot {
+  opacity: 1;
+  transition-delay: 800ms;
+}
+
+.gate:not(.still) .s-run .ping {
+  animation: ping 1.8s var(--ease) infinite;
+}
+
+.gate:not(.p-arrive) .s-run .ping {
+  animation-delay: 800ms;
+}
+
+@keyframes ping {
+  0% { transform: scale(1); opacity: 0.8; }
+  100% { transform: scale(2); opacity: 0; }
+}
+
+/* ---------- Next slice ----------
+   An arc under the track from review back to verify, drawn in two pieces so
+   each stays attached to its part while the row zooms. */
+
+.loop {
+  position: absolute;
+  top: calc(100% + 8px);
+  height: 28px;
+  border: 0 solid var(--arc);
+}
+
+.loop.to {
+  left: 50%;
+  right: calc(var(--gap) / -2);
+  border-width: 0 0 2px 2px;
+  border-bottom-left-radius: 14px;
+}
+
+/* Arrowhead pointing up into verify */
+.loop.to::before {
   content: '';
   position: absolute;
-  left: 36px;
-  top: 100%;
-  width: 4px;
+  left: -5px;
+  top: -1px;
+  width: 10px;
   height: 10px;
-  background: #3a3a3a;
-  z-index: 1;
+  border: 0 solid var(--arc);
+  border-width: 2px 0 0 2px;
+  transform: rotate(45deg);
 }
 
-.job:last-child::after,
-.jobs.inner .job:last-child::after {
-  display: none;
+.loop.from {
+  left: calc(var(--gap) / -2 - 1px);
+  right: 50%;
+  border-width: 0 2px 2px 0;
+  border-bottom-right-radius: 14px;
 }
 
-.group:has(.s-done:last-child)::after {
-  background: var(--ok);
-}
-
-.group::after {
-  content: '';
+.loop-label {
   position: absolute;
-  left: 25px;
-  top: 100%;
-  width: 4px;
-  height: 10px;
-  background: #3a3a3a;
-}
-
-.job.s-done::after {
-  background: var(--ok);
-}
-
-.name {
-  font-family: var(--z-font-display);
-  font-size: 25px;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  color: #fff;
-  transition: color 600ms var(--ns-ease);
-}
-
-.meta {
-  font-size: 17px;
+  top: 442px;
+  transform: translateX(-50%);
+  font-size: 18px;
+  line-height: 22px;
   color: #8f8f8f;
+  transition: left 1300ms var(--ease);
 }
 
-.s-queued .name {
-  color: #6f6f6f;
-}
+/* ---------- Question ---------- */
 
-.s-done .meta {
-  color: var(--ok);
-}
-
-.s-run .meta {
-  color: var(--live);
+.q {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 492px;
+  margin: 0;
+  max-width: none;
+  text-align: center;
+  font-size: 40px;
   font-weight: 700;
-}
-
-/* Current job: the one moment of colour and size on the slide. */
-.job.s-run {
-  border-color: var(--live);
-  background: linear-gradient(135deg, rgba(5, 195, 222, 0.2), rgba(5, 195, 222, 0.04) 60%), #262626;
-  box-shadow: 0 24px 60px -24px rgba(5, 195, 222, 0.55);
-}
-
-.job.open .name {
-  font-size: 32px;
-}
-
-/* Status icons */
-.ic svg {
-  display: block;
-  width: 34px;
-  height: 34px;
-  overflow: visible;
-}
-
-.fill {
-  fill: var(--z-teal);
-}
-
-.tick {
-  fill: none;
-  stroke: #fff;
-  stroke-width: 2.6;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.track {
-  fill: none;
-  stroke: rgba(5, 195, 222, 0.25);
-  stroke-width: 3;
-}
-
-.arc {
-  fill: none;
-  stroke: var(--live);
-  stroke-width: 3;
-  stroke-linecap: round;
-}
-
-.live .spin {
-  animation: spin 1s linear infinite;
-  transform-origin: 50% 50%;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-.ring {
-  fill: #262626;
-  stroke: var(--dim);
-  stroke-width: 3;
-  stroke-dasharray: 3 4;
-}
-
-/* Log of the running job */
-.log {
-  grid-column: 2 / -1;
-  display: grid;
-  grid-template-rows: 0fr;
-  transition: grid-template-rows 900ms var(--ns-ease) 2600ms;
-}
-
-.log > div {
-  overflow: hidden;
-}
-
-.go .open .log {
-  grid-template-rows: 1fr;
-}
-
-.ln {
-  padding-top: 5px;
-  font-size: 17px;
-  color: #cfcfcf;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  transition: opacity 800ms var(--ns-ease);
-  transition-delay: calc(3000ms + var(--k) * 700ms);
-}
-
-.run-slide:not(.go) .ln {
-  opacity: 0;
-}
-
-.ln:first-child {
-  padding-top: 8px;
-}
-
-.lk {
-  display: inline-block;
-  width: 24px;
-  color: var(--ok);
-}
-
-.ln.now {
-  color: #fff;
-}
-
-.ln.now .lk {
   color: var(--live);
+  transition: opacity 800ms var(--ease) 900ms, transform 900ms var(--ease) 900ms;
 }
 
-/* For each slice: verify and review share a dashed frame. */
-.group {
-  position: relative;
-  margin: 0 0 8px !important;
-  padding: 0 10px 2px;
-  border: 2px dashed #4a4a4a;
-}
-
-.group-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 4px;
-  font-size: 16px;
-  font-weight: 700;
-  color: #a8a8a8;
-}
-
-.group-label svg {
-  width: 18px;
-  height: 18px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2.2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.jobs.inner {
-  flex: none;
-}
-
-/* ---------- Entrance ----------
-   Paced for reading while the speaker talks: the title, then the question,
-   then the intro line, then the log of the running job, one line at a time.
-   The whole build takes about five seconds. */
-
-h1,
-p {
-  transition: opacity 700ms var(--ns-ease), transform 900ms var(--ns-ease), filter 700ms var(--ns-ease);
-}
-
-.run-slide:not(.go) h1,
-.run-slide:not(.go) p {
+.gate:not(.p-zoom) .q {
   opacity: 0;
-  transform: translateY(24px);
-  filter: blur(6px);
+  transform: translateY(16px);
 }
 
-.go h1 { transition-delay: 450ms; }
-.go p { transition-delay: 1100ms; }
-.go p.intro { transition-delay: 1900ms; }
-
-.still,
-.still * {
+/* Before it starts, nothing animates into place. */
+.p-arrive .row,
+.p-arrive .row *,
+.still .row,
+.still .row *,
+.still .q {
   transition: none !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .live .spin {
-    animation: none;
+  .row,
+  .w {
+    transition: none;
   }
 
-  .run-slide:not(.go) h1,
-  .run-slide:not(.go) p {
-    transform: none;
-    filter: none;
+  .ping {
+    animation: none !important;
   }
 }
 </style>

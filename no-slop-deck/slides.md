@@ -180,13 +180,13 @@ About 1 minute. This is the agenda. Keep it quick.
 layout: none
 ---
 
-<SectionGate :current="0" title="Understand the current system" question="What does the code do today?" intro="The agent looks things up instead of guessing, and says where it found them." />
+<SectionGate :current="0" />
 
 <!--
 Research, about 6 minutes.
 
-- On screen: the talk as a pipeline run. Each part is a job; research is running, and its log shows what research finds in our app.
-- Say the line under the question: "The agent looks things up instead of guessing, and says where it found them."
+- On screen: the six parts on one track. Research lights up, then the row zooms into it and its question appears.
+- Say: "Part one: understand the current system. The agent looks things up instead of guessing, and says where it found them."
 - Say: "Before anyone writes the export, what does the app do today?"
 -->
 
@@ -313,13 +313,13 @@ About 1 minute.
 layout: none
 ---
 
-<SectionGate :current="1" title="Grill the decisions, keep the answers" question="What are we actually building?" intro="Settle what the feature means before any code, and write it down." />
+<SectionGate :current="1" />
 
 <!--
 Design, about 5 minutes.
 
-- On screen: research is done, design is running. Its log is the workflow: ask about the open choices, answer the factual ones from the code, record the decisions.
-- Say the line under the question: "Settle what the feature means before any code, and write it down."
+- On screen: research ticks to done, the track fills to design, then the row zooms into design.
+- Say: "Grill the decisions, keep the answers. Settle what the feature means before any code, and write it down."
 - Grilling is useful as soon as implementing directly would need guesses. It can be a short conversation or part of a larger design phase. A separate detailed plan isn't required.
 -->
 
@@ -420,13 +420,13 @@ About 1.5 minutes.
 layout: none
 ---
 
-<SectionGate :current="2" title="Put something working in front of a person" question="What can someone see and check today?" intro="Build one thin path a person can click through, then the next one." />
+<SectionGate :current="2" />
 
 <!--
 Slice, about 5 minutes. No demo.
 
-- On screen: research and design are done, slice is running. Its log: a thin path through every layer, check one usable behaviour, then the next slice.
-- Say the line under the question: "Build one thin path a person can click through, then the next one."
+- On screen: research and design are done, the track fills to slice, then the row zooms into it.
+- Say: "Put something working in front of a person. Build one thin path a person can click through, then the next one."
 -->
 
 ---
@@ -521,13 +521,13 @@ About 1.5 minutes.
 layout: none
 ---
 
-<SectionGate :current="3" title="Green is a starting point" question="Which claim did we actually test?" intro="The agent proves each claim before you look at the change." />
+<SectionGate :current="3" />
 
 <!--
 Verify, about 8 minutes. No demo.
 
-- On screen: verify is running. It sits in the "for each slice" group with review: both happen for every slice, not once at the end.
-- Say the line under the question: "The agent proves each claim before you look at the change."
+- On screen: slice ticks to done, the track fills to verify, then the row zooms into it. The arc under the track runs from review back to verify: every slice gets verified and reviewed, then the next slice goes round again.
+- Say: "Green is a starting point. The agent proves each claim before you look at the change."
 -->
 
 ---
@@ -724,13 +724,13 @@ About 1 minute.
 layout: none
 ---
 
-<SectionGate :current="4" title="Let the models review first" question="What still needs your eyes?" intro="Models review each slice and the PR. A stop rule ends the loop." />
+<SectionGate :current="4" />
 
 <!--
 Review, about 11 minutes including a 3-minute walkthrough.
 
-- On screen: verify is done, review is running, still inside the "for each slice" group. The log: subagents review the slice, PR bots add a second opinion, a written rule says when to stop.
-- Say the line under the question: "Models review each slice and the PR. A stop rule ends the loop."
+- On screen: verify ticks to done, the track fills to review, then the row zooms into it. The arc back to verify is the loop: after review, the next slice gets verified.
+- Say: "Let the models review first. They review each slice and the PR, and a stop rule ends the loop."
 - The question is the point of the part: models do the first passes so your attention goes to what they can't judge.
 -->
 
@@ -957,13 +957,13 @@ About 2 minutes. The controls work. Change reviewers, rounds or the lens live if
 layout: none
 ---
 
-<SectionGate :current="5" title="What happens after merge?" question="Who watches the rollout, what stops it, and how do we recover?" intro="Watch the change in real use, and limit how far it can spread." />
+<SectionGate :current="5" />
 
 <!--
 Production, about 14 minutes as drafted, the longest part. Rehearsal decides the cuts: the Polylane case study and the Jev aside are the obvious candidates.
 
-- On screen: every earlier job is done, production is running. Its log: roll out behind a flag, watch the agreed signals, stop or roll back.
-- Say the line under the question: "Watch the change in real use, and limit how far it can spread."
+- On screen: every earlier part is done, the track fills to production, then the row zooms into it.
+- Say: "What happens after merge? Watch the change in real use, and limit how far it can spread."
 -->
 
 ---
