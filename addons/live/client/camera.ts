@@ -37,11 +37,12 @@ export function startCamera() {
       // the bubble to be turned on again.
       await push.start(outgoing, why => why === 'lost' && again())
     }
-    catch (error) {
+    catch (error: any) {
       if (stream !== current) return
       console.warn('[live] camera', error)
       push.stop()
-      again()
+      // A refusal (the talk is over here, or Realtime is not set up) stays.
+      if (![409, 501].includes(error?.status)) again()
     }
   }
 

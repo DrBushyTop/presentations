@@ -22,6 +22,12 @@ export function createPush(kind: Kind) {
   let id: string | undefined
   let live = false
   let ended: ((why: Ended) => void) | undefined
+  // The order of this attempt's `on` among all shares of this kind, and the
+  // latest one the dev server announced.
+  let seq = 0
+  let latest = 0
+  // This dev server no longer publishes: nothing can start again.
+  let stopped = false
 
   async function call(body: Record<string, unknown>, keepalive = false) {
     const res = await fetch('/__slidev-live/media', {
@@ -31,7 +37,7 @@ export function createPush(kind: Kind) {
       keepalive,
     })
     const result = await res.json().catch(() => ({}))
-    if (!res.ok) throw new Error(result.error || `The dev server answered ${res.status}`)
+    if (!res.ok) throw Object.assign(new Error(result.error || `The dev server answered ${res.status}`), { status: res.status })
     return result
   }
 
@@ -51,6 +57,7 @@ export function createPush(kind: Kind) {
   // first. `onEnded` runs if the share ends later without `stop`.
   async function start(outgoing: Outgoing[], onEnded: (why: Ended) => void) {
     stop()
+    if (stopped) throw Object.assign(new Error('This dev server no longer publishes to the live site.'), { status: 409 })
     const mine = id = [...crypto.getRandomValues(new Uint8Array(16))].map(b => b.toString(16).padStart(2, '0')).join('')
     const current = () => id === mine
     const peer = pc = new RTCPeerConnection({ iceServers: ICE, bundlePolicy: 'max-bundle' })
@@ -74,8 +81,15 @@ export function createPush(kind: Kind) {
       await peer.setRemoteDescription({ type: 'answer', sdp: answer.sdp })
       await connected(peer)
       if (!current()) return false
-      await call({ action: 'on', id: mine })
+      const on = await call({ action: 'on', id: mine })
       if (!current()) return false
+      // Another tab's share went on after this one while the answer was on
+      // its way.
+      seq = on.seq ?? 0
+      if (latest > seq) {
+        end('replaced')
+        return false
+      }
       live = true
       peer.addEventListener('connectionstatechange', () => {
         if (current() && peer.connectionState === 'failed') end('lost')
@@ -93,6 +107,7 @@ export function createPush(kind: Kind) {
     if (id) call({ action: 'off', id }, keepalive).catch(() => {})
     pc = id = ended = undefined
     live = false
+    seq = 0
   }
 
   function end(why: Ended) {
@@ -104,10 +119,15 @@ export function createPush(kind: Kind) {
   // The dev server tells every tab which share is live, and when the talk
   // stopped publishing (taken over or stopped): the relay has cut this tab's
   // tracks off by then, so stop capturing too.
-  import.meta.hot?.on('slidev-live:media', (data: { kind?: Kind, id?: string, stopped?: boolean }) => {
-    if (!id) return
-    if (data.stopped) end('stopped')
-    else if (live && data.kind === kind && data.id && data.id !== id) end('replaced')
+  import.meta.hot?.on('slidev-live:media', (data: { kind?: Kind, id?: string, seq?: number, stopped?: boolean }) => {
+    if (data.stopped) {
+      stopped = true
+      if (id) end('stopped')
+      return
+    }
+    if (data.kind !== kind || !data.seq) return
+    latest = Math.max(latest, data.seq)
+    if (live && data.seq > seq) end('replaced')
   })
 
   // Closing the tab ends it; otherwise viewers would keep its last frame.

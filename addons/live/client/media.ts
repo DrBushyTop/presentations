@@ -60,13 +60,14 @@ export function createMedia(relay: string) {
   // Changes to one SFU session must not overlap.
   let queue = Promise.resolve()
 
-  // No content type: a simple request needs no CORS preflight. A refusal
-  // (`clean`) left the SFU session as it was; any other failure may have
-  // changed it.
+  // No content type: a simple request needs no CORS preflight. A refused
+  // pull (`clean`) left the SFU session and this connection as they were.
+  // Anything else may have left them disagreeing: an answer or a close is
+  // refused only after this connection changed its own side.
   async function post(step: string, body: unknown) {
     const res = await fetch(`${base}/watch?step=${step}`, { method: 'POST', body: JSON.stringify(body), signal: AbortSignal.timeout(15_000) })
     const result = await res.json().catch(() => ({}))
-    if (!res.ok) throw Object.assign(new Error(result.error || `${res.status}`), { clean: [400, 409, 429, 503].includes(res.status) })
+    if (!res.ok) throw Object.assign(new Error(result.error || `${res.status}`), { clean: step === 'pull' && [400, 409, 429, 503].includes(res.status) })
     return result
   }
 
@@ -131,7 +132,7 @@ export function createMedia(relay: string) {
   function close() {
     pc?.close()
     clearTimeout(closing)
-    pc = token = connecting = undefined
+    pc = token = connecting = closing = undefined
     pulled = {}
     mids.clear()
     for (const name of ['screen', 'camera', 'voice']) drop(name)

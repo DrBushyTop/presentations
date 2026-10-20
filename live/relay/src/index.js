@@ -34,9 +34,19 @@ const MEDIA_ID = /^[\w-]{8,64}$/
 // connections (a venue's Wi-Fi is one IP for everyone), and for one viewer's
 // connection. A whole audience opens connections over a minute or so, then
 // pulls the screen, the camera and maybe the voice within a few seconds.
-const BUDGET = { connect: 2000, pull: 3000, answer: 6000, close: 3000 }
-const MAX_CONNECTS_PER_IP = 400
+// Sized for 2,000 viewers, every one reconnecting once in the same minute
+// and pulling the screen and the camera; a venue may put them all behind one
+// IP. One share is pulled at most 6,000 times a minute, three per viewer.
+// Refused requests do not count, and the maps stop taking new keys at
+// MAX_KEYS.
+const BUDGET = { connect: 6000, pull: 8000, answer: 16000, close: 8000 }
+const MAX_CONNECTS_PER_IP = 2500
 const MAX_STEPS_PER_VIEWER = 40
+const MAX_PULLS_PER_SHARE = 6000
+const MAX_KEYS = 10_000
+// Failed revocations are retried this often, this many times.
+const REVOKE_RETRY = 15_000
+const MAX_REVOKE_TRIES = 40
 // A viewer's token outlives any talk.
 const TOKEN_TTL = 12 * 3600_000
 // Shares ended before their publish arrived, remembered so it cannot revive
@@ -104,7 +114,7 @@ async function watch(request, env, stage) {
     Object.assign(params, { kind: body.kind, tracks: tracks.join(',') })
   }
   const sdp = typeof body.sdp === 'string' && body.sdp.length <= MAX_SDP ? body.sdp : undefined
-  const mids = Array.isArray(body.mids) && body.mids.length >= 1 && body.mids.length <= 8
+  const mids = Array.isArray(body.mids) && body.mids.length >= 1 && body.mids.length <= 32
     && body.mids.every(mid => typeof mid === 'string' && mid.length <= 16) ? body.mids : undefined
   if (step === 'answer' && !sdp) return json({ error: 'Bad answer' }, 400)
   if (step === 'close' && !(sdp && mids)) return json({ error: 'Bad close' }, 400)
@@ -159,7 +169,11 @@ async function sfu(env, path, method, body) {
   })
   const result = await res.json().catch(() => ({}))
   const failed = result.errorCode || result.tracks?.find(t => t.errorCode)
-  if (!res.ok || failed) throw new Error(`SFU ${path.replace(/[\w-]{20,}/g, ':id')}: ${res.status} ${failed?.errorDescription ?? failed?.errorCode ?? ''}`.trim())
+  if (!res.ok || failed) {
+    const message = `SFU ${path.replace(/[\w-]{20,}/g, ':id')}: ${res.status} ${failed?.errorDescription ?? failed?.errorCode ?? ''}`.trim()
+    // Gone means the SFU no longer has it: nothing to retry.
+    throw Object.assign(new Error(message), { gone: res.ok || (res.status >= 400 && res.status < 500) })
+  }
   return result
 }
 
@@ -286,7 +300,7 @@ export class LiveRoom extends DurableObject {
     this.endAllMedia()
     this.snapshot = { live: false, synced: {} }
     const retired = [this.stage.session, ...(this.stage.retired ?? [])].filter(Boolean).slice(0, MAX_RETIRED)
-    this.stage = { ...next, retired }
+    this.stage = { ...next, retired, revoking: this.stage.revoking }
     this.save('stage', 'snapshot')
     // Viewers start over from the new stage: a viewer on another deck reloads.
     this.broadcast(JSON.stringify({ t: 'snapshot', ...this.public() }))
@@ -357,13 +371,16 @@ export class LiveRoom extends DurableObject {
       return json({ ok: true })
     }
     if (action === 'on') {
-      if (stage.media[kind]?.id === id) return json({ ok: true })
+      // `seq` orders the shares put on, so a tab whose `on` raced another
+      // tab's can tell which came last.
+      if (stage.media[kind]?.id === id) return json({ ok: true, seq: stage.media[kind].seq })
       if (!found) return json({ error: 'Not this share' }, 409)
       stage.staged = staged.filter(m => m !== found)
       if (stage.media[kind]) this.revoke(stage.media[kind])
+      found.seq = stage.mediaSeq = (stage.mediaSeq ?? 0) + 1
       stage.media[kind] = found
       this.setMedia(kind, found)
-      return json({ ok: true })
+      return json({ ok: true, seq: found.seq })
     }
     if (action !== 'publish') return json({ error: 'Unknown action' }, 400)
     if (!sfuReady(this.env)) return json({ error: 'Realtime is not set up on the relay' }, 501)
@@ -432,14 +449,39 @@ export class LiveRoom extends DurableObject {
   }
 
   // Closes a share's tracks at the SFU, so viewers who pulled them stop
-  // receiving even if they ignore the relay.
+  // receiving even if they ignore the relay. Stored until the SFU confirms,
+  // and retried from an alarm.
   revoke(media) {
     if (!media?.mids?.length || !sfuReady(this.env)) return
-    const closing = sfu(this.env, `/sessions/${media.sfu}/tracks/close`, 'PUT', {
-      tracks: media.mids.map(mid => ({ mid })),
-      force: true,
-    }).catch(error => console.error('revoke', error.message))
-    this.ctx.waitUntil?.(closing)
+    this.stage.revoking = [...(this.stage.revoking ?? []), { sfu: media.sfu, mids: media.mids, tries: 0 }]
+    this.save('stage')
+    this.ctx.waitUntil?.(this.flushRevokes())
+  }
+
+  async flushRevokes() {
+    if (this.flushing) return this.flushing
+    this.flushing = (async () => {
+      for (const entry of [...(this.stage.revoking ?? [])]) {
+        let done = true
+        try {
+          await sfu(this.env, `/sessions/${entry.sfu}/tracks/close`, 'PUT', { tracks: entry.mids.map(mid => ({ mid })), force: true })
+        }
+        catch (error) {
+          console.error('revoke', error.message)
+          done = error.gone || ++entry.tries >= MAX_REVOKE_TRIES
+        }
+        if (done) this.stage.revoking = this.stage.revoking.filter(e => e !== entry)
+      }
+      this.save('stage')
+      if (this.stage.revoking?.length) await this.ctx.storage.setAlarm(Date.now() + REVOKE_RETRY)
+    })().finally(() => {
+      this.flushing = undefined
+    })
+    return this.flushing
+  }
+
+  async alarm() {
+    await this.flushRevokes()
   }
 
   // For the Worker's `/watch`: admits a viewer's step against the budgets,
@@ -449,15 +491,18 @@ export class LiveRoom extends DurableObject {
     const step = params.get('step')
     if (!this.snapshot.live || this.stage.stopped) return json({ error: 'Not live' }, 409)
     const minute = Math.floor(Date.now() / 60_000)
-    if (this.budget?.minute !== minute) this.budget = { minute, steps: {}, ips: new Map(), viewers: new Map() }
+    if (this.budget?.minute !== minute) this.budget = { minute, steps: {}, ips: new Map(), viewers: new Map(), shares: new Map() }
     const b = this.budget
-    const charge = (map, key, max) => {
-      const count = (map.get(key) ?? 0) + 1
-      map.set(key, count)
-      return count <= max
+    const full = (map, key, max) => (map.get(key) ?? 0) >= max || (map.size >= MAX_KEYS && !map.has(key))
+    const add = (map, key) => map.set(key, (map.get(key) ?? 0) + 1)
+    const ip = params.get('ip')
+    const viewer = params.get('session')
+    if (step === 'connect' && full(b.ips, ip, MAX_CONNECTS_PER_IP)) return json({ error: 'Too many connections from this network' }, 429)
+    // A viewer's own requests count even when refused: it only blocks itself.
+    if (step !== 'connect') {
+      if (full(b.viewers, viewer, MAX_STEPS_PER_VIEWER)) return json({ error: 'Too many requests' }, 429)
+      add(b.viewers, viewer)
     }
-    if (step === 'connect' && !charge(b.ips, params.get('ip'), MAX_CONNECTS_PER_IP)) return json({ error: 'Too many connections from this network' }, 429)
-    if (step !== 'connect' && !charge(b.viewers, params.get('session'), MAX_STEPS_PER_VIEWER)) return json({ error: 'Too many requests' }, 429)
     let media
     if (step === 'pull') {
       const kind = params.get('kind')
@@ -467,8 +512,11 @@ export class LiveRoom extends DurableObject {
       if (!tracks.length) return json({ error: 'No such track' }, 409)
       media = { ...media, tracks }
     }
+    if ((b.steps[step] ?? 0) >= BUDGET[step]) return json({ error: 'Too many viewers joining' }, 503)
+    if (media && full(b.shares, media.id, MAX_PULLS_PER_SHARE)) return json({ error: 'Too many viewers joining' }, 503)
     b.steps[step] = (b.steps[step] ?? 0) + 1
-    if (b.steps[step] > BUDGET[step]) return json({ error: 'Too many viewers joining' }, 503)
+    if (step === 'connect') add(b.ips, ip)
+    if (media) add(b.shares, media.id)
     return json(media ?? { ok: true })
   }
 

@@ -188,12 +188,14 @@ presenter tab ──► dev server ──wss──► Cloudflare Worker + Durabl
 - Only the dev server, with the key, can publish a screen or camera. Viewers
   get a signed token for their own Realtime session, valid for 12 hours, and
   only while a talk is live. Their Realtime requests have budgets per minute:
-  for the whole audience, for one network (400 connections, enough for a
-  venue behind one IP) and for one viewer (40). A flood can still keep new
-  viewers from joining for a minute, but cannot run up the Realtime bill.
+  for the whole audience, for one network (2,500 connections, enough for a
+  2,000-seat venue behind one IP reconnecting once), for one viewer (40) and
+  for one share (6,000 pulls). A flood can still keep new viewers from
+  joining for a minute, but cannot run up the Realtime bill without limit.
 - Ending a share, replacing it, stopping the talk or another talk taking
-  over closes its tracks at Cloudflare, so a viewer who ignores the relay
-  stops receiving too, and the presenter's tab stops capturing.
+  over closes its tracks at Cloudflare, retried until Cloudflare confirms,
+  so a viewer who ignores the relay stops receiving too, and the presenter's
+  tab stops sending.
 - The viewer bundle has no speaker notes and no presenter routes. The deck
   itself is public while deployed, as is this repository.
 

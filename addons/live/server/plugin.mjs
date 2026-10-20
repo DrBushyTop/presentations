@@ -147,7 +147,7 @@ export function livePlugin() {
         async media({ kind, action, ...body }) {
           if (!['screen', 'camera'].includes(kind) || !['publish', 'on', 'off'].includes(action)) return false
           const result = await publisher().media(kind, action, body)
-          if (action === 'on' && result.status === 200) notify({ kind, id: body.id })
+          if (action === 'on' && result.status === 200) notify({ kind, id: body.id, seq: result.body.seq })
           return result
         },
       }
