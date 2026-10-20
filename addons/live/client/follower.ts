@@ -1,4 +1,5 @@
 import type { RouteLocationNormalized } from 'vue-router'
+import type { Place } from './place'
 import { drawingState, lockShortcuts, onDrawingUpdate, onSharedUpdate, useNav } from '@slidev/client'
 import { createStatus } from './status'
 import { SYNC_CHANNEL } from './bridge'
@@ -11,7 +12,7 @@ declare const __SLIDEV_LIVE_BUILD__: string
 
 interface Nav { page: number, clicks: number }
 interface Message {
-  t: 'snapshot' | 'live' | 'nav' | 'cursor' | 'drawings' | 'synced' | 'presenter' | 'media'
+  t: 'snapshot' | 'live' | 'nav' | 'cursor' | 'drawings' | 'synced' | 'presenter' | 'media' | 'bubble'
   ts?: number
   live?: boolean
   on?: boolean
@@ -27,6 +28,7 @@ interface Message {
   build?: string
   since?: number
   media?: Shown
+  bubble?: Partial<Place>
 }
 
 const SITE_POLL = 10_000
@@ -193,10 +195,14 @@ export function startFollower() {
         if (msg.nav) follow(msg.nav)
         status.live(!!msg.live && !!msg.nav)
         media.active(!!msg.live)
+        media.place(msg.bubble)
         media.show(msg.media)
         break
       case 'media':
         media.show(msg.media)
+        break
+      case 'bubble':
+        media.place(msg.bubble)
         break
       case 'live':
         status.live(!!msg.on && !!target)

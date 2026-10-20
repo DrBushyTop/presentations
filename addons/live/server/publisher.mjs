@@ -4,6 +4,7 @@
 
 const CURSOR_INTERVAL = 33
 const DRAWINGS_INTERVAL = 50
+const BUBBLE_INTERVAL = 100
 const HINT_WINDOW = 800
 // The relay answers every ping. Silence this long means a dead connection.
 const PING_INTERVAL = 10_000
@@ -19,7 +20,7 @@ export function createPublisher({ relay, deck, key, session, build = '', host = 
   const base = `${relay.replace(/\/$/, '')}/publish?${new URLSearchParams({ session, deck, build, host })}`
   const created = performance.now()
   let opened = false
-  const last = { nav: undefined, cursor: undefined, drawings: undefined, synced: {} }
+  const last = { nav: undefined, cursor: undefined, drawings: undefined, bubble: undefined, synced: {} }
   let ws
   let retry = 500
   let stopped = false
@@ -40,6 +41,7 @@ export function createPublisher({ relay, deck, key, session, build = '', host = 
       if (last.nav) send({ t: 'nav', nav: JSON.parse(last.nav) })
       if (last.cursor) send({ t: 'cursor', cursor: JSON.parse(last.cursor) })
       if (last.drawings) send({ t: 'drawings', drawings: JSON.parse(last.drawings) })
+      if (last.bubble) send({ t: 'bubble', bubble: JSON.parse(last.bubble) })
       for (const [k, v] of Object.entries(last.synced)) send({ t: 'synced', key: k, value: JSON.parse(v) })
       lastSeen = Date.now()
       clearInterval(keepalive)
@@ -109,10 +111,12 @@ export function createPublisher({ relay, deck, key, session, build = '', host = 
   }
   const sendCursor = throttle(CURSOR_INTERVAL, () => send({ t: 'cursor', cursor: JSON.parse(last.cursor) }))
   const sendDrawings = throttle(DRAWINGS_INTERVAL, () => send({ t: 'drawings', drawings: JSON.parse(last.drawings) }))
+  const sendBubble = throttle(BUBBLE_INTERVAL, () => send({ t: 'bubble', bubble: JSON.parse(last.bubble) }))
 
   let serverNav
   let hintUntil = 0
   const hintSeq = {}
+  const bubbleSeq = {}
   const syncedSeq = new Map()
   let reconcile
   function sendNav(nav) {
@@ -178,6 +182,16 @@ export function createPublisher({ relay, deck, key, session, build = '', host = 
       if (drawings === last.drawings) return
       last.drawings = drawings
       sendDrawings()
+    },
+    // Where the camera bubble sits on the slide, from the tab whose camera is
+    // on. Keeps each tab's order, like `navHint`.
+    bubble(place, tab, seq) {
+      if ((bubbleSeq[tab] ?? -1) >= seq) return
+      bubbleSeq[tab] = seq
+      const bubble = JSON.stringify(place)
+      if (bubble === last.bubble) return
+      last.bubble = bubble
+      sendBubble()
     },
     // Every dev tab forwards the same BroadcastChannel message, and separate
     // requests can overtake each other: keep each source tab's order.

@@ -1,13 +1,17 @@
 // The viewer's side of the screen share and the camera. While the presenter
 // shares a screen, a video covers the slides; while Slidev's camera bubble is
-// on, a bubble shows it here too, with the presenter's voice if a microphone
-// is on. Browsers only play sound after the viewer has touched the page, so
-// until then a button asks for it, and the first touch anywhere turns it on.
-// A viewer who mutes it stays muted in that tab.
+// on, a bubble shows it here too, on the same spot of the slide, with the
+// presenter's voice if a microphone is on. Browsers only play sound after the
+// viewer has touched the page, so until then a button asks for it, and the
+// first touch anywhere turns it on. A viewer who mutes it stays muted in that
+// tab.
 // Each viewer keeps one connection to Cloudflare Realtime for the whole talk,
 // opened when the page opens. Opening one takes a moment, and an audience
 // opening the page at once is spread over a minute or so; a share then only
 // adds its tracks to connections that are already up.
+import type { Place } from './place'
+import { circle, clampPlace } from './place'
+
 const ICE = [{ urls: 'stun:stun.cloudflare.com:3478' }]
 const KINDS = ['screen', 'camera'] as const
 const VOLUME = 'slidev-live-volume'
@@ -25,8 +29,8 @@ export function createMedia(relay: string) {
   const base = relay.replace(/^ws/, 'http').replace(/\/$/, '')
   const screen = document.createElement('video')
   screen.className = 'slidev-live-screen'
-  // The speaker button sits next to the camera bubble, in the corner where
-  // Slidev puts it. It opens a panel with mute and the volume.
+  // The speaker button sits in the corner, next to the camera bubble when the
+  // bubble is there. It opens a panel with mute and the volume.
   const corner = document.createElement('div')
   corner.className = 'slidev-live-corner'
   const bubble = document.createElement('div')
@@ -71,7 +75,7 @@ export function createMedia(relay: string) {
   const audio = new Audio()
   // Remembered between talks. iPhones and iPads ignore a page's volume: their
   // own buttons set it, so they get no slider.
-  audio.volume = volume.valueAsNumber = Math.min(1, Math.max(0, Number(localStorage.getItem(VOLUME) ?? 1) || 0))
+  audio.volume = volume.valueAsNumber = Math.min(1, Math.max(0, Number(localStorage.getItem(VOLUME) ?? 0.5) || 0))
   const adjustable = (() => {
     const probe = new Audio()
     probe.volume = 0.5
@@ -84,8 +88,8 @@ export function createMedia(relay: string) {
     if (!listening) setListening(true)
   })
   screen.hidden = bubble.hidden = sound.hidden = true
-  corner.append(sound, bubble)
-  document.body.append(screen, corner)
+  corner.append(sound)
+  document.body.append(screen, bubble, corner)
 
   let pc: RTCPeerConnection | undefined
   let token: string | undefined
@@ -210,6 +214,31 @@ export function createMedia(relay: string) {
     else (name === 'screen' ? screen : camera).srcObject = null
   }
 
+  // Where the presenter put the bubble, as fractions of the slide. The slide
+  // moves with the window, a frame later: Slidev rescales it in its own
+  // observer, which may run after this one.
+  let placed: Partial<Place> | undefined
+  let slide: HTMLElement | null = null
+  const resized = new ResizeObserver(() => requestAnimationFrame(position))
+  addEventListener('resize', () => position())
+  function position() {
+    const container = document.getElementById('slide-container')
+    if (container && container !== slide) {
+      resized.disconnect()
+      resized.observe(slide = container)
+    }
+    const rect = document.getElementById('slide-content')?.getBoundingClientRect()
+    const box = rect?.width ? rect : { left: 0, top: 0, width: innerWidth, height: innerHeight }
+    const { left, top, size } = circle(box, clampPlace(placed, box.width / box.height))
+    Object.assign(bubble.style, { left: `${left}px`, top: `${top}px`, width: `${size}px`, height: `${size}px` })
+    // The speaker button moves out of the bubble's way, to its left.
+    corner.style.right = ''
+    if (bubble.hidden || sound.hidden) return
+    const button = corner.getBoundingClientRect()
+    const overlaps = left < button.right && left + size > button.left && top < button.bottom && top + size > button.top
+    if (overlaps) corner.style.right = `${innerWidth - left + 12}px`
+  }
+
   function render() {
     screen.hidden = !active || !shows(screen, 'screen')
     bubble.hidden = !active || !shows(camera, 'camera')
@@ -227,6 +256,7 @@ export function createMedia(relay: string) {
     panel.classList.toggle('muted', !listening)
     mute.textContent = listening ? 'Mute' : 'Unmute'
     mute.setAttribute('aria-pressed', String(!listening))
+    position()
   }
 
   // An element shows its share from its first frame, so viewers never see
@@ -380,6 +410,11 @@ export function createMedia(relay: string) {
       render()
       closeLater()
       if (KINDS.some(kind => wanted[kind])) sync()
+    },
+    // Where the presenter put the camera bubble.
+    place(next: Partial<Place> | undefined) {
+      placed = next
+      position()
     },
   }
 }

@@ -143,6 +143,12 @@ export function livePlugin() {
           if (typeof key !== 'string' || key.length > 200 || typeof from !== 'string' || !Number.isInteger(seq)) return false
           publisher().synced(key, value, from, seq)
         },
+        // Where the camera bubble sits: its centre and width as fractions of
+        // the slide (client/place.ts).
+        bubble({ x, y, size, tab, seq }) {
+          if (![x, y, size].every(n => Number.isFinite(n) && n >= 0 && n <= 1) || typeof tab !== 'string' || !Number.isInteger(seq)) return false
+          publisher().bubble({ x, y, size }, tab, seq)
+        },
         // The screen share and the camera. Answers with the relay's reply.
         async media({ kind, action, ...body }) {
           if (!['screen', 'camera'].includes(kind) || !['publish', 'on', 'off'].includes(action)) return false

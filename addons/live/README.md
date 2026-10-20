@@ -43,21 +43,37 @@ command prints the audience URL.
   `-- --deck <deck>` stops it only if that deck is live.
 - `npm run live:url` prints the audience URL.
 
-Viewers follow the presenter view, the phone remote, and play tabs. While
+Viewers follow the presenter view, the phone remote, the phone clicker
+([slidev-addon-clicker](../clicker/README.md)) and play tabs. While
 live, only `localhost` and Tailscale addresses can change the deck: Slidev's
 dev server takes slide changes, drawings and slide edits from anyone who can
-reach it, and those would now reach every viewer. Use the phone remote over
+reach it, and those would now reach every viewer. Use the phone clicker over
 Tailscale, or start with `--trust-lan` to let the local network in too (only
 on a network you trust; not on venue Wi-Fi).
 
 ## Share your screen
 
-The presenter view's nav bar has a share button while `npm run live`
-publishes. It opens the browser's picker; pick a window, a tab or the whole
-screen. Viewers see it over the slides until you press the button again, end
-it from the browser's own bar, or close the presenter tab. The picker leaves
-out the presenter view itself, and the browser's bar can switch what is shared
-without stopping.
+Slidev's Screen Mirror goes to viewers too while `npm run live` publishes. In
+the presenter view, switch the Current pane from Slides to Screen Mirror,
+press Start Screen Mirroring and pick a window, a tab or the whole screen. The
+pane shows it as usual, and viewers see it over the slides until you switch
+the pane back to Slides, end it from the browser's own bar, or close the
+presenter tab. The picker leaves out the presenter view itself, and the
+browser's bar can switch what is shared without stopping. Mirroring the screen
+that shows the slides sends viewers a video of them, so switch back to Slides
+after a demo.
+
+- One tab shares at a time. Starting the mirror in another presenter tab takes
+  over; the first tab's pane keeps showing it to you only.
+- A dropped connection reconnects by itself while the mirror is on.
+- A dot next to Current shows whether viewers get the share: amber while it
+  connects, green when they do, red when they don't. Its tooltip says why.
+- Slidev remembers the pane. After a reload, press Start Screen Mirroring
+  again.
+- In Firefox and Zen, ending it from the browser's bar leaves the last frame
+  in the pane, a Slidev quirk. Viewers go back to the slides all the same.
+- Recordings and slide screenshots are never shared. With
+  `npm run start:<deck>`, the mirror stays local, as in stock Slidev.
 
 Text stays sharp: the capture comes down to at most 1920 x 1080, VP8 at up to
 2.5 Mbps and 30 fps, and it drops frames before resolution. Zoom in on code
@@ -74,18 +90,35 @@ screen by 35 to 50 ms (p50) on a good connection.
 
 ## Camera and voice
 
-Slidev's camera bubble (the camera button in the play view's nav bar) goes to
-viewers too, in the bottom-right corner, mirrored as Slidev shows it. Viewers
-see it over the slides and over a screen share. If a microphone is picked in
-Slidev's recording devices, viewers hear it too. Browsers only play sound once
-the viewer has touched the page, so until then a "Turn on sound" button shows,
-and the first tap anywhere turns it on. After that a speaker button opens a
-panel with mute and a volume slider. The tab remembers a mute, the page the
-volume. Turning the volume up unmutes. In the room, phones playing the voice
-can echo the speaker: ask people there to mute. iPhones and iPads ignore a
-page's volume, so there the speaker button just mutes: their own volume
-buttons set it. Turning the bubble off, or closing the tab, ends both. Moving or
-resizing the bubble only changes it on your screen.
+The presenter view's nav bar has a camera button while `npm run live`
+publishes. It turns on Slidev's camera bubble over the Current pane, and
+viewers see it on the same spot of the slide, mirrored as Slidev shows it,
+on any screen size, phones in portrait too. They see it over the slides and
+over a screen share. If a microphone is picked in Slidev's recording devices,
+viewers hear it too. Pick both in a play view's recording menu.
+
+Drag the bubble's edge to move it, and the dot on the edge to resize it. Both
+show when the pointer comes near. Clicks and drawing go through the rest of
+the bubble to the slide, and while drawing it has no handles. Viewers follow
+as you drag, and the presenter view remembers the place.
+
+- A dot on the camera button shows whether viewers get it: amber while it
+  connects, green when they do, red when they don't. The button's tooltip
+  says why.
+- A play view's own camera button works too. Viewers then see the bubble where
+  it sits on that tab's slide, and follow it when you move it there.
+- One tab sends its camera at a time. Turning it on in another tab takes over.
+- The presenter view's bubble never shows in play tabs, such as the
+  projector's: the room sees you in person.
+
+Browsers only play sound once the viewer has touched the page, so until then
+a "Turn on sound" button shows, and the first tap anywhere turns it on. After
+that a speaker button opens a panel with mute and a volume slider. The volume
+starts at half. The tab remembers a mute, the page the volume. Turning the
+volume up unmutes. In the room, phones playing the voice can echo the
+speaker: ask people there to mute. iPhones and iPads ignore a page's volume,
+so there the speaker button just mutes: their own volume buttons set it.
+Turning the bubble off, or closing the tab, ends both.
 
 ## Update the viewer page
 
@@ -170,7 +203,13 @@ presenter tab ──► dev server ──wss──► Cloudflare Worker + Durabl
   track to it, which takes a fraction of a second even for a crowd, while
   opening connections is rate-limited: from one public IP, about two and a half
   a second. The Worker makes the Realtime calls and signs each viewer's session,
-  so a viewer can only change its own.
+  so a viewer can only change its own. The screen is Slidev's Screen Mirror:
+  `client/share.ts` wraps its component (`ScreenCaptureMirror.vue`) and
+  publishes the capture that a click in its pane starts. After a Slidev
+  upgrade, check that the mirror still reaches viewers. The camera is
+  Slidev's bubble, sent by whichever tab turns it on (`client/camera.ts`).
+  Its place goes as data: the centre and width as fractions of the slide,
+  through the dev server and the relay, which keeps it for late joiners.
 - **Interactive state**. Components that keep state with `useSynced` in
   `no-slop-deck/lib/sync.ts` use the `slidev-live-sync` BroadcastChannel. The
   dev tabs forward that channel to the dev server, which keeps each tab's

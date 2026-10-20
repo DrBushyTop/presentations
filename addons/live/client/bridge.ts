@@ -4,7 +4,7 @@ import { useNav } from '@slidev/client'
 // no-slop-deck/lib/sync.ts).
 export const SYNC_CHANNEL = 'slidev-live-sync'
 
-function post(route: string, body: unknown) {
+export function post(route: string, body: unknown) {
   fetch(`/__slidev-live/${route}`, {
     method: 'POST',
     headers: { 'content-type': 'application/json', 'x-slidev-live': '1' },
@@ -29,7 +29,7 @@ export function startBridge() {
   })
 
   // Slidev's camera bubble goes to viewers too.
-  import('./camera').then(({ startCamera }) => startCamera())
+  import('./camera').then(({ startCamera }) => startCamera(() => router.currentRoute.value.name === 'presenter'))
 
   // Forward interactive slide state to the dev server, which relays it.
   const channel = new BroadcastChannel(SYNC_CHANNEL)

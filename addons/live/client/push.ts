@@ -9,6 +9,11 @@ export type Kind = 'screen' | 'camera'
 // tab replaced it, or the talk is no longer live from this dev server.
 export type Ended = 'lost' | 'replaced' | 'stopped'
 
+// Whether viewers get a share, for the presenter's status dot. A failed one
+// says why.
+export interface Status { state: 'off' | 'connecting' | 'live' | 'failed', reason?: string }
+export const sentence = (text: string) => /[.!?…]$/.test(text) ? text : `${text}.`
+
 export interface Outgoing {
   track: MediaStreamTrack
   trackName: string

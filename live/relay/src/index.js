@@ -580,6 +580,10 @@ export class LiveRoom extends DurableObject {
         if (!validDrawings(msg.drawings)) return
         s.drawings = msg.drawings
         break
+      case 'bubble':
+        if (!validBubble(msg.bubble)) return
+        s.bubble = { x: msg.bubble.x, y: msg.bubble.y, size: msg.bubble.size }
+        break
       case 'synced': {
         if (typeof msg.key !== 'string' || msg.key.length > 200) return
         const synced = { ...s.synced, [msg.key]: msg.value ?? null }
@@ -632,6 +636,12 @@ function validCursor(cursor) {
   return cursor === null || (typeof cursor === 'object'
     && Number.isFinite(cursor.x) && Number.isFinite(cursor.y)
     && (cursor.style === undefined || cursor.style === 'cursor' || cursor.style === 'laser'))
+}
+
+// The camera bubble's centre and width, as fractions of the slide.
+function validBubble(bubble) {
+  return !!bubble && typeof bubble === 'object'
+    && [bubble.x, bubble.y, bubble.size].every(n => Number.isFinite(n) && n >= 0 && n <= 1)
 }
 
 // Page number to SVG markup. Viewers sanitise the markup before drawing it.
