@@ -240,7 +240,7 @@ async function screenSetup() {
   console.log('Create the app in the Cloudflare dashboard: Realtime > Serverless SFU > Create.')
   const appId = process.env.REALTIME_APP_ID || await ask('App ID: ')
   const token = process.env.REALTIME_APP_SECRET || await ask('App token (hidden): ', { hidden: true })
-  if (!/^[a-f0-9]{32}$/.test(appId)) fail('The App ID is 32 hex characters.')
+  if (!/^[\w-]{16,64}$/.test(appId)) fail('That does not look like an App ID.')
   if (token.length < 32) fail('That does not look like the app token.')
   wrangler(['secret', 'put', 'REALTIME_APP_ID'], { input: appId, stdio: ['pipe', 'inherit', 'inherit'] })
   wrangler(['secret', 'put', 'REALTIME_APP_SECRET'], { input: token, stdio: ['pipe', 'inherit', 'inherit'] })
