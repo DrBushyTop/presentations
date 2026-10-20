@@ -78,13 +78,13 @@ Slidev's camera bubble (the camera button in the play view's nav bar) goes to
 viewers too, in the bottom-right corner, mirrored as Slidev shows it. Viewers
 see it over the slides and over a screen share. If a microphone is picked in
 Slidev's recording devices, viewers hear it too. Browsers only play sound once
-the viewer has touched the page, so until then the button reads "Turn on
-sound", and the first tap anywhere turns it on. "Mute presenter" turns it
-off and the tab remembers that. In the room, phones playing the voice can
-echo the speaker: ask people there to mute. While listening, a slider next to
-the button sets the volume, and the page remembers it. iPhones and iPads
-ignore a page's volume, so they get no slider: their own volume buttons set
-it. Turning the bubble off, or closing the tab, ends both. Moving or
+the viewer has touched the page, so until then a "Turn on sound" button shows,
+and the first tap anywhere turns it on. After that a speaker button opens a
+panel with mute and a volume slider. The tab remembers a mute, the page the
+volume. Turning the volume up unmutes. In the room, phones playing the voice
+can echo the speaker: ask people there to mute. iPhones and iPads ignore a
+page's volume, so there the speaker button just mutes: their own volume
+buttons set it. Turning the bubble off, or closing the tab, ends both. Moving or
 resizing the bubble only changes it on your screen.
 
 ## Update the viewer page

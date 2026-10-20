@@ -12,6 +12,11 @@ const ICE = [{ urls: 'stun:stun.cloudflare.com:3478' }]
 const KINDS = ['screen', 'camera'] as const
 const VOLUME = 'slidev-live-volume'
 const MUTED = 'slidev-live-muted'
+const SPEAKER = '<path d="M4 9h4l5-4v14l-5-4H4z"/>'
+const ICONS = {
+  on: `${SPEAKER}<path d="M16.5 8.5a5 5 0 0 1 0 7M19.5 5.5a9 9 0 0 1 0 13"/>`,
+  muted: `${SPEAKER}<path d="M16.5 9l6 6M22.5 9l-6 6"/>`,
+}
 type Kind = typeof KINDS[number]
 export interface Media { id: string, tracks: string[] }
 export type Shown = Partial<Record<Kind, Media>>
@@ -20,8 +25,8 @@ export function createMedia(relay: string) {
   const base = relay.replace(/^ws/, 'http').replace(/\/$/, '')
   const screen = document.createElement('video')
   screen.className = 'slidev-live-screen'
-  // The listen button and its volume sit next to the camera bubble, in the
-  // corner where Slidev puts it.
+  // The speaker button sits next to the camera bubble, in the corner where
+  // Slidev puts it. It opens a panel with mute and the volume.
   const corner = document.createElement('div')
   corner.className = 'slidev-live-corner'
   const bubble = document.createElement('div')
@@ -38,6 +43,18 @@ export function createMedia(relay: string) {
   const listen = document.createElement('button')
   listen.type = 'button'
   listen.className = 'slidev-live-listen'
+  listen.title = 'Presenter\'s sound'
+  const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+  icon.setAttribute('viewBox', '0 0 24 24')
+  icon.setAttribute('aria-hidden', 'true')
+  const label = document.createElement('span')
+  label.textContent = 'Turn on sound'
+  listen.append(icon, label)
+  const panel = document.createElement('div')
+  panel.className = 'slidev-live-panel'
+  const mute = document.createElement('button')
+  mute.type = 'button'
+  mute.className = 'slidev-live-mute'
   const volume = document.createElement('input')
   volume.type = 'range'
   volume.className = 'slidev-live-volume'
@@ -45,7 +62,8 @@ export function createMedia(relay: string) {
   volume.max = '1'
   volume.step = '0.05'
   volume.setAttribute('aria-label', 'Presenter volume')
-  sound.append(listen, volume)
+  panel.append(mute, volume)
+  sound.append(panel, listen)
   // One stream for the voice. A new voice track replaces the one in it. It
   // goes in the element only with a track: an empty stream holds up the
   // page's load.
@@ -62,6 +80,8 @@ export function createMedia(relay: string) {
   volume.addEventListener('input', () => {
     audio.volume = volume.valueAsNumber
     localStorage.setItem(VOLUME, String(audio.volume))
+    // Turning it up while muted means the viewer wants to hear it.
+    if (!listening) setListening(true)
   })
   screen.hidden = bubble.hidden = sound.hidden = true
   corner.append(sound, bubble)
@@ -83,6 +103,8 @@ export function createMedia(relay: string) {
   audio.muted = !listening
   // The browser refused to play sound before the viewer touched the page.
   let blocked = false
+  let open = false
+  let shownIcon = ''
   let active = false
   let retry = 1000
   let timer: ReturnType<typeof setTimeout> | undefined
@@ -192,12 +214,19 @@ export function createMedia(relay: string) {
     screen.hidden = !active || !shows(screen, 'screen')
     bubble.hidden = !active || !shows(camera, 'camera')
     sound.hidden = !active || !wanted.camera?.tracks.includes('voice')
-    const hearing = listening && !blocked
-    volume.hidden = !hearing || !adjustable
-    listen.textContent = !listening ? 'Unmute presenter' : blocked ? 'Turn on sound' : 'Mute presenter'
-    listen.classList.toggle('on', hearing)
-    listen.classList.toggle('blocked', listening && blocked)
-    listen.setAttribute('aria-pressed', String(hearing))
+    const state = !listening ? 'muted' : blocked ? 'blocked' : 'on'
+    if (sound.hidden || state === 'blocked') open = false
+    listen.dataset.state = state
+    const drawn = state === 'muted' ? ICONS.muted : ICONS.on
+    if (shownIcon !== drawn) icon.innerHTML = shownIcon = drawn
+    label.hidden = state !== 'blocked'
+    // Without a volume to set there is nothing to open: the button mutes.
+    listen.setAttribute('aria-label', state === 'blocked' ? 'Turn on sound' : adjustable ? 'Presenter\'s sound' : listening ? 'Mute presenter' : 'Unmute presenter')
+    if (adjustable) listen.setAttribute('aria-expanded', String(open))
+    panel.hidden = !open
+    panel.classList.toggle('muted', !listening)
+    mute.textContent = listening ? 'Mute' : 'Unmute'
+    mute.setAttribute('aria-pressed', String(!listening))
   }
 
   // An element shows its share from its first frame, so viewers never see
@@ -296,28 +325,41 @@ export function createMedia(relay: string) {
     })
   }
 
-  // Any touch, click or key counts as the viewer's go-ahead. The button
-  // handles its own clicks.
-  for (const type of ['pointerdown', 'keydown', 'touchend']) {
-    addEventListener(type, (event) => {
-      if (blocked && listening && audio.srcObject && !sound.contains(event.target as Node)) play()
-    }, { capture: true, passive: true })
-  }
-
-  listen.addEventListener('click', () => {
-    // While blocked, the click is the go-ahead, not a mute.
-    if (listening && blocked) return play()
-    listening = !listening
-    audio.muted = !listening
-    sessionStorage.setItem(MUTED, listening ? '0' : '1')
-    if (listening) {
+  function setListening(on: boolean) {
+    listening = on
+    audio.muted = !on
+    sessionStorage.setItem(MUTED, on ? '0' : '1')
+    if (on) {
       if (audio.srcObject) play()
       sync()
     }
     render()
-  })
+  }
 
-  ;(window as any).__slidevLiveMedia = { screen, camera, audio, listen, volume, sound, pc: () => pc }
+  // Any touch, click or key counts as the viewer's go-ahead. The sound
+  // controls handle their own clicks. A touch elsewhere, or Escape, closes
+  // the panel.
+  for (const type of ['pointerdown', 'keydown', 'touchend']) {
+    addEventListener(type, (event) => {
+      const inside = sound.contains(event.target as Node)
+      if (blocked && listening && audio.srcObject && !inside) play()
+      if (open && ((type === 'pointerdown' && !inside) || (event as KeyboardEvent).key === 'Escape')) {
+        open = false
+        render()
+      }
+    }, { capture: true, passive: true })
+  }
+
+  listen.addEventListener('click', () => {
+    // While blocked, the click is the go-ahead.
+    if (listening && blocked) return play()
+    if (!adjustable) return setListening(!listening)
+    open = !open
+    render()
+  })
+  mute.addEventListener('click', () => setListening(!listening))
+
+  ;(window as any).__slidevLiveMedia = { screen, camera, audio, listen, mute, panel, volume, sound, pc: () => pc }
 
   return {
     // While the talk is live, keep a connection ready.

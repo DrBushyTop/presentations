@@ -50,8 +50,8 @@
   display: none;
 }
 
-/* Slidev's camera bubble, mirrored as Slidev shows it, and the button that
-   lets a viewer hear the presenter. Over the screen share, under the notices. */
+/* Slidev's camera bubble, mirrored as Slidev shows it, and the speaker
+   button for the presenter's voice. Over the screen share, under the notices. */
 .slidev-live-corner {
   position: fixed;
   right: 30px;
@@ -80,42 +80,94 @@
 }
 
 .slidev-live-sound {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  border-radius: 999px;
-  background: rgb(0 0 0 / 0.7);
+  position: relative;
   pointer-events: auto;
+  font: 500 0.85rem/1.4 system-ui, sans-serif;
 }
 
 .slidev-live-listen {
-  padding: 0.4rem 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 2.5rem;
+  height: 2.5rem;
+  padding: 0 0.6rem;
   border: 0;
   border-radius: 999px;
-  background: transparent;
+  background: rgb(0 0 0 / 0.7);
   color: #fff;
-  font: 500 0.85rem/1.4 system-ui, sans-serif;
+  font: inherit;
   cursor: pointer;
 }
 
-.slidev-live-listen.on {
-  background: #2563eb;
+.slidev-live-listen svg {
+  width: 1.3rem;
+  height: 1.3rem;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
-.slidev-live-listen.blocked {
+.slidev-live-listen svg path:first-child {
+  fill: currentColor;
+}
+
+.slidev-live-listen[data-state="blocked"] {
+  padding-right: 0.9rem;
   background: #f59e0b;
   color: #111827;
 }
 
+.slidev-live-listen[aria-expanded="true"] {
+  background: #2563eb;
+}
+
+.slidev-live-panel {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 0.5rem);
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.35rem 0.9rem 0.35rem 0.35rem;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 0.8);
+  white-space: nowrap;
+}
+
+.slidev-live-mute {
+  min-width: 4.8rem;
+  padding: 0.3rem 0.8rem;
+  border: 0;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.15);
+  color: #fff;
+  font: inherit;
+  cursor: pointer;
+}
+
+.slidev-live-panel.muted .slidev-live-mute {
+  background: #2563eb;
+}
+
 .slidev-live-volume {
-  width: 6rem;
-  margin: 0 0.9rem 0 0;
+  width: 7rem;
+  margin: 0;
   accent-color: #60a5fa;
   cursor: pointer;
 }
 
+.slidev-live-panel.muted .slidev-live-volume {
+  opacity: 0.5;
+}
+
 .slidev-live-camera[hidden],
 .slidev-live-sound[hidden],
+.slidev-live-panel[hidden],
+.slidev-live-listen span[hidden],
 .slidev-live-volume[hidden] {
   display: none;
 }
