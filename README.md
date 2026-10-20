@@ -51,6 +51,12 @@ npm run live:stop                       # end whatever talk is live
 See [the live addon guide](addons/live/README.md) for setup, presenting from
 m1 or m4, how it works and the measured latency.
 
+## Phone clicker
+
+Every deck's dev server has a Back and Next clicker for a phone on Tailscale at
+`/clicker`. The terminal prints its address and a QR code. See
+[the clicker addon guide](addons/clicker/README.md).
+
 ## Rehearsal timing
 
 All five primary Slidev decks include a rehearsal timer in presenter view. Click **Rehearsal**

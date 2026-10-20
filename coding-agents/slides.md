@@ -4,6 +4,7 @@ addons:
   - slidev-addon-rehearsal
   - slidev-addon-t3-annotate
   - slidev-addon-live
+  - slidev-addon-clicker
   - slidev-addon-shared-mermaid
 title: How I develop with coding agents
 titleTemplate: '%s · Zure'
