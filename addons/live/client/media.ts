@@ -8,6 +8,7 @@
 // adds its tracks to connections that are already up.
 const ICE = [{ urls: 'stun:stun.cloudflare.com:3478' }]
 const KINDS = ['screen', 'camera'] as const
+const VOLUME = 'slidev-live-volume'
 type Kind = typeof KINDS[number]
 export interface Media { id: string, tracks: string[] }
 export type Shown = Partial<Record<Kind, Media>>
@@ -16,8 +17,8 @@ export function createMedia(relay: string) {
   const base = relay.replace(/^ws/, 'http').replace(/\/$/, '')
   const screen = document.createElement('video')
   screen.className = 'slidev-live-screen'
-  // The listen button sits next to the camera bubble, in the corner where
-  // Slidev puts it.
+  // The listen button and its volume sit next to the camera bubble, in the
+  // corner where Slidev puts it.
   const corner = document.createElement('div')
   corner.className = 'slidev-live-corner'
   const bubble = document.createElement('div')
@@ -29,16 +30,38 @@ export function createMedia(relay: string) {
     video.autoplay = true
     video.playsInline = true
   }
+  const sound = document.createElement('div')
+  sound.className = 'slidev-live-sound'
   const listen = document.createElement('button')
   listen.type = 'button'
   listen.className = 'slidev-live-listen'
+  const volume = document.createElement('input')
+  volume.type = 'range'
+  volume.className = 'slidev-live-volume'
+  volume.min = '0'
+  volume.max = '1'
+  volume.step = '0.05'
+  volume.setAttribute('aria-label', 'Presenter volume')
+  sound.append(listen, volume)
   // One stream for the voice, played from the viewer's click: browsers only
   // let audio play after one. A new voice track replaces the one in it. It
   // goes in the element only then: an empty stream holds up the page's load.
   const voice = new MediaStream()
   const audio = new Audio()
-  screen.hidden = bubble.hidden = listen.hidden = true
-  corner.append(listen, bubble)
+  // Remembered between talks. iPhones and iPads ignore a page's volume: their
+  // own buttons set it, so they get no slider.
+  audio.volume = volume.valueAsNumber = Math.min(1, Math.max(0, Number(localStorage.getItem(VOLUME) ?? 1) || 0))
+  const adjustable = (() => {
+    const probe = new Audio()
+    probe.volume = 0.5
+    return probe.volume === 0.5
+  })()
+  volume.addEventListener('input', () => {
+    audio.volume = volume.valueAsNumber
+    localStorage.setItem(VOLUME, String(audio.volume))
+  })
+  screen.hidden = bubble.hidden = sound.hidden = true
+  corner.append(sound, bubble)
   document.body.append(screen, corner)
 
   let pc: RTCPeerConnection | undefined
@@ -161,7 +184,8 @@ export function createMedia(relay: string) {
   function render() {
     screen.hidden = !active || !shows(screen, 'screen')
     bubble.hidden = !active || !shows(camera, 'camera')
-    listen.hidden = !active || !wanted.camera?.tracks.includes('voice')
+    sound.hidden = !active || !wanted.camera?.tracks.includes('voice')
+    volume.hidden = !listening || !adjustable
     listen.textContent = listening ? 'Mute presenter' : 'Listen to presenter'
     listen.classList.toggle('on', listening)
     listen.setAttribute('aria-pressed', String(listening))
@@ -264,7 +288,7 @@ export function createMedia(relay: string) {
     render()
   })
 
-  ;(window as any).__slidevLiveMedia = { screen, camera, audio, listen, pc: () => pc }
+  ;(window as any).__slidevLiveMedia = { screen, camera, audio, listen, volume, sound, pc: () => pc }
 
   return {
     // While the talk is live, keep a connection ready.

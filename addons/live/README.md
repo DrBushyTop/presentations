@@ -79,7 +79,9 @@ viewers too, in the bottom-right corner, mirrored as Slidev shows it. Viewers
 see it over the slides and over a screen share. If a microphone is picked in
 Slidev's recording devices, viewers get a "Listen to presenter" button. The
 voice is off until they press it, so phones in the room do not echo the
-speaker. Turning the bubble off, or closing the tab, ends both. Moving or
+speaker. While listening, a slider next to the button sets the volume, and
+the page remembers it. iPhones and iPads ignore a page's volume, so they get
+no slider: their own volume buttons set it. Turning the bubble off, or closing the tab, ends both. Moving or
 resizing the bubble only changes it on your screen.
 
 ## Update the viewer page
