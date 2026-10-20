@@ -34,6 +34,7 @@
     "live:setup": "node scripts/live.mjs setup",
     "live:login": "node scripts/live.mjs login",
     "live:relay": "node scripts/live.mjs relay",
+    "live:screen-setup": "node scripts/live.mjs screen-setup",
     "live:latency": "node scripts/live-latency.mjs",
     "export:coding-agents": "cd coding-agents && slidev export slides.md",
     "export:database-modernization": "cd database-modernization && slidev export slides.md",

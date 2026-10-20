@@ -4,6 +4,7 @@
 //   npm run live:setup                    one-time Azure resources and publish key
 //   npm run live:login                    sign in to Cloudflare (once per machine)
 //   npm run live:relay                    deploy the Cloudflare relay
+//   npm run live:screen-setup             store the Cloudflare Realtime app for screen sharing
 //   npm run live:deploy -- --deck <name>  build and upload the viewer page
 //   npm run live -- --deck <name>         present: dev server that publishes; the
 //                                         latest one started always takes the site
@@ -203,6 +204,47 @@ function deployRelay() {
   config.relay = https.replace(/^https:/, 'wss:')
   writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`)
   console.log(`\nRelay: ${config.relay} (saved to live/config.json, commit it).`)
+}
+
+// Hidden input, for the Realtime app token.
+function ask(question, { hidden = false } = {}) {
+  return new Promise((resolvePrompt) => {
+    const { stdin, stdout } = process
+    stdout.write(question)
+    let answer = ''
+    if (hidden && stdin.isTTY) stdin.setRawMode(true)
+    stdin.setEncoding('utf8')
+    stdin.resume()
+    const onData = (chunk) => {
+      for (const char of chunk) {
+        if (char === '\u0003') process.exit(130)
+        if (char === '\r' || char === '\n') {
+          stdin.off('data', onData)
+          if (hidden && stdin.isTTY) stdin.setRawMode(false)
+          stdin.pause()
+          stdout.write('\n')
+          return resolvePrompt(answer.trim())
+        }
+        if (char === '\u007f') answer = answer.slice(0, -1)
+        else answer += char
+        if (!hidden) stdout.write(char)
+      }
+    }
+    stdin.on('data', onData)
+  })
+}
+
+// Screen sharing uses a Cloudflare Realtime SFU app. Its token stays in the
+// Worker as a secret, like the publish key's hash.
+async function screenSetup() {
+  console.log('Create the app in the Cloudflare dashboard: Realtime > Serverless SFU > Create.')
+  const appId = process.env.REALTIME_APP_ID || await ask('App ID: ')
+  const token = process.env.REALTIME_APP_SECRET || await ask('App token (hidden): ', { hidden: true })
+  if (!/^[a-f0-9]{32}$/.test(appId)) fail('The App ID is 32 hex characters.')
+  if (token.length < 32) fail('That does not look like the app token.')
+  wrangler(['secret', 'put', 'REALTIME_APP_ID'], { input: appId, stdio: ['pipe', 'inherit', 'inherit'] })
+  wrangler(['secret', 'put', 'REALTIME_APP_SECRET'], { input: token, stdio: ['pipe', 'inherit', 'inherit'] })
+  console.log('\nScreen sharing is set up. Share from the presenter view while `npm run live` runs.')
 }
 
 function withoutLiveEnv() {
@@ -487,9 +529,10 @@ switch (command) {
   case 'setup': await setup(); break
   case 'login': wrangler(['login'], { stdio: 'inherit' }); break
   case 'relay': deployRelay(); break
+  case 'screen-setup': await screenSetup(); break
   case 'deploy': await deployViewer(deck); break
   case 'start': await start(deck); break
   case 'stop': await stop(); break
   case 'url': console.log(viewerUrl() ?? 'The Static Web App does not exist yet. Run `npm run live:setup`.'); break
-  default: fail(`Unknown command "${command}". Use setup, login, relay, deploy, start, stop or url.`)
+  default: fail(`Unknown command "${command}". Use setup, login, relay, screen-setup, deploy, start, stop or url.`)
 }
