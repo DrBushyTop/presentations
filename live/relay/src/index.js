@@ -28,9 +28,21 @@ const MAX_RETIRED = 100
 const SFU = 'https://rtc.live.cloudflare.com/v1/apps'
 const MEDIA = { screen: ['screen'], camera: ['camera', 'voice'] }
 const MAX_SDP = 64 * 1024
-// Tracks pulled per minute. A whole audience pulls the screen, the camera and
-// maybe the voice within a few seconds.
-const MAX_PULLS = 3000
+const MEDIA_ID = /^[\w-]{8,64}$/
+// Realtime calls are paid for by the app, so anonymous viewers get budgets
+// per minute: for the whole audience by step, for one public IP opening
+// connections (a venue's Wi-Fi is one IP for everyone), and for one viewer's
+// connection. A whole audience opens connections over a minute or so, then
+// pulls the screen, the camera and maybe the voice within a few seconds.
+const BUDGET = { connect: 2000, pull: 3000, answer: 6000, close: 3000 }
+const MAX_CONNECTS_PER_IP = 400
+const MAX_STEPS_PER_VIEWER = 40
+// A viewer's token outlives any talk.
+const TOKEN_TTL = 12 * 3600_000
+// Shares ended before their publish arrived, remembered so it cannot revive
+// them, and published shares waiting for their `on`.
+const MAX_CANCELLED = 20
+const MAX_STAGED = 4
 
 const ROUTES = ['/viewer', '/publish', '/stop', '/status', '/build', '/media', '/watch']
 // Open to anyone. Everything else needs the publish key.
@@ -66,43 +78,63 @@ export default {
   },
 }
 
-// Each viewer keeps one SFU session for the whole talk, set up in three
-// steps: `connect` opens the session with only the SFU's server-events data
+// Each viewer keeps one SFU session for the whole talk, set up in steps:
+// `connect` opens the session with only the SFU's server-events data
 // channel, `pull` adds tracks of the screen or camera on stage to it (the
-// voice only when the viewer asks to listen), and `answer` passes the
-// viewer's SDP answer on after either. Connections open as people open the
-// page, spread out, so starting a share only renegotiates them. The token
-// is signed: a viewer can only ever use the session made for it. The SFU
-// calls run here, not in the stage, which has a limit on outgoing requests
-// a whole audience would pass.
+// voice only when the viewer asks to listen), `close` drops tracks of a share
+// that ended, and `answer` passes the viewer's SDP answer on after a pull.
+// Connections open as people open the page, spread out, so starting a share
+// only renegotiates them. The token is signed: a viewer can only ever use the
+// session made for it. The SFU calls run here, not in the stage, which has a
+// limit on outgoing requests a whole audience would pass; the stage only
+// admits each step first.
 async function watch(request, env, stage) {
   if (!sfuReady(env)) return json({ error: 'Realtime is not set up' }, 501)
   const body = await request.json().catch(() => ({}))
   const step = new URL(request.url).searchParams.get('step')
+  if (!Object.hasOwn(BUDGET, step)) return json({ error: 'Unknown step' }, 400)
+  const session = step === 'connect' ? '' : await verify(env, body.token)
+  if (session === undefined) return json({ error: 'Bad token' }, 400)
+  const params = { step, session, ip: request.headers.get('cf-connecting-ip') ?? '' }
+  if (step === 'pull') {
+    const tracks = body.tracks
+    const valid = Object.hasOwn(MEDIA, body.kind) && Array.isArray(tracks) && tracks.length >= 1
+      && new Set(tracks).size === tracks.length && tracks.every(name => MEDIA[body.kind].includes(name))
+    if (!valid) return json({ error: 'Bad pull' }, 400)
+    Object.assign(params, { kind: body.kind, tracks: tracks.join(',') })
+  }
+  const sdp = typeof body.sdp === 'string' && body.sdp.length <= MAX_SDP ? body.sdp : undefined
+  const mids = Array.isArray(body.mids) && body.mids.length >= 1 && body.mids.length <= 8
+    && body.mids.every(mid => typeof mid === 'string' && mid.length <= 16) ? body.mids : undefined
+  if (step === 'answer' && !sdp) return json({ error: 'Bad answer' }, 400)
+  if (step === 'close' && !(sdp && mids)) return json({ error: 'Bad close' }, 400)
+  // The stage admits the step, and for a pull names its source. Never sent
+  // to viewers.
+  const admitted = await stage.fetch(`https://stage/admit?${new URLSearchParams(params)}`)
+  if (!admitted.ok) return json(await admitted.json(), admitted.status)
   try {
     if (step === 'connect') {
       const { sessionId } = await sfu(env, '/sessions/new', 'POST')
       const opened = await sfu(env, `/sessions/${sessionId}/datachannels/establish`, 'POST', {
         dataChannel: { location: 'remote', dataChannelName: 'server-events' },
       })
-      return json({ token: await sign(env, sessionId), sdp: opened.sessionDescription.sdp })
+      return json({ token: await sign(env, sessionId, Date.now() + TOKEN_TTL), sdp: opened.sessionDescription.sdp })
     }
-    const session = await verify(env, body.token)
-    if (!session) return json({ error: 'Bad token' }, 400)
     if (step === 'answer') {
-      if (typeof body.sdp !== 'string' || body.sdp.length > MAX_SDP) return json({ error: 'Bad answer' }, 400)
-      await sfu(env, `/sessions/${session}/renegotiate`, 'PUT', { sessionDescription: { type: 'answer', sdp: body.sdp } })
+      await sfu(env, `/sessions/${session}/renegotiate`, 'PUT', { sessionDescription: { type: 'answer', sdp } })
       return json({ ok: true })
     }
-    if (step !== 'pull' || !Object.hasOwn(MEDIA, body.kind) || !Array.isArray(body.tracks)) return json({ error: 'Bad pull' }, 400)
-    // What is on stage, with its SFU session. Never sent to viewers.
-    const found = await stage.fetch(`https://stage/media-source?kind=${body.kind}`)
-    if (!found.ok) return json(await found.json(), found.status)
-    const media = await found.json()
-    const names = media.tracks.filter(name => body.tracks.includes(name))
-    if (!names.length) return json({ error: 'No such track' }, 409)
+    if (step === 'close') {
+      const closed = await sfu(env, `/sessions/${session}/tracks/close`, 'PUT', {
+        tracks: mids.map(mid => ({ mid })),
+        sessionDescription: { type: 'offer', sdp },
+        force: false,
+      })
+      return json({ sdp: closed.sessionDescription?.sdp })
+    }
+    const media = await admitted.json()
     const pulled = await sfu(env, `/sessions/${session}/tracks/new`, 'POST', {
-      tracks: names.map(trackName => ({ location: 'remote', sessionId: media.sfu, trackName })),
+      tracks: media.tracks.map(trackName => ({ location: 'remote', sessionId: media.sfu, trackName })),
     })
     return json({
       id: media.id,
@@ -114,7 +146,6 @@ async function watch(request, env, stage) {
     return json({ error: String(error.message ?? error) }, 502)
   }
 }
-
 function sfuReady(env) {
   return !!(env.REALTIME_APP_ID && env.REALTIME_APP_SECRET)
 }
@@ -132,18 +163,18 @@ async function sfu(env, path, method, body) {
   return result
 }
 
-async function sign(env, session) {
+// A viewer's token: its SFU session and when the token expires, signed.
+async function sign(env, session, expires) {
   const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(env.REALTIME_APP_SECRET), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'])
-  const mac = new Uint8Array(await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(`watch:${session}`)))
-  return `${session}.${btoa(String.fromCharCode(...mac)).replace(/=+$/, '')}`
+  const mac = new Uint8Array(await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(`watch:${session}:${expires}`)))
+  return `${session}.${expires}.${btoa(String.fromCharCode(...mac)).replace(/=+$/, '')}`
 }
 
 async function verify(env, token) {
   if (typeof token !== 'string' || token.length > 300) return undefined
-  const dot = token.lastIndexOf('.')
-  const session = token.slice(0, dot)
-  if (dot < 1 || !/^[\w-]+$/.test(session)) return undefined
-  const a = new TextEncoder().encode(await sign(env, session))
+  const [session, expires, mac, extra] = token.split('.')
+  if (extra !== undefined || !mac || !/^[\w-]+$/.test(session) || !/^\d{1,15}$/.test(expires) || Number(expires) < Date.now()) return undefined
+  const a = new TextEncoder().encode(await sign(env, session, expires))
   const b = new TextEncoder().encode(token)
   return a.length === b.length && crypto.subtle.timingSafeEqual(a, b) ? session : undefined
 }
@@ -189,7 +220,7 @@ export class LiveRoom extends DurableObject {
       case '/stop': return this.stop(url.searchParams)
       case '/build': return this.setBuild(url.searchParams)
       case '/media': return this.media(url.searchParams, request)
-      case '/media-source': return this.mediaSource(url.searchParams.get('kind'))
+      case '/admit': return this.admit(url.searchParams)
       case '/status': {
         const { session, host, startedAt, stopped, retired = [] } = this.stage
         return json({ ...this.public(), session, host, startedAt, stopped: !!stopped, connected: this.hasPublisher(), retired, screenReady: sfuReady(this.env) })
@@ -252,6 +283,7 @@ export class LiveRoom extends DurableObject {
     for (const old of this.ctx.getWebSockets('publisher')) this.dismiss(old, 4000, `Taken over by ${next.deck} on ${next.host}`)
     // A new talk starts clean: the old one's slide, drawings and interactive
     // state do not apply, even for the same deck.
+    this.endAllMedia()
     this.snapshot = { live: false, synced: {} }
     const retired = [this.stage.session, ...(this.stage.retired ?? [])].filter(Boolean).slice(0, MAX_RETIRED)
     this.stage = { ...next, retired }
@@ -272,7 +304,7 @@ export class LiveRoom extends DurableObject {
     if (!match) return json({ stopped: false, ...this.public(), host: stage.host })
     stage.stopped = true
     this.snapshot.live = false
-    for (const kind of Object.keys(MEDIA)) this.setMedia(kind, undefined)
+    this.endAllMedia()
     this.save('stage', 'snapshot')
     for (const ws of this.ctx.getWebSockets('publisher')) this.dismiss(ws, 4000, 'Stopped')
     this.broadcast(JSON.stringify({ t: 'live', on: false }))
@@ -293,8 +325,10 @@ export class LiveRoom extends DurableObject {
   // The presenter's screen share or camera, in three steps from its dev
   // server: `publish` pushes the browser's tracks to a new SFU session and
   // answers its offer; `on` shows them to viewers once the browser is
-  // connected; `off` ends them. The SFU session stays here: a viewer who knew
-  // it could renegotiate it.
+  // connected, in place of the previous one; `off` ends them. The browser
+  // names each attempt, so an attempt ended or replaced before its publish
+  // completes cannot come back. The SFU sessions stay here: a viewer who knew
+  // one could renegotiate it.
   async media(params, request) {
     const stage = this.stage
     if (params.get('session') !== stage.session || stage.stopped) return json({ error: 'Not on stage' }, 409)
@@ -302,15 +336,33 @@ export class LiveRoom extends DurableObject {
     if (!Object.hasOwn(MEDIA, kind)) return json({ error: 'Unknown kind' }, 400)
     const action = params.get('action')
     const body = await request.json().catch(() => ({}))
-    const current = stage.media?.[kind]
+    const id = body.id
+    if (typeof id !== 'string' || !MEDIA_ID.test(id)) return json({ error: 'Bad id' }, 400)
+    stage.media ??= {}
+    // Attempts by id: publishing now (in memory only) and published.
+    this.pending ??= new Set()
+    const staged = stage.staged = Array.isArray(stage.staged) ? stage.staged : []
+    const found = staged.find(m => m.id === id && m.kind === kind)
     // A tab ends only its own share, not a newer one from another tab.
     if (action === 'off') {
-      if (current && body.id === current.id) this.setMedia(kind, undefined)
+      // Also stops a publish still in flight, or not arrived yet.
+      stage.cancelled = [id, ...(stage.cancelled ?? [])].slice(0, MAX_CANCELLED)
+      this.pending.delete(id)
+      if (found) {
+        this.revoke(found)
+        stage.staged = staged.filter(m => m !== found)
+      }
+      if (stage.media[kind]?.id === id) this.endMedia(kind)
+      this.save('stage')
       return json({ ok: true })
     }
     if (action === 'on') {
-      if (!current || body.id !== current.id) return json({ error: 'Not this share' }, 409)
-      this.setMedia(kind, current)
+      if (stage.media[kind]?.id === id) return json({ ok: true })
+      if (!found) return json({ error: 'Not this share' }, 409)
+      stage.staged = staged.filter(m => m !== found)
+      if (stage.media[kind]) this.revoke(stage.media[kind])
+      stage.media[kind] = found
+      this.setMedia(kind, found)
       return json({ ok: true })
     }
     if (action !== 'publish') return json({ error: 'Unknown action' }, 400)
@@ -321,28 +373,40 @@ export class LiveRoom extends DurableObject {
       && new Set(names).size === names.length && names.every(name => MEDIA[kind].includes(name))
       && tracks.every(t => typeof t.mid === 'string' && t.mid.length <= 16)
     if (!valid) return json({ error: 'Bad share' }, 400)
+    if (stage.cancelled?.includes(id) || this.pending.has(id) || found) return json({ error: 'Already ended' }, 409)
+    this.pending.add(id)
+    let published
     try {
       const { sessionId } = await sfu(this.env, '/sessions/new', 'POST')
       const pushed = await sfu(this.env, `/sessions/${sessionId}/tracks/new`, 'POST', {
         sessionDescription: { type: 'offer', sdp: body.sdp },
         tracks: tracks.map(({ mid, trackName }) => ({ location: 'local', mid, trackName })),
       })
-      // The session can have changed while the SFU answered.
-      if (params.get('session') !== this.stage.session || this.stage.stopped) return json({ error: 'Not on stage' }, 409)
-      const id = crypto.randomUUID()
-      this.stage.media = { ...this.stage.media, [kind]: { id, sfu: sessionId, tracks: names } }
+      published = { id, kind, sfu: sessionId, tracks: names, mids: tracks.map(t => t.mid) }
+      // The talk, or this tab's mind, can have changed while the SFU answered.
+      const current = this.stage === stage && !stage.stopped && this.pending.has(id)
+      if (!current) {
+        this.revoke(published)
+        return json({ error: 'Ended before it started' }, 409)
+      }
+      // Published shares that never got their `on` are dropped, oldest first.
+      stage.staged = [...stage.staged, published]
+      for (const old of stage.staged.slice(0, -MAX_STAGED)) this.revoke(old)
+      stage.staged = stage.staged.slice(-MAX_STAGED)
       this.save('stage')
       return json({ id, sdp: pushed.sessionDescription.sdp })
     }
     catch (error) {
       return json({ error: String(error.message ?? error) }, 502)
     }
+    finally {
+      this.pending.delete(id)
+    }
   }
 
   // Shows a share or camera to viewers, or ends it (undefined). Viewers see
   // its id and which tracks it has.
   setMedia(kind, media) {
-    if (!media && this.stage.media) delete this.stage.media[kind]
     const visible = media ? { id: media.id, tracks: media.tracks } : undefined
     const shown = this.snapshot.media ?? {}
     if (shown[kind]?.id === visible?.id) return
@@ -352,15 +416,60 @@ export class LiveRoom extends DurableObject {
     this.broadcast(JSON.stringify({ t: 'media', media: this.snapshot.media }))
   }
 
-  // For the Worker's `/watch`: what is on stage of a kind, if anything. Only
-  // the Worker can ask; it is not a public route.
-  mediaSource(kind) {
+  endMedia(kind) {
     const media = this.stage.media?.[kind]
-    if (!media || this.snapshot.media?.[kind]?.id !== media.id || this.stage.stopped) return json({ error: `No ${kind}` }, 409)
+    if (media) this.revoke(media)
+    delete this.stage.media?.[kind]
+    this.setMedia(kind, undefined)
+  }
+
+  // On stop and takeover: nothing of the old talk may keep reaching anyone.
+  endAllMedia() {
+    for (const kind of Object.keys(MEDIA)) this.endMedia(kind)
+    for (const media of Array.isArray(this.stage.staged) ? this.stage.staged : []) this.revoke(media)
+    this.stage.staged = []
+    this.pending?.clear()
+  }
+
+  // Closes a share's tracks at the SFU, so viewers who pulled them stop
+  // receiving even if they ignore the relay.
+  revoke(media) {
+    if (!media?.mids?.length || !sfuReady(this.env)) return
+    const closing = sfu(this.env, `/sessions/${media.sfu}/tracks/close`, 'PUT', {
+      tracks: media.mids.map(mid => ({ mid })),
+      force: true,
+    }).catch(error => console.error('revoke', error.message))
+    this.ctx.waitUntil?.(closing)
+  }
+
+  // For the Worker's `/watch`: admits a viewer's step against the budgets,
+  // and for a pull returns what is on stage. Only the Worker can ask; it is
+  // not a public route.
+  admit(params) {
+    const step = params.get('step')
+    if (!this.snapshot.live || this.stage.stopped) return json({ error: 'Not live' }, 409)
     const minute = Math.floor(Date.now() / 60_000)
-    if (this.pulls?.minute !== minute) this.pulls = { minute, count: 0 }
-    if (++this.pulls.count > MAX_PULLS) return json({ error: 'Too many viewers joining' }, 503)
-    return json(media)
+    if (this.budget?.minute !== minute) this.budget = { minute, steps: {}, ips: new Map(), viewers: new Map() }
+    const b = this.budget
+    const charge = (map, key, max) => {
+      const count = (map.get(key) ?? 0) + 1
+      map.set(key, count)
+      return count <= max
+    }
+    if (step === 'connect' && !charge(b.ips, params.get('ip'), MAX_CONNECTS_PER_IP)) return json({ error: 'Too many connections from this network' }, 429)
+    if (step !== 'connect' && !charge(b.viewers, params.get('session'), MAX_STEPS_PER_VIEWER)) return json({ error: 'Too many requests' }, 429)
+    let media
+    if (step === 'pull') {
+      const kind = params.get('kind')
+      media = this.stage.media?.[kind]
+      if (!media || this.snapshot.media?.[kind]?.id !== media.id) return json({ error: `No ${kind}` }, 409)
+      const tracks = media.tracks.filter(name => params.get('tracks').split(',').includes(name))
+      if (!tracks.length) return json({ error: 'No such track' }, 409)
+      media = { ...media, tracks }
+    }
+    b.steps[step] = (b.steps[step] ?? 0) + 1
+    if (b.steps[step] > BUDGET[step]) return json({ error: 'Too many viewers joining' }, 503)
+    return json(media ?? { ok: true })
   }
 
   // Closes a publisher. The reason also goes as a message first: the closing

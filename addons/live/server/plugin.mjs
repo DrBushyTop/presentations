@@ -128,7 +128,10 @@ export function livePlugin() {
     },
     configureServer(server) {
       if (!publishing) return
-      publisher()
+      // Tabs that share a screen or camera stop once it is replaced or the
+      // talk no longer publishes from here.
+      const notify = data => server.ws.send('slidev-live:media', data)
+      publisher().onStop(() => notify({ stopped: true }))
       // The presenter's browser posts its position (before it renders) and
       // interactive slide state (lib/sync.ts in a deck, via BroadcastChannel).
       const routes = {
@@ -141,9 +144,11 @@ export function livePlugin() {
           publisher().synced(key, value, from, seq)
         },
         // The screen share and the camera. Answers with the relay's reply.
-        media({ kind, action, ...body }) {
+        async media({ kind, action, ...body }) {
           if (!['screen', 'camera'].includes(kind) || !['publish', 'on', 'off'].includes(action)) return false
-          return publisher().media(kind, action, body)
+          const result = await publisher().media(kind, action, body)
+          if (action === 'on' && result.status === 200) notify({ kind, id: body.id })
+          return result
         },
       }
       server.middlewares.use('/__slidev-live/', async (req, res) => {

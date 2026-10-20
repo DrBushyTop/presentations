@@ -33,7 +33,9 @@ export function startCamera() {
       if (stream === current) retry = setTimeout(() => send(stream, Math.min(wait * 2, 30_000)), wait)
     }
     try {
-      await push.start(outgoing, again)
+      // Replaced by another tab's camera, or the talk ended here: wait for
+      // the bubble to be turned on again.
+      await push.start(outgoing, why => why === 'lost' && again())
     }
     catch (error) {
       if (stream !== current) return

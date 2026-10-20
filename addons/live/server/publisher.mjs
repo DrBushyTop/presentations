@@ -25,6 +25,7 @@ export function createPublisher({ relay, deck, key, session, build = '', host = 
   let stopped = false
   let keepalive
   let lastSeen = 0
+  let stopListener
 
   function connect() {
     const claim = !opened && performance.now() - created < CLAIM_WINDOW
@@ -80,6 +81,7 @@ export function createPublisher({ relay, deck, key, session, build = '', host = 
           : (reason || 'Another presentation took over')
       log.warn(`[live] ${why}. This dev server no longer publishes to the live site.`)
       log.warn('[live] Run `npm run live` again to take the live site back.')
+      stopListener?.()
       return
     }
     log.warn(`[live] relay connection lost (${reason || code || 'no code'}), retrying in ${retry} ms`)
@@ -124,6 +126,12 @@ export function createPublisher({ relay, deck, key, session, build = '', host = 
   connect()
 
   return {
+    // Runs once this server stops publishing for good. One listener: the
+    // latest dev server's.
+    onStop(fn) {
+      stopListener = fn
+      if (stopped) fn()
+    },
     // The presenter's screen share or camera, passed on with the key (see
     // the relay's `media`). The browser never sees the key.
     async media(kind, action, body) {

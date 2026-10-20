@@ -52,6 +52,7 @@ export function createMedia(relay: string) {
   // The share each track on screen (or in the voice stream) comes from.
   const showing = new Map<string, string>()
   const kindOf = (name: string): Kind => name === 'screen' ? 'screen' : 'camera'
+  let closing: ReturnType<typeof setTimeout> | undefined
   let listening = false
   let active = false
   let retry = 1000
@@ -59,11 +60,13 @@ export function createMedia(relay: string) {
   // Changes to one SFU session must not overlap.
   let queue = Promise.resolve()
 
-  // No content type: a simple request needs no CORS preflight.
+  // No content type: a simple request needs no CORS preflight. A refusal
+  // (`clean`) left the SFU session as it was; any other failure may have
+  // changed it.
   async function post(step: string, body: unknown) {
-    const res = await fetch(`${base}/watch?step=${step}`, { method: 'POST', body: JSON.stringify(body) })
+    const res = await fetch(`${base}/watch?step=${step}`, { method: 'POST', body: JSON.stringify(body), signal: AbortSignal.timeout(15_000) })
     const result = await res.json().catch(() => ({}))
-    if (!res.ok) throw new Error(result.error || `${res.status}`)
+    if (!res.ok) throw Object.assign(new Error(result.error || `${res.status}`), { clean: [400, 409, 429, 503].includes(res.status) })
     return result
   }
 
@@ -127,6 +130,7 @@ export function createMedia(relay: string) {
 
   function close() {
     pc?.close()
+    clearTimeout(closing)
     pc = token = connecting = undefined
     pulled = {}
     mids.clear()
@@ -186,6 +190,41 @@ export function createMedia(relay: string) {
     return tracks.filter(name => name !== 'voice' || listening)
   }
 
+  // Tracks of shares that ended. Each new share adds tracks to the
+  // connection, so ended ones are closed, a few seconds later and at a random
+  // moment so the audience does not ask at once.
+  function obsolete() {
+    const ids = new Set(KINDS.map(kind => wanted[kind]?.id))
+    return [...mids].filter(([, from]) => !ids.has(from.id)).map(([mid]) => mid)
+  }
+  function closeLater() {
+    if (closing || !obsolete().length) return
+    closing = setTimeout(() => {
+      closing = undefined
+      queue = queue.then(async () => {
+        const peer = pc
+        const ended = obsolete()
+        if (!peer || !token || !ended.length) return
+        for (const transceiver of peer.getTransceivers()) {
+          if (ended.includes(transceiver.mid ?? '')) transceiver.stop()
+        }
+        for (const mid of ended) mids.delete(mid)
+        await peer.setLocalDescription(await peer.createOffer())
+        const closed = await post('close', { token, mids: ended, sdp: peer.localDescription!.sdp })
+        if (pc === peer) await peer.setRemoteDescription({ type: 'answer', sdp: closed.sdp })
+      }).catch(failed)
+    }, 2000 + Math.random() * 8000)
+  }
+
+  // A refusal leaves the connection usable: try again later. Anything else
+  // may have left the SFU and this connection disagreeing, so start over.
+  function failed(error: any) {
+    if (!pc || !connecting) return
+    console.warn('[live] media', error)
+    if (error?.clean) later()
+    else reset()
+  }
+
   // Brings the connection in line with what should be shown.
   function sync() {
     queue = queue.then(async () => {
@@ -208,11 +247,8 @@ export function createMedia(relay: string) {
       }
       // A share that started meanwhile was announced, and its turn is queued.
       retry = 1000
-    }).catch((error) => {
-      if (!pc || !connecting) return
-      console.warn('[live] media', error)
-      later()
-    })
+      closeLater()
+    }).catch(failed)
   }
 
   listen.addEventListener('click', () => {
@@ -227,7 +263,7 @@ export function createMedia(relay: string) {
     render()
   })
 
-  ;(window as any).__slidevLiveMedia = { screen, camera, audio, listen }
+  ;(window as any).__slidevLiveMedia = { screen, camera, audio, listen, pc: () => pc }
 
   return {
     // While the talk is live, keep a connection ready.
@@ -246,6 +282,7 @@ export function createMedia(relay: string) {
         if (showing.get(name) !== wanted[kindOf(name)]?.id) drop(name)
       }
       render()
+      closeLater()
       if (KINDS.some(kind => wanted[kind])) sync()
     },
   }

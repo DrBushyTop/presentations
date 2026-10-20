@@ -5,6 +5,10 @@ const ICE = [{ urls: 'stun:stun.cloudflare.com:3478' }]
 
 export type Kind = 'screen' | 'camera'
 
+// Why a share ended without its tab asking: its connection failed, another
+// tab replaced it, or the talk is no longer live from this dev server.
+export type Ended = 'lost' | 'replaced' | 'stopped'
+
 export interface Outgoing {
   track: MediaStreamTrack
   trackName: string
@@ -14,7 +18,10 @@ export interface Outgoing {
 
 export function createPush(kind: Kind) {
   let pc: RTCPeerConnection | undefined
+  // Names the current attempt, from before it publishes until it stops.
   let id: string | undefined
+  let live = false
+  let ended: ((why: Ended) => void) | undefined
 
   async function call(body: Record<string, unknown>, keepalive = false) {
     const res = await fetch('/__slidev-live/media', {
@@ -40,45 +47,68 @@ export function createPush(kind: Kind) {
     })
   }
 
-  // Resolves false when `stop` came first. `lost` runs if the connection
-  // fails later.
-  async function start(outgoing: Outgoing[], lost: () => void) {
+  // Resolves false, and never throws, once `stop` or a newer start came
+  // first. `onEnded` runs if the share ends later without `stop`.
+  async function start(outgoing: Outgoing[], onEnded: (why: Ended) => void) {
     stop()
-    const peer = new RTCPeerConnection({ iceServers: ICE, bundlePolicy: 'max-bundle' })
-    pc = peer
-    const sent = outgoing.map(({ track, trackName, encodings, codec }) => {
-      const transceiver = peer.addTransceiver(track, { direction: 'sendonly', sendEncodings: encodings })
-      const codecs = RTCRtpSender.getCapabilities(track.kind)?.codecs ?? []
-      const preferred = codecs.filter(c => c.mimeType.toLowerCase() === codec)
-      if (preferred.length) transceiver.setCodecPreferences([...preferred, ...codecs.filter(c => !preferred.includes(c))])
-      return { transceiver, trackName }
-    })
-    await peer.setLocalDescription(await peer.createOffer())
-    const answer = await call({
-      action: 'publish',
-      sdp: peer.localDescription!.sdp,
-      tracks: sent.map(({ transceiver, trackName }) => ({ mid: transceiver.mid, trackName })),
-    })
-    if (pc !== peer) return false
-    id = answer.id
-    await peer.setRemoteDescription({ type: 'answer', sdp: answer.sdp })
-    await connected(peer)
-    if (pc !== peer) return false
-    await call({ action: 'on', id })
-    if (pc !== peer) return false
-    peer.addEventListener('connectionstatechange', () => {
-      if (pc !== peer || peer.connectionState !== 'failed') return
-      stop()
-      lost()
-    })
-    return true
+    const mine = id = [...crypto.getRandomValues(new Uint8Array(16))].map(b => b.toString(16).padStart(2, '0')).join('')
+    const current = () => id === mine
+    const peer = pc = new RTCPeerConnection({ iceServers: ICE, bundlePolicy: 'max-bundle' })
+    ended = onEnded
+    try {
+      const sent = outgoing.map(({ track, trackName, encodings, codec }) => {
+        const transceiver = peer.addTransceiver(track, { direction: 'sendonly', sendEncodings: encodings })
+        const codecs = RTCRtpSender.getCapabilities(track.kind)?.codecs ?? []
+        const preferred = codecs.filter(c => c.mimeType.toLowerCase() === codec)
+        if (preferred.length) transceiver.setCodecPreferences([...preferred, ...codecs.filter(c => !preferred.includes(c))])
+        return { transceiver, trackName }
+      })
+      await peer.setLocalDescription(await peer.createOffer())
+      const answer = await call({
+        action: 'publish',
+        id: mine,
+        sdp: peer.localDescription!.sdp,
+        tracks: sent.map(({ transceiver, trackName }) => ({ mid: transceiver.mid, trackName })),
+      })
+      if (!current()) return false
+      await peer.setRemoteDescription({ type: 'answer', sdp: answer.sdp })
+      await connected(peer)
+      if (!current()) return false
+      await call({ action: 'on', id: mine })
+      if (!current()) return false
+      live = true
+      peer.addEventListener('connectionstatechange', () => {
+        if (current() && peer.connectionState === 'failed') end('lost')
+      })
+      return true
+    }
+    catch (error) {
+      if (!current()) return false
+      throw error
+    }
   }
 
   function stop(keepalive = false) {
     pc?.close()
     if (id) call({ action: 'off', id }, keepalive).catch(() => {})
-    pc = id = undefined
+    pc = id = ended = undefined
+    live = false
   }
+
+  function end(why: Ended) {
+    const notify = ended
+    stop()
+    notify?.(why)
+  }
+
+  // The dev server tells every tab which share is live, and when the talk
+  // stopped publishing (taken over or stopped): the relay has cut this tab's
+  // tracks off by then, so stop capturing too.
+  import.meta.hot?.on('slidev-live:media', (data: { kind?: Kind, id?: string, stopped?: boolean }) => {
+    if (!id) return
+    if (data.stopped) end('stopped')
+    else if (live && data.kind === kind && data.id && data.id !== id) end('replaced')
+  })
 
   // Closing the tab ends it; otherwise viewers would keep its last frame.
   addEventListener('pagehide', () => {
