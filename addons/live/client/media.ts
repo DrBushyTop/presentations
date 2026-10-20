@@ -1,7 +1,9 @@
 // The viewer's side of the screen share and the camera. While the presenter
 // shares a screen, a video covers the slides; while Slidev's camera bubble is
-// on, a bubble shows it here too. The presenter's voice plays only after the
-// viewer chooses to listen: in the room it would echo.
+// on, a bubble shows it here too, with the presenter's voice if a microphone
+// is on. Browsers only play sound after the viewer has touched the page, so
+// until then a button asks for it, and the first touch anywhere turns it on.
+// A viewer who mutes it stays muted in that tab.
 // Each viewer keeps one connection to Cloudflare Realtime for the whole talk,
 // opened when the page opens. Opening one takes a moment, and an audience
 // opening the page at once is spread over a minute or so; a share then only
@@ -9,6 +11,7 @@
 const ICE = [{ urls: 'stun:stun.cloudflare.com:3478' }]
 const KINDS = ['screen', 'camera'] as const
 const VOLUME = 'slidev-live-volume'
+const MUTED = 'slidev-live-muted'
 type Kind = typeof KINDS[number]
 export interface Media { id: string, tracks: string[] }
 export type Shown = Partial<Record<Kind, Media>>
@@ -43,9 +46,9 @@ export function createMedia(relay: string) {
   volume.step = '0.05'
   volume.setAttribute('aria-label', 'Presenter volume')
   sound.append(listen, volume)
-  // One stream for the voice, played from the viewer's click: browsers only
-  // let audio play after one. A new voice track replaces the one in it. It
-  // goes in the element only then: an empty stream holds up the page's load.
+  // One stream for the voice. A new voice track replaces the one in it. It
+  // goes in the element only with a track: an empty stream holds up the
+  // page's load.
   const voice = new MediaStream()
   const audio = new Audio()
   // Remembered between talks. iPhones and iPads ignore a page's volume: their
@@ -76,7 +79,10 @@ export function createMedia(relay: string) {
   const showing = new Map<string, string>()
   const kindOf = (name: string): Kind => name === 'screen' ? 'screen' : 'camera'
   let closing: ReturnType<typeof setTimeout> | undefined
-  let listening = false
+  let listening = sessionStorage.getItem(MUTED) !== '1'
+  audio.muted = !listening
+  // The browser refused to play sound before the viewer touched the page.
+  let blocked = false
   let active = false
   let retry = 1000
   let timer: ReturnType<typeof setTimeout> | undefined
@@ -127,7 +133,8 @@ export function createMedia(relay: string) {
     }
     for (const old of voice.getTracks()) voice.removeTrack(old)
     voice.addTrack(event.track)
-    if (listening) audio.play().catch(() => {})
+    audio.srcObject ??= voice
+    if (listening) play()
   }
 
   function connect() {
@@ -185,10 +192,12 @@ export function createMedia(relay: string) {
     screen.hidden = !active || !shows(screen, 'screen')
     bubble.hidden = !active || !shows(camera, 'camera')
     sound.hidden = !active || !wanted.camera?.tracks.includes('voice')
-    volume.hidden = !listening || !adjustable
-    listen.textContent = listening ? 'Mute presenter' : 'Listen to presenter'
-    listen.classList.toggle('on', listening)
-    listen.setAttribute('aria-pressed', String(listening))
+    const hearing = listening && !blocked
+    volume.hidden = !hearing || !adjustable
+    listen.textContent = !listening ? 'Unmute presenter' : blocked ? 'Turn on sound' : 'Mute presenter'
+    listen.classList.toggle('on', hearing)
+    listen.classList.toggle('blocked', listening && blocked)
+    listen.setAttribute('aria-pressed', String(hearing))
   }
 
   // An element shows its share from its first frame, so viewers never see
@@ -276,13 +285,33 @@ export function createMedia(relay: string) {
     }).catch(failed)
   }
 
+  function play() {
+    audio.play().then(() => {
+      blocked = false
+      render()
+    }, (error) => {
+      // Not allowed yet: wait for the viewer to touch the page.
+      if (error?.name === 'NotAllowedError') blocked = true
+      render()
+    })
+  }
+
+  // Any touch, click or key counts as the viewer's go-ahead. The button
+  // handles its own clicks.
+  for (const type of ['pointerdown', 'keydown', 'touchend']) {
+    addEventListener(type, (event) => {
+      if (blocked && listening && audio.srcObject && !sound.contains(event.target as Node)) play()
+    }, { capture: true, passive: true })
+  }
+
   listen.addEventListener('click', () => {
+    // While blocked, the click is the go-ahead, not a mute.
+    if (listening && blocked) return play()
     listening = !listening
     audio.muted = !listening
-    // Within the click, so the browser lets it play.
+    sessionStorage.setItem(MUTED, listening ? '0' : '1')
     if (listening) {
-      audio.srcObject ??= voice
-      audio.play().catch(() => {})
+      if (audio.srcObject) play()
       sync()
     }
     render()

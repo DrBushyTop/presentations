@@ -3,8 +3,8 @@ import { recorder } from '@slidev/client/logic/recording.ts'
 import { createPush } from './push'
 
 // Slidev's camera bubble, sent to viewers while it is on in this tab: the
-// camera, and the microphone if one is picked. Viewers hear it only if they
-// choose to listen.
+// camera, and the microphone if one is picked. Viewers hear it unless they
+// mute it.
 const CAMERA_BITRATE = 600_000
 
 export function startCamera() {

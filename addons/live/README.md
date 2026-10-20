@@ -77,11 +77,14 @@ screen by 35 to 50 ms (p50) on a good connection.
 Slidev's camera bubble (the camera button in the play view's nav bar) goes to
 viewers too, in the bottom-right corner, mirrored as Slidev shows it. Viewers
 see it over the slides and over a screen share. If a microphone is picked in
-Slidev's recording devices, viewers get a "Listen to presenter" button. The
-voice is off until they press it, so phones in the room do not echo the
-speaker. While listening, a slider next to the button sets the volume, and
-the page remembers it. iPhones and iPads ignore a page's volume, so they get
-no slider: their own volume buttons set it. Turning the bubble off, or closing the tab, ends both. Moving or
+Slidev's recording devices, viewers hear it too. Browsers only play sound once
+the viewer has touched the page, so until then the button reads "Turn on
+sound", and the first tap anywhere turns it on. "Mute presenter" turns it
+off and the tab remembers that. In the room, phones playing the voice can
+echo the speaker: ask people there to mute. While listening, a slider next to
+the button sets the volume, and the page remembers it. iPhones and iPads
+ignore a page's volume, so they get no slider: their own volume buttons set
+it. Turning the bubble off, or closing the tab, ends both. Moving or
 resizing the bubble only changes it on your screen.
 
 ## Update the viewer page
@@ -228,7 +231,7 @@ viewer mounting the next slide. The audience's own connection adds to this.
 - Cloudflare Realtime counts the data sent to viewers, with 1,000 GB a month
   free. A share sends each viewer up to 2.5 Mbps, far less for a still screen:
   200 viewers watching an hour of constant motion take about 225 GB. The camera
-  adds up to 0.6 Mbps per viewer, the voice about 0.04 Mbps per listener.
+  adds up to 0.6 Mbps per viewer, the voice about 0.04 Mbps per viewer who has not muted it.
 - Realtime connects directly or over STUN. A network that blocks WebRTC
   (some corporate Wi-Fi) gets the slides but not the share or camera; a TURN
   server would fix that.

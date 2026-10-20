@@ -102,6 +102,11 @@
   background: #2563eb;
 }
 
+.slidev-live-listen.blocked {
+  background: #f59e0b;
+  color: #111827;
+}
+
 .slidev-live-volume {
   width: 6rem;
   margin: 0 0.9rem 0 0;
