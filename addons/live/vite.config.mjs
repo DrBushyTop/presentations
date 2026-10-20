@@ -1,8 +1,8 @@
-import { livePlugin, onServerRefChanged } from './server/plugin.mjs'
+import { liveGuardPlugin, livePlugin, onServerRefChanged } from './server/plugin.mjs'
 
 export default {
   slidev: {
     serverRef: { onChanged: onServerRefChanged },
   },
-  plugins: [livePlugin()],
+  plugins: [liveGuardPlugin(), livePlugin()],
 }

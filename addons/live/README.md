@@ -13,30 +13,40 @@ Every deck lists the addon in its headmatter. It does nothing unless
 
 ```bash
 npm run live -- --deck no-slop            # or just `npm run live` and pick a deck
-npm run live -- --deck no-slop --deploy   # rebuild and upload the viewer first
 ```
 
 This starts the deck's normal dev server (`start:<deck>`), so the presenter
-view, the phone remote (`--remote`), notes, the annotate addon and everything
-else work as usual. The command prints the audience URL.
+view, notes, the annotate addon and everything else work as usual. The
+command prints the audience URL.
 
-- **Ctrl+C** ends the talk: viewers see "This talk isn't live right now".
+- **The latest one started wins.** The site shows one talk at a time. Starting
+  a deck, on either machine, takes the site over from whatever was live. A dev
+  server left running somewhere stops publishing and says so in its terminal.
+  It cannot take the site back, even when its network returns. Run
+  `npm run live` there again if you do want it back.
+- **The site follows.** If the site holds another deck, or an older version
+  of this one, `npm run live` updates it in the background while you present
+  (log in `dist/live/<deck>/deploy.log`). Viewers see "The next talk is
+  starting" and reload by themselves when it is up, in a minute or two.
+  `--deploy` forces an update; `--no-deploy` skips it.
+- **Ctrl+C** ends the talk: viewers see "This talk isn't live right now". On a
+  dev server that was already replaced, it leaves the new talk alone.
 - **A crash** keeps viewers on the last slide with a "Presenter reconnecting…"
   notice. Run `npm run live` again to continue.
-- **m1 or m4**: run it on whichever machine has the dev server. Starting it on
-  the other machine takes over, and the first one stops publishing.
-- `npm run live:stop -- --deck <deck>` ends a talk by hand, for example after
-  a crash. It also stops a dev server that is still publishing.
+- `npm run live:stop` ends whatever talk is live, for example after a crash.
+  `-- --deck <deck>` stops it only if that deck is live.
 - `npm run live:url` prints the audience URL.
 
-Viewers follow the presenter view, the phone remote, and play tabs on
-`localhost`. Everything else that moves the dev server's shared state goes
-through the same path.
+Viewers follow the presenter view, the phone remote, and play tabs. While
+live, only `localhost` and Tailscale addresses can change the deck: Slidev's
+dev server takes slide changes, drawings and slide edits from anyone who can
+reach it, and those would now reach every viewer. Use the phone remote over
+Tailscale, or start with `--trust-lan` to let the local network in too (only
+on a network you trust; not on venue Wi-Fi).
 
 ## Update the viewer page
 
-The viewer is a static build of the deck. Rebuild it whenever the slides
-change:
+`npm run live` keeps the site up to date. To update it without presenting:
 
 ```bash
 npm run live:deploy -- --deck no-slop
@@ -44,8 +54,8 @@ npm run live:deploy -- --deck no-slop
 
 The site holds one deck at a time, at the root of the domain. Deploying a deck
 replaces the previous one. Old `/<deck>/` links open the same page.
-`npm run live` warns when the site shows a different deck than the one you
-start; add `--deploy` to fix it.
+`live.json` on the site names the deck and a hash of its sources, so any
+machine can tell whether the site is current.
 
 The build uses `--without-notes`, memory routing (no slide number in the URL,
 no back button), and turns off presenter mode, PDF download, the exporter,
@@ -77,7 +87,7 @@ default host, added with `az staticwebapp hostname set`.
 
 ```text
 presenter tab ──► dev server ──wss──► Cloudflare Worker + Durable Object ──wss──► viewers
- (m1 or m4)       publisher            (one room per deck)                          (Azure Static Web App)
+ (m1 or m4)       publisher            (one stage for all decks)                    (Azure Static Web App)
 ```
 
 - **Publisher** (`server/`). Runs inside the dev server. It forwards Slidev's
@@ -87,27 +97,37 @@ presenter tab ──► dev server ──wss──► Cloudflare Worker + Durabl
   report waits for a 10 ms debounce and the presenter view's render. The
   publisher sends that faster report first and reconciles with Slidev's state
   800 ms later.
-- **Relay** (`live/relay`). A Worker with one Durable Object per deck. It keeps
-  the latest state for late joiners, and survives hibernation by storing it.
-  It accepts one publisher, authenticated with the publish key. Viewers are
-  read-only: any message from them closes their socket.
+- **Relay** (`live/relay`). A Worker with one Durable Object, the stage. Each
+  `npm run live` is a session. A session's first connection takes the stage
+  and starts it clean; its reconnects only resume it, and only its newest
+  connection may write. Ordering is by arrival at the relay, so the machines'
+  clocks do not matter. The stage keeps the latest state for late joiners and
+  survives hibernation by storing it. Viewers are read-only: any message from
+  them closes their socket.
 - **Viewer** (`client/follower.ts`). Feeds the relay's messages into Slidev's
   own shared state, so slides, clicks and transitions behave like a local
   follower window. A router guard rejects every navigation the presenter did
-  not make (swipes, links, keys), and shortcuts are locked.
+  not make (swipes, links, keys), and shortcuts are locked. When the stage
+  shows another deck, a newer build or a new talk, the page reloads once the
+  site has it.
 - **Interactive state**. Components that keep state with `useSynced` in
   `no-slop-deck/lib/sync.ts` use the `slidev-live-sync` BroadcastChannel. The
-  dev tabs forward that channel to the dev server. The viewer replays it, and
-  answers late-mounting components that ask for the current value.
+  dev tabs forward that channel to the dev server, which keeps each tab's
+  changes in order. The viewer replays it, and answers late-mounting
+  components that ask for the current value.
 
 ## Security
 
 - The publish key lives in Azure Key Vault and is read with `az` at start.
   The Worker only stores its SHA-256 (`wrangler secret`). Nothing secret is in
-  the repo.
-- The dev server stays on the LAN and Tailscale, as before. The live routes
-  (`/__slidev-live/*`) accept only loopback and Tailscale addresses, with a
-  custom header that blocks cross-site posts.
+  the repo or the viewer bundle.
+- While live, the dev server only accepts changes (any request other than
+  GET, and MCP) from loopback and Tailscale, unless `--trust-lan`. The live
+  routes (`/__slidev-live/*`) also need a custom header that blocks cross-site
+  posts.
+- Viewers keep only plain SVG shapes from drawings, so markup cannot run
+  script on their devices. The relay checks the shape and size of everything
+  it stores, and caps viewers at 2,000.
 - The viewer bundle has no speaker notes and no presenter routes. The deck
   itself is public while deployed, as is this repository.
 
@@ -123,8 +143,10 @@ site, 60 to 80 steps:
 | Slidev state only, 3 viewers | 52 ms | 111 ms | 150 ms |
 | With the router report, 3 viewers | 32 ms | 79 ms | 109 ms |
 | With the router report, 1 viewer | 32 ms | 53 ms | 78 ms |
+| One stage, sanitised drawings, 2 viewers | 32 ms | 81 ms | 89 ms |
 
-The time is keypress to the viewer's first frame on the new step. About 22 ms
+The time is keypress to the viewer's first frame with the new step in the
+page. About 22 ms
 of it is the network round trip through Cloudflare, and the tail is the
 viewer mounting the next slide. The audience's own connection adds to this.
 
@@ -133,4 +155,8 @@ viewer mounting the next slide. The audience's own connection adds to this.
 - Azure Static Web Apps Free and Cloudflare Workers Free with Durable Objects.
   A 200-viewer talk is well inside the free allowance. Viewer pings are
   answered without waking the object.
-- One deck on the site at a time, and one publisher per deck.
+- One talk on the site at a time.
+- The relay is a public `workers.dev` endpoint. Someone flooding it with
+  requests could use up the free plan's 100,000 requests a day, and the relay
+  would refuse new viewers until midnight UTC. A Cloudflare rate-limiting rule
+  needs the relay on a Cloudflare-managed domain instead of `workers.dev`.

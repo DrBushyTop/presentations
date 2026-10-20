@@ -1,3 +1,4 @@
+import { hostname } from 'node:os'
 import { createPublisher } from './publisher.mjs'
 
 // Two modes, both off unless `npm run live` sets the environment:
@@ -5,7 +6,7 @@ import { createPublisher } from './publisher.mjs'
 // - build with SLIDEV_LIVE_VIEWER=1: a read-only follower bundle.
 const env = process.env
 const viewer = env.SLIDEV_LIVE_VIEWER === '1'
-const publishing = !viewer && !!(env.SLIDEV_LIVE_RELAY && env.SLIDEV_LIVE_DECK && env.SLIDEV_LIVE_KEY)
+const publishing = !viewer && !!(env.SLIDEV_LIVE_RELAY && env.SLIDEV_LIVE_DECK && env.SLIDEV_LIVE_KEY && env.SLIDEV_LIVE_SESSION)
 
 // Slidev restarts the dev server (and reloads this file) on headmatter edits.
 // Keep a single relay connection for the whole process.
@@ -15,6 +16,9 @@ function publisher() {
     relay: env.SLIDEV_LIVE_RELAY,
     deck: env.SLIDEV_LIVE_DECK,
     key: env.SLIDEV_LIVE_KEY,
+    session: env.SLIDEV_LIVE_SESSION,
+    build: env.SLIDEV_LIVE_BUILD,
+    host: hostname().split('.')[0],
   })
   return globalThis.__slidevLivePublisher
 }
@@ -25,12 +29,38 @@ export function onServerRefChanged(key, data) {
 }
 
 // Loopback or Tailscale, like the annotate addon. The decks bind 0.0.0.0.
+// `npm run live -- --trust-lan` adds private LAN addresses.
+const trustLan = env.SLIDEV_LIVE_TRUST_LAN === '1'
 function trustedAddress(raw = '') {
-  const ip = raw.replace(/^::ffff:/, '')
+  const ip = raw.replace(/^::ffff:/, '').toLowerCase()
   if (ip === '127.0.0.1' || ip === '::1') return true
   const [a, b] = ip.split('.').map(Number)
   if (a === 100 && b >= 64 && b <= 127) return true
-  return ip.toLowerCase().startsWith('fd7a:115c:a1e0:')
+  if (ip.startsWith('fd7a:115c:a1e0:')) return true
+  if (!trustLan) return false
+  return a === 10 || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168) || (a === 169 && b === 254)
+    || /^f[cd]/.test(ip) || ip.startsWith('fe80:')
+}
+
+// Slidev's dev server accepts state changes from anyone who can reach it:
+// slide position and drawings (/@server-ref/), slide edits (/__slidev/) and
+// MCP. While live, those reach every viewer, so only trusted addresses may
+// change anything. Reading (the play view) stays open.
+export function liveGuardPlugin() {
+  return {
+    name: 'slidev-addon-live:guard',
+    enforce: 'pre',
+    configureServer(server) {
+      if (!publishing) return
+      // Registered before Slidev's own middlewares (enforce: 'pre').
+      server.middlewares.use((req, res, next) => {
+        const write = !['GET', 'HEAD', 'OPTIONS'].includes(req.method ?? 'GET') || req.url?.startsWith('/__mcp')
+        if (!write || trustedAddress(req.socket.remoteAddress)) return next()
+        res.statusCode = 403
+        res.end('Read-only while live. Use localhost or Tailscale, or start with --trust-lan.')
+      })
+    },
+  }
 }
 
 async function readJson(req) {
@@ -52,6 +82,7 @@ export function livePlugin() {
         __SLIDEV_LIVE_BRIDGE__: JSON.stringify(publishing),
         __SLIDEV_LIVE_RELAY__: JSON.stringify(viewer ? env.SLIDEV_LIVE_RELAY ?? '' : ''),
         __SLIDEV_LIVE_DECK__: JSON.stringify(viewer ? env.SLIDEV_LIVE_DECK ?? '' : ''),
+        __SLIDEV_LIVE_BUILD__: JSON.stringify(viewer ? env.SLIDEV_LIVE_BUILD ?? '' : ''),
       }
       // The follower bundle is the plain play view: no presenter, notes
       // routes, recording, exporter or PDF.
@@ -75,9 +106,9 @@ export function livePlugin() {
           if (![page, clicks, seq].every(Number.isInteger) || typeof tab !== 'string') return false
           publisher().navHint(page, clicks, tab, seq)
         },
-        synced({ key, value }) {
-          if (typeof key !== 'string' || key.length > 200) return false
-          publisher().synced(key, value)
+        synced({ key, value, from, seq }) {
+          if (typeof key !== 'string' || key.length > 200 || typeof from !== 'string' || !Number.isInteger(seq)) return false
+          publisher().synced(key, value, from, seq)
         },
       }
       server.middlewares.use('/__slidev-live/', async (req, res) => {

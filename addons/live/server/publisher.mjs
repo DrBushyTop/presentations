@@ -5,43 +5,77 @@
 const CURSOR_INTERVAL = 33
 const DRAWINGS_INTERVAL = 50
 const HINT_WINDOW = 800
+// The relay answers every ping. Silence this long means a dead connection.
+const PING_INTERVAL = 10_000
+const PING_DEADLINE = 25_000
 
-export function createPublisher({ relay, deck, key, log = console }) {
-  const url = `${relay.replace(/\/$/, '')}/publish/${deck}`
+// The relay shows one talk at a time. The first connection of a session takes
+// the stage; later ones only resume it, so a server that was replaced cannot
+// take the stage back.
+export function createPublisher({ relay, deck, key, session, build = '', host = '', log = console }) {
+  const base = `${relay.replace(/\/$/, '')}/publish?${new URLSearchParams({ session, deck, build, host })}`
+  let resume = false
   const last = { nav: undefined, cursor: undefined, drawings: undefined, synced: {} }
   let ws
   let retry = 500
   let stopped = false
   let keepalive
+  let lastSeen = 0
 
   function connect() {
-    ws = new WebSocket(url, { headers: { authorization: `Bearer ${key}` } })
-    ws.addEventListener('open', () => {
+    const socket = new WebSocket(resume ? `${base}&resume=1` : base, { headers: { authorization: `Bearer ${key}` } })
+    ws = socket
+    socket.addEventListener('open', () => {
+      log.info(resume ? '[live] reconnected to the relay' : `[live] publishing ${deck} to ${relay}`)
+      resume = true
       retry = 500
-      log.info(`[live] publishing ${deck} to ${relay}`)
       send({ t: 'live', on: true })
       // A reconnect may have missed changes, so resend everything.
       if (last.nav) send({ t: 'nav', nav: JSON.parse(last.nav) })
       if (last.cursor) send({ t: 'cursor', cursor: JSON.parse(last.cursor) })
       if (last.drawings) send({ t: 'drawings', drawings: JSON.parse(last.drawings) })
       for (const [k, v] of Object.entries(last.synced)) send({ t: 'synced', key: k, value: JSON.parse(v) })
+      lastSeen = Date.now()
       clearInterval(keepalive)
-      keepalive = setInterval(() => ws.readyState === WebSocket.OPEN && ws.send('ping'), 30_000)
+      keepalive = setInterval(() => {
+        if (Date.now() - lastSeen > PING_DEADLINE) return closed(socket, 1006, 'no reply to pings')
+        if (socket.readyState === WebSocket.OPEN) socket.send('ping')
+      }, PING_INTERVAL)
     })
-    ws.addEventListener('message', () => {})
-    ws.addEventListener('close', (event) => {
-      clearInterval(keepalive)
-      if (stopped) return
-      if (event.code === 4000) {
-        stopped = true
-        log.warn('[live] another machine took over this deck; this one stopped publishing')
-        return
+    // The relay says why before it closes; the close itself can lag.
+    socket.addEventListener('message', (event) => {
+      lastSeen = Date.now()
+      if (typeof event.data !== 'string' || !event.data.startsWith('{')) return
+      try {
+        const msg = JSON.parse(event.data)
+        if (msg.t === 'closing') closed(socket, msg.code, msg.reason)
       }
-      log.warn(`[live] relay connection closed (${event.code || 'no code'}), retrying in ${retry} ms`)
-      setTimeout(connect, retry)
-      retry = Math.min(retry * 2, 10_000)
+      catch {}
     })
-    ws.addEventListener('error', () => {})
+    socket.addEventListener('close', event => closed(socket, event.code, event.reason))
+    socket.addEventListener('error', () => {})
+  }
+
+  function closed(socket, code, reason) {
+    // An older socket of this session, already replaced.
+    if (ws !== socket) return
+    ws = undefined
+    clearInterval(keepalive)
+    try {
+      socket.close()
+    }
+    catch {}
+    if (stopped) return
+    if (code === 4000) {
+      stopped = true
+      const why = reason === 'Stopped' ? 'The talk was stopped' : (reason || 'Another presentation took over')
+      log.warn(`[live] ${why}. This dev server no longer publishes to the live site.`)
+      log.warn('[live] Run `npm run live` again to take the live site back.')
+      return
+    }
+    log.warn(`[live] relay connection lost (${reason || code || 'no code'}), retrying in ${retry} ms`)
+    setTimeout(connect, retry)
+    retry = Math.min(retry * 2, 10_000)
   }
 
   function send(msg) {
@@ -68,6 +102,7 @@ export function createPublisher({ relay, deck, key, log = console }) {
   let serverNav
   let hintUntil = 0
   const hintSeq = {}
+  const syncedSeq = new Map()
   let reconcile
   function sendNav(nav) {
     if (!nav) return
@@ -109,7 +144,12 @@ export function createPublisher({ relay, deck, key, log = console }) {
       last.drawings = drawings
       sendDrawings()
     },
-    synced(k, value) {
+    // Every dev tab forwards the same BroadcastChannel message, and separate
+    // requests can overtake each other: keep each source tab's order.
+    synced(k, value, from, seq) {
+      const order = `${from}\0${k}`
+      if ((syncedSeq.get(order) ?? -1) >= seq) return
+      syncedSeq.set(order, seq)
       const v = JSON.stringify(value ?? null)
       if (last.synced[k] === v) return
       last.synced[k] = v

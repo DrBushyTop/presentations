@@ -39,11 +39,12 @@ npm run dev:no-slop
 
 The audience can follow any deck on their own devices at
 `https://live.huuhka.net/`. The page is read-only and stays on the
-presenter's slide. The site holds the last deployed deck.
+presenter's slide. The latest deck started takes the site over and updates it
+if needed.
 
 ```bash
-npm run live:deploy -- --deck no-slop   # after slide changes: build and upload the viewer
 npm run live -- --deck no-slop          # present; Ctrl+C ends the talk for viewers
+npm run live:stop                       # end whatever talk is live
 ```
 
 See [the live addon guide](addons/live/README.md) for setup, presenting from

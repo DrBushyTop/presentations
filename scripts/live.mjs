@@ -5,27 +5,31 @@
 //   npm run live:login                    sign in to Cloudflare (once per machine)
 //   npm run live:relay                    deploy the Cloudflare relay
 //   npm run live:deploy -- --deck <name>  build and upload the viewer page
-//   npm run live -- --deck <name>         present: dev server that publishes
-//   npm run live:stop -- --deck <name>    mark the talk as not live
+//   npm run live -- --deck <name>         present: dev server that publishes; the
+//                                         latest one started always takes the site
+//   npm run live:stop [-- --deck <name>]  end whatever talk is live (or only that deck)
 //   npm run live:url                      print the audience URL
 //
 // Nothing secret is stored in the repo. The publish key lives in Key Vault and
 // is read with `az`; the relay only stores its SHA-256.
 
 import { execFileSync, spawn } from 'node:child_process'
-import { createHash, randomBytes } from 'node:crypto'
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
-import { tmpdir } from 'node:os'
+import { createHash, randomBytes, randomUUID } from 'node:crypto'
+import { createWriteStream, existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs'
+import { hostname, tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { chooseDeck } from './decks.mjs'
+import { chooseDeck, deckArgument, findDeck } from './decks.mjs'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const configPath = join(root, 'live/config.json')
 const config = JSON.parse(readFileSync(configPath, 'utf8'))
 const { azure } = config
 const relayDir = join(root, 'live/relay')
-const siteDir = join(root, 'dist/live/site')
+// One build directory per deck, so two decks never build into the same place.
+const liveDir = deck => join(root, 'dist/live', deck.name)
+const siteDir = deck => join(liveDir(deck), 'site')
+const host = hostname().split('.')[0]
 const SWA_CLI = '@azure/static-web-apps-cli@2.0.10'
 
 const [command = 'start', ...args] = process.argv.slice(2)
@@ -78,6 +82,47 @@ function publishKey() {
   const key = azTry('keyvault', 'secret', 'show', '--vault-name', azure.keyVault, '--name', azure.keySecret, '--query', 'value')
   if (!key) fail(`Could not read the publish key from Key Vault ${azure.keyVault}. Run \`npm run live:setup\`, or check your access.`)
   return key
+}
+
+// Identifies a viewer build by its sources, so `npm run live` can tell whether
+// the site is up to date, on any machine.
+function buildId(deck) {
+  const listed = run('git', ['ls-files', '-co', '--exclude-standard', '-z', '--', deck.dir, 'addons', 'themes', 'package-lock.json', 'live/config.json'], { cwd: root })
+  const hash = createHash('sha256')
+  for (const file of listed.split('\0').filter(Boolean).sort()) {
+    const path = join(root, file)
+    if (!existsSync(path) || !statSync(path).isFile()) continue
+    hash.update(file).update('\0').update(readFileSync(path)).update('\0')
+  }
+  return hash.digest('hex').slice(0, 16)
+}
+
+// The relay's HTTP routes, authenticated with the publish key.
+async function relayCall(route, key, params = {}, method = 'GET') {
+  const url = `${relayUrl().replace(/^ws/, 'http')}${route}?${new URLSearchParams(params)}`
+  const res = await fetch(url, { method, headers: { authorization: `Bearer ${key}` }, signal: AbortSignal.timeout(8000) })
+  if (!res.ok) throw new Error(`${route}: ${res.status}`)
+  return res.json()
+}
+
+async function relayStatus(key) {
+  try {
+    return await relayCall('/status', key)
+  }
+  catch {
+    return undefined
+  }
+}
+
+// What the site serves: { deck, build }, or undefined if that cannot be told.
+async function siteInfo() {
+  try {
+    const res = await fetch(new URL('live.json', viewerUrl()), { cache: 'no-store', signal: AbortSignal.timeout(8000) })
+    return res.ok ? await res.json() : undefined
+  }
+  catch {
+    return undefined
+  }
 }
 
 // The audience address: the custom domain from live/config.json, or the
@@ -160,13 +205,18 @@ function deployRelay() {
   console.log(`\nRelay: ${config.relay} (saved to live/config.json, commit it).`)
 }
 
+function withoutLiveEnv() {
+  return Object.fromEntries(Object.entries(process.env).filter(([name]) => !name.startsWith('SLIDEV_LIVE_')))
+}
+
 // The site holds one deck at a time, served from the root of the domain.
-function buildViewer(deck) {
-  rmSync(siteDir, { recursive: true, force: true })
+function buildViewer(deck, build) {
+  const site = siteDir(deck)
+  rmSync(site, { recursive: true, force: true })
   console.log(`Building the viewer for ${deck.name}`)
   run('npx', [
     'slidev', 'build', 'slides.md',
-    '--out', siteDir,
+    '--out', site,
     '--base', '/',
     // Memory routing keeps the slide out of the URL: nothing to edit, no back button.
     '--router-mode', 'memory',
@@ -175,16 +225,18 @@ function buildViewer(deck) {
   ], {
     cwd: join(root, deck.dir),
     stdio: 'inherit',
-    env: { ...process.env, SLIDEV_LIVE_VIEWER: '1', SLIDEV_LIVE_RELAY: relayUrl(), SLIDEV_LIVE_DECK: deck.name },
+    // Only what the viewer bundle needs: no key or session in the build.
+    env: { ...withoutLiveEnv(), SLIDEV_LIVE_VIEWER: '1', SLIDEV_LIVE_RELAY: relayUrl(), SLIDEV_LIVE_DECK: deck.name, SLIDEV_LIVE_BUILD: build },
   })
   // Leftovers from Slidev's own hosting helpers.
-  for (const file of ['_redirects', '404.html']) rmSync(join(siteDir, file), { force: true })
+  for (const file of ['_redirects', '404.html']) rmSync(join(site, file), { force: true })
 
-  // Lets `npm run live` check that the site shows the deck being presented.
-  writeFileSync(join(siteDir, 'live.json'), `${JSON.stringify({ deck: deck.name })}\n`)
+  // What the site serves. `npm run live` checks it, and viewers reload when
+  // it matches the talk on stage.
+  writeFileSync(join(site, 'live.json'), `${JSON.stringify({ deck: deck.name, build })}\n`)
 
   // Every other path (old /<deck>/ links too) gets the viewer.
-  writeFileSync(join(siteDir, 'staticwebapp.config.json'), `${JSON.stringify({
+  writeFileSync(join(site, 'staticwebapp.config.json'), `${JSON.stringify({
     routes: [
       { route: '/assets/*', headers: { 'cache-control': 'public, max-age=31536000, immutable' } },
     ],
@@ -198,9 +250,18 @@ function buildViewer(deck) {
   }, null, 2)}\n`)
 }
 
-function deployViewer(deck) {
-  buildViewer(deck)
-  if (flag('build-only')) return console.log(`\nBuilt ${siteDir}`)
+async function deployViewer(deck) {
+  const build = process.env.SLIDEV_LIVE_BUILD || buildId(deck)
+  buildViewer(deck, build)
+  if (flag('build-only')) return console.log(`\nBuilt ${siteDir(deck)}`)
+  // Started by `npm run live`: if a newer presentation took over meanwhile,
+  // leave the site to it.
+  const session = process.env.SLIDEV_LIVE_SESSION
+  if (session) {
+    const stage = await relayStatus(publishKey())
+    if (stage?.session && stage.session !== session)
+      return console.log(`\nNot uploading: ${stage.deck} on ${stage.host} is live now.`)
+  }
   requireAz()
   const token = az('staticwebapp', 'secrets', 'list', '-n', azure.staticWebApp, '-g', azure.resourceGroup, '--query', 'properties.apiKey')
   console.log('Uploading to Azure Static Web Apps')
@@ -208,50 +269,77 @@ function deployViewer(deck) {
   // Run next to the site: from the repo root the CLI picks up other
   // staticwebapp.config.json files, and it refuses to run inside the site.
   run('npx', ['-y', SWA_CLI, 'deploy', 'site', '--swa-config-location', 'site', '--env', 'production'], {
-    cwd: dirname(siteDir),
+    cwd: liveDir(deck),
     stdio: 'inherit',
     env: { ...process.env, SWA_CLI_DEPLOYMENT_TOKEN: token },
   })
   console.log(`\nViewer: ${viewerUrl()}`)
 }
 
-// Tells viewers the talk is over. Connecting replaces any old publisher.
-async function sendStop(deck, key) {
-  const ws = new WebSocket(`${relayUrl()}/publish/${deck.name}`, { headers: { authorization: `Bearer ${key}` } })
-  await new Promise((done) => {
-    const timer = setTimeout(done, 5000)
-    ws.addEventListener('open', () => {
-      ws.send(JSON.stringify({ t: 'live', on: false, ts: Date.now() }))
-      ws.close(1000)
-    })
-    ws.addEventListener('close', () => {
-      clearTimeout(timer)
-      done()
-    })
-    ws.addEventListener('error', () => {})
-  })
-}
-
-// The deck the site serves, or undefined if that cannot be told.
-async function deployedDeck(url) {
+// Ends the talk for viewers. With a session, only if that presentation is
+// still the one on stage; with a deck, only if that deck is on stage.
+async function stopTalk(key, params) {
   try {
-    const res = await fetch(new URL('live.json', url), { signal: AbortSignal.timeout(5000) })
-    return res.ok ? (await res.json()).deck : undefined
+    return await relayCall('/stop', key, params, 'POST')
   }
-  catch {
+  catch (error) {
+    console.error(`Could not reach the relay: ${error.message}`)
     return undefined
   }
+}
+
+// Builds and uploads the viewer next to the dev server, so presenting starts
+// right away. Output goes to a log file, not over the dev server's.
+function deployInBackground(deck, env) {
+  mkdirSync(liveDir(deck), { recursive: true })
+  const logPath = join(liveDir(deck), 'deploy.log')
+  const log = createWriteStream(logPath)
+  const child = spawn(process.execPath, [fileURLToPath(import.meta.url), 'deploy', '--deck', deck.name], {
+    stdio: ['ignore', 'pipe', 'pipe'],
+    env,
+  })
+  child.stdout.pipe(log)
+  child.stderr.pipe(log)
+  child.on('exit', (code) => {
+    if (code === 0) console.log(`\n[live] The site now shows ${deck.name}. Viewers reload to it.`)
+    else if (code !== null) console.error(`\n[live] Updating the site failed (${code}). See ${logPath}`)
+  })
+  return logPath
 }
 
 async function start(deck) {
   const relay = relayUrl()
   const key = publishKey()
-  if (flag('deploy')) deployViewer(deck)
+  const build = buildId(deck)
+  const session = randomUUID()
   const url = viewerUrl()
-  const shown = url && await deployedDeck(url)
-  if (shown && shown !== deck.name) {
-    console.warn(`\nThe site shows ${shown}, not ${deck.name}. Viewers will not follow this talk.`)
-    console.warn(`Deploy it first: npm run live -- --deck ${deck.name} --deploy`)
+  const [stage, site] = await Promise.all([relayStatus(key), siteInfo()])
+
+  // The latest presentation started always takes the live site.
+  if (stage?.deck && !stage.stopped && (stage.connected || stage.live))
+    console.log(`\nTaking over the live site from ${stage.deck} on ${stage.host}.`)
+
+  const env = {
+    ...process.env,
+    SLIDEV_LIVE_RELAY: relay,
+    SLIDEV_LIVE_DECK: deck.name,
+    SLIDEV_LIVE_KEY: key,
+    SLIDEV_LIVE_SESSION: session,
+    SLIDEV_LIVE_BUILD: build,
+    // While live, only localhost and Tailscale may change the deck (phone
+    // remote included). --trust-lan also lets the local network in.
+    ...(flag('trust-lan') ? { SLIDEV_LIVE_TRUST_LAN: '1' } : {}),
+  }
+
+  const stale = site?.deck !== deck.name || site?.build !== build
+  if (flag('no-deploy')) {
+    if (site?.deck && site.deck !== deck.name)
+      console.warn(`\nThe site shows ${site.deck}, not ${deck.name}. Viewers wait until it is deployed.`)
+  }
+  else if (stale || flag('deploy')) {
+    const log = deployInBackground(deck, env)
+    console.log(`\nUpdating the site to this version of ${deck.name} in the background (log: ${log}).`)
+    console.log('Viewers switch over by themselves when it is up, in a minute or two.')
   }
 
   console.log(`\nLive: viewers follow this dev server through ${relay}`)
@@ -262,35 +350,39 @@ async function start(deck) {
   // Ctrl+C reaches the dev server too. Wait for it, then end the talk.
   for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => { interrupted = true })
 
-  const child = spawn('npm', ['run', `start:${deck.name}`], {
-    stdio: 'inherit',
-    env: { ...process.env, SLIDEV_LIVE_RELAY: relay, SLIDEV_LIVE_DECK: deck.name, SLIDEV_LIVE_KEY: key },
-  })
+  const child = spawn('npm', ['run', `start:${deck.name}`], { stdio: 'inherit', env })
   child.on('exit', async (code, signal) => {
     if (interrupted || signal === 'SIGINT' || signal === 'SIGTERM') {
-      await sendStop(deck, key)
-      console.log('\nThe talk is no longer live for viewers.')
+      const result = await stopTalk(key, { session })
+      if (result?.stopped) console.log('\nThe talk is no longer live for viewers.')
+      else if (result?.deck) console.log(`\n${result.deck} on ${result.host} had taken over the live site. It stays live.`)
       process.exit(0)
     }
     console.error(`\nThe dev server exited (${code ?? signal}). Viewers stay on the last slide.`)
-    console.error(`Restart with \`npm run live -- --deck ${deck.name}\`, or end it with \`npm run live:stop -- --deck ${deck.name}\`.`)
+    console.error(`Restart with \`npm run live -- --deck ${deck.name}\`, or end it with \`npm run live:stop\`.`)
     process.exit(code ?? 1)
   })
 }
 
-const needsDeck = ['start', 'deploy', 'stop'].includes(command)
+async function stop() {
+  const name = deckArgument(args)
+  const result = await stopTalk(publishKey(), name ? { deck: findDeck(name).name } : {})
+  if (!result) process.exit(1)
+  if (result.stopped) console.log(`${result.deck} is no longer live for viewers.`)
+  else if (result.deck && !result.stopped && name) console.log(`Nothing stopped: the live site shows ${result.deck}, not ${name}.`)
+  else console.log('Nothing is live.')
+}
+
+const needsDeck = ['start', 'deploy'].includes(command)
 const deck = needsDeck ? await chooseDeck(args, `run live (${command})`, `npm run live -- --deck no-slop`) : undefined
 
 switch (command) {
   case 'setup': await setup(); break
   case 'login': wrangler(['login'], { stdio: 'inherit' }); break
   case 'relay': deployRelay(); break
-  case 'deploy': deployViewer(deck); break
+  case 'deploy': await deployViewer(deck); break
   case 'start': await start(deck); break
-  case 'stop':
-    await sendStop(deck, publishKey())
-    console.log('The talk is no longer live for viewers.')
-    break
+  case 'stop': await stop(); break
   case 'url': console.log(viewerUrl() ?? 'The Static Web App does not exist yet. Run `npm run live:setup`.'); break
   default: fail(`Unknown command "${command}". Use setup, login, relay, deploy, start, stop or url.`)
 }

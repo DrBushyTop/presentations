@@ -31,7 +31,7 @@ export function startBridge() {
   // Forward interactive slide state to the dev server, which relays it.
   const channel = new BroadcastChannel(SYNC_CHANNEL)
   channel.onmessage = (event) => {
-    const { key, value, request } = event.data ?? {}
-    if (!request && typeof key === 'string') post('synced', { key, value })
+    const { key, value, request, from, seq } = event.data ?? {}
+    if (!request && typeof key === 'string' && typeof from === 'string') post('synced', { key, value, from, seq })
   }
 }
