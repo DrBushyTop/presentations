@@ -124,11 +124,11 @@ export function createPublisher({ relay, deck, key, session, build = '', host = 
   connect()
 
   return {
-    // The presenter's screen share, passed on with the key (see the relay's
-    // `screen`). The browser never sees the key.
-    async screen(action, body) {
+    // The presenter's screen share or camera, passed on with the key (see
+    // the relay's `media`). The browser never sees the key.
+    async media(kind, action, body) {
       if (stopped) return { status: 409, body: { error: 'This dev server no longer publishes' } }
-      const url = `${relay.replace(/^ws/, 'http').replace(/\/$/, '')}/screen?${new URLSearchParams({ session, action })}`
+      const url = `${relay.replace(/^ws/, 'http').replace(/\/$/, '')}/media?${new URLSearchParams({ session, kind, action })}`
       try {
         const res = await fetch(url, {
           method: 'POST',

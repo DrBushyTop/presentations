@@ -22,18 +22,20 @@ const MAX_SYNCED_KEYS = 200
 const MAX_VIEWERS = 2000
 // Replaced sessions remembered, newest first.
 const MAX_RETIRED = 100
-// Screen sharing goes through Cloudflare Realtime: the presenter's browser
-// pushes the screen to an SFU session, and each viewer pulls it into its own.
+// The screen share and the camera go through Cloudflare Realtime: the
+// presenter's browser pushes them to an SFU session, and each viewer pulls
+// them into its own. The tracks each kind may have:
 const SFU = 'https://rtc.live.cloudflare.com/v1/apps'
-const TRACK = /^[\w-]{1,32}$/
+const MEDIA = { screen: ['screen'], camera: ['camera', 'voice'] }
 const MAX_SDP = 64 * 1024
-// Viewers joining a share per minute. A whole audience joins in a few seconds.
-const MAX_WATCHES = 1000
+// Tracks pulled per minute. A whole audience pulls the screen, the camera and
+// maybe the voice within a few seconds.
+const MAX_PULLS = 3000
 
-const ROUTES = ['/viewer', '/publish', '/stop', '/status', '/build', '/screen', '/watch']
+const ROUTES = ['/viewer', '/publish', '/stop', '/status', '/build', '/media', '/watch']
 // Open to anyone. Everything else needs the publish key.
 const PUBLIC = ['/viewer', '/watch']
-const POST = ['/stop', '/build', '/screen', '/watch']
+const POST = ['/stop', '/build', '/media', '/watch']
 // The viewer page is on another origin.
 const CORS = {
   'access-control-allow-origin': '*',
@@ -66,14 +68,15 @@ export default {
 
 // Each viewer keeps one SFU session for the whole talk, set up in three
 // steps: `connect` opens the session with only the SFU's server-events data
-// channel, `pull` adds the share on stage to it, and `answer` passes the
+// channel, `pull` adds tracks of the screen or camera on stage to it (the
+// voice only when the viewer asks to listen), and `answer` passes the
 // viewer's SDP answer on after either. Connections open as people open the
 // page, spread out, so starting a share only renegotiates them. The token
 // is signed: a viewer can only ever use the session made for it. The SFU
 // calls run here, not in the stage, which has a limit on outgoing requests
 // a whole audience would pass.
 async function watch(request, env, stage) {
-  if (!sfuReady(env)) return json({ error: 'Screen sharing is not set up' }, 501)
+  if (!sfuReady(env)) return json({ error: 'Realtime is not set up' }, 501)
   const body = await request.json().catch(() => ({}))
   const step = new URL(request.url).searchParams.get('step')
   try {
@@ -91,15 +94,21 @@ async function watch(request, env, stage) {
       await sfu(env, `/sessions/${session}/renegotiate`, 'PUT', { sessionDescription: { type: 'answer', sdp: body.sdp } })
       return json({ ok: true })
     }
-    if (step !== 'pull') return json({ error: 'Unknown step' }, 400)
-    // The share on stage, with its SFU session. Never sent to viewers.
-    const found = await stage.fetch('https://stage/screen-source')
+    if (step !== 'pull' || !Object.hasOwn(MEDIA, body.kind) || !Array.isArray(body.tracks)) return json({ error: 'Bad pull' }, 400)
+    // What is on stage, with its SFU session. Never sent to viewers.
+    const found = await stage.fetch(`https://stage/media-source?kind=${body.kind}`)
     if (!found.ok) return json(await found.json(), found.status)
-    const screen = await found.json()
+    const media = await found.json()
+    const names = media.tracks.filter(name => body.tracks.includes(name))
+    if (!names.length) return json({ error: 'No such track' }, 409)
     const pulled = await sfu(env, `/sessions/${session}/tracks/new`, 'POST', {
-      tracks: screen.tracks.map(trackName => ({ location: 'remote', sessionId: screen.sfu, trackName })),
+      tracks: names.map(trackName => ({ location: 'remote', sessionId: media.sfu, trackName })),
     })
-    return json({ id: screen.id, sdp: pulled.sessionDescription.sdp })
+    return json({
+      id: media.id,
+      sdp: pulled.sessionDescription.sdp,
+      tracks: (pulled.tracks ?? []).map(({ mid, trackName }) => ({ mid, trackName })),
+    })
   }
   catch (error) {
     return json({ error: String(error.message ?? error) }, 502)
@@ -179,8 +188,8 @@ export class LiveRoom extends DurableObject {
       case '/publish': return this.publish(url.searchParams)
       case '/stop': return this.stop(url.searchParams)
       case '/build': return this.setBuild(url.searchParams)
-      case '/screen': return this.screen(url.searchParams, request)
-      case '/screen-source': return this.screenSource()
+      case '/media': return this.media(url.searchParams, request)
+      case '/media-source': return this.mediaSource(url.searchParams.get('kind'))
       case '/status': {
         const { session, host, startedAt, stopped, retired = [] } = this.stage
         return json({ ...this.public(), session, host, startedAt, stopped: !!stopped, connected: this.hasPublisher(), retired, screenReady: sfuReady(this.env) })
@@ -263,7 +272,7 @@ export class LiveRoom extends DurableObject {
     if (!match) return json({ stopped: false, ...this.public(), host: stage.host })
     stage.stopped = true
     this.snapshot.live = false
-    this.setScreen(undefined)
+    for (const kind of Object.keys(MEDIA)) this.setMedia(kind, undefined)
     this.save('stage', 'snapshot')
     for (const ws of this.ctx.getWebSockets('publisher')) this.dismiss(ws, 4000, 'Stopped')
     this.broadcast(JSON.stringify({ t: 'live', on: false }))
@@ -281,30 +290,36 @@ export class LiveRoom extends DurableObject {
     return json({ ok: true })
   }
 
-  // The presenter's screen share, in three steps from its dev server:
-  // `publish` pushes the browser's tracks to a new SFU session and answers its
-  // offer; `on` shows it to viewers once the browser is connected; `off` ends
-  // it. The SFU session stays here: a viewer who knew it could renegotiate it.
-  async screen(params, request) {
+  // The presenter's screen share or camera, in three steps from its dev
+  // server: `publish` pushes the browser's tracks to a new SFU session and
+  // answers its offer; `on` shows them to viewers once the browser is
+  // connected; `off` ends them. The SFU session stays here: a viewer who knew
+  // it could renegotiate it.
+  async media(params, request) {
     const stage = this.stage
     if (params.get('session') !== stage.session || stage.stopped) return json({ error: 'Not on stage' }, 409)
+    const kind = params.get('kind')
+    if (!Object.hasOwn(MEDIA, kind)) return json({ error: 'Unknown kind' }, 400)
     const action = params.get('action')
     const body = await request.json().catch(() => ({}))
+    const current = stage.media?.[kind]
     // A tab ends only its own share, not a newer one from another tab.
     if (action === 'off') {
-      if (stage.screen && body.id === stage.screen.id) this.setScreen(undefined)
+      if (current && body.id === current.id) this.setMedia(kind, undefined)
       return json({ ok: true })
     }
     if (action === 'on') {
-      if (!stage.screen || body.id !== stage.screen.id) return json({ error: 'Not this share' }, 409)
-      this.setScreen(stage.screen)
+      if (!current || body.id !== current.id) return json({ error: 'Not this share' }, 409)
+      this.setMedia(kind, current)
       return json({ ok: true })
     }
     if (action !== 'publish') return json({ error: 'Unknown action' }, 400)
-    if (!sfuReady(this.env)) return json({ error: 'Screen sharing is not set up on the relay' }, 501)
+    if (!sfuReady(this.env)) return json({ error: 'Realtime is not set up on the relay' }, 501)
     const tracks = Array.isArray(body.tracks) ? body.tracks : []
-    const valid = typeof body.sdp === 'string' && body.sdp.length <= MAX_SDP && tracks.length >= 1 && tracks.length <= 2
-      && tracks.every(t => typeof t?.mid === 'string' && t.mid.length <= 16 && TRACK.test(t.trackName ?? ''))
+    const names = tracks.map(t => t?.trackName)
+    const valid = typeof body.sdp === 'string' && body.sdp.length <= MAX_SDP && tracks.length >= 1
+      && new Set(names).size === names.length && names.every(name => MEDIA[kind].includes(name))
+      && tracks.every(t => typeof t.mid === 'string' && t.mid.length <= 16)
     if (!valid) return json({ error: 'Bad share' }, 400)
     try {
       const { sessionId } = await sfu(this.env, '/sessions/new', 'POST')
@@ -315,7 +330,7 @@ export class LiveRoom extends DurableObject {
       // The session can have changed while the SFU answered.
       if (params.get('session') !== this.stage.session || this.stage.stopped) return json({ error: 'Not on stage' }, 409)
       const id = crypto.randomUUID()
-      this.stage.screen = { id, sfu: sessionId, tracks: tracks.map(t => t.trackName) }
+      this.stage.media = { ...this.stage.media, [kind]: { id, sfu: sessionId, tracks: names } }
       this.save('stage')
       return json({ id, sdp: pushed.sessionDescription.sdp })
     }
@@ -324,25 +339,28 @@ export class LiveRoom extends DurableObject {
     }
   }
 
-  // Shows a share to viewers, or ends it (undefined).
-  setScreen(screen) {
-    const visible = screen ? { id: screen.id } : null
-    if (!screen) delete this.stage.screen
-    if ((this.snapshot.screen?.id ?? null) === (visible?.id ?? null)) return
-    this.snapshot.screen = visible
+  // Shows a share or camera to viewers, or ends it (undefined). Viewers see
+  // its id and which tracks it has.
+  setMedia(kind, media) {
+    if (!media && this.stage.media) delete this.stage.media[kind]
+    const visible = media ? { id: media.id, tracks: media.tracks } : undefined
+    const shown = this.snapshot.media ?? {}
+    if (shown[kind]?.id === visible?.id) return
+    this.snapshot.media = { ...shown, [kind]: visible }
+    if (!visible) delete this.snapshot.media[kind]
     this.save('stage', 'snapshot')
-    this.broadcast(JSON.stringify({ t: 'screen', screen: visible }))
+    this.broadcast(JSON.stringify({ t: 'media', media: this.snapshot.media }))
   }
 
-  // For the Worker's `/watch`: the share on stage, if any. Only the Worker
-  // can ask; it is not a public route.
-  screenSource() {
-    const screen = this.stage.screen
-    if (!screen || this.snapshot.screen?.id !== screen.id || this.stage.stopped) return json({ error: 'No screen share' }, 409)
+  // For the Worker's `/watch`: what is on stage of a kind, if anything. Only
+  // the Worker can ask; it is not a public route.
+  mediaSource(kind) {
+    const media = this.stage.media?.[kind]
+    if (!media || this.snapshot.media?.[kind]?.id !== media.id || this.stage.stopped) return json({ error: `No ${kind}` }, 409)
     const minute = Math.floor(Date.now() / 60_000)
-    if (this.watches?.minute !== minute) this.watches = { minute, count: 0 }
-    if (++this.watches.count > MAX_WATCHES) return json({ error: 'Too many viewers joining' }, 503)
-    return json(screen)
+    if (this.pulls?.minute !== minute) this.pulls = { minute, count: 0 }
+    if (++this.pulls.count > MAX_PULLS) return json({ error: 'Too many viewers joining' }, 503)
+    return json(media)
   }
 
   // Closes a publisher. The reason also goes as a message first: the closing

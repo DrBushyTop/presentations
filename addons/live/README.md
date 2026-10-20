@@ -50,6 +50,38 @@ reach it, and those would now reach every viewer. Use the phone remote over
 Tailscale, or start with `--trust-lan` to let the local network in too (only
 on a network you trust; not on venue Wi-Fi).
 
+## Share your screen
+
+The presenter view's nav bar has a share button while `npm run live`
+publishes. It opens the browser's picker; pick a window, a tab or the whole
+screen. Viewers see it over the slides until you press the button again, end
+it from the browser's own bar, or close the presenter tab. The picker leaves
+out the presenter view itself, and the browser's bar can switch what is shared
+without stopping.
+
+Text stays sharp: the capture comes down to at most 1920 x 1080, VP8 at up to
+2.5 Mbps and 30 fps, and it drops frames before resolution. Zoom in on code
+and UIs as you would for the room. Measured with code on screen:
+
+| What moves | Viewers get |
+| --- | --- |
+| Nothing (a still screen) | about 1 frame a second; a change shows in about 60 ms |
+| An animated demo | 30 fps at about 0.9 Mbps |
+| Scrolling the whole screen | 29 fps at the full 2.5 Mbps, blurred until it stops |
+
+The video reaches viewers about 1.3 s after the click, and then trails the
+screen by 35 to 50 ms (p50) on a good connection.
+
+## Camera and voice
+
+Slidev's camera bubble (the camera button in the play view's nav bar) goes to
+viewers too, in the bottom-right corner, mirrored as Slidev shows it. Viewers
+see it over the slides and over a screen share. If a microphone is picked in
+Slidev's recording devices, viewers get a "Listen to presenter" button. The
+voice is off until they press it, so phones in the room do not echo the
+speaker. Turning the bubble off, or closing the tab, ends both. Moving or
+resizing the bubble only changes it on your screen.
+
 ## Update the viewer page
 
 `npm run live` keeps the site up to date. To update it without presenting:
@@ -86,6 +118,11 @@ needs **Key Vault Secrets Officer** on the vault, which `live:setup` grants.
 `npm run live:login` is only needed to redeploy the relay. Wrangler is a
 dependency of `live/relay` only, installed on first use.
 
+The screen share and camera need a Cloudflare Realtime app (Realtime, SFU,
+in the Cloudflare dashboard). Its App ID and API token are in the vault as
+`realtime-app-id` and `realtime-api-token`. `npm run live:screen-setup`
+copies them into the Worker's secrets.
+
 The custom domain is a CNAME from `live.huuhka.net` to the Static Web App's
 default host, added with `az staticwebapp hostname set`.
 
@@ -120,6 +157,15 @@ presenter tab ──► dev server ──wss──► Cloudflare Worker + Durabl
   between builds. When the stage shows another deck, another build or a new
   talk, the page reloads once the site has it. A heartbeat replaces a socket
   that went quiet.
+- **Screen, camera and voice** (`client/push.ts`, `client/media.ts`). The
+  presenter's tab sends its tracks to Cloudflare Realtime, an SFU, through
+  the dev server, which adds the publish key. The relay keeps the SFU session
+  and tells viewers what is on. Each viewer opens one Realtime connection when
+  the page opens and keeps it for the whole talk. A share then only adds a
+  track to it, which takes a fraction of a second even for a crowd, while
+  opening connections is rate-limited: from one public IP, about two and a half
+  a second. The Worker makes the Realtime calls and signs each viewer's session,
+  so a viewer can only change its own.
 - **Interactive state**. Components that keep state with `useSynced` in
   `no-slop-deck/lib/sync.ts` use the `slidev-live-sync` BroadcastChannel. The
   dev tabs forward that channel to the dev server, which keeps each tab's
@@ -166,6 +212,13 @@ viewer mounting the next slide. The audience's own connection adds to this.
 - Azure Static Web Apps Free and Cloudflare Workers Free with Durable Objects.
   A 200-viewer talk is well inside the free allowance. Viewer pings are
   answered without waking the object.
+- Cloudflare Realtime counts the data sent to viewers, with 1,000 GB a month
+  free. A share sends each viewer up to 2.5 Mbps, far less for a still screen:
+  200 viewers watching an hour of constant motion take about 225 GB. The camera
+  adds up to 0.6 Mbps per viewer, the voice about 0.04 Mbps per listener.
+- Realtime connects directly or over STUN. A network that blocks WebRTC
+  (some corporate Wi-Fi) gets the slides but not the share or camera; a TURN
+  server would fix that.
 - One talk on the site at a time.
 - The relay is a public `workers.dev` endpoint. Someone flooding it with
   requests could use up the free plan's 100,000 requests a day, and the relay

@@ -40,7 +40,8 @@ npm run dev:no-slop
 The audience can follow any deck on their own devices at
 `https://live.huuhka.net/`. The page is read-only and stays on the
 presenter's slide. The latest deck started takes the site over and updates it
-if needed.
+if needed. The presenter view can share a screen with viewers, and Slidev's
+camera bubble goes to them too, with the voice for those who choose to listen.
 
 ```bash
 npm run live -- --deck no-slop          # present; Ctrl+C ends the talk for viewers

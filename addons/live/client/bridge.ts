@@ -28,6 +28,9 @@ export function startBridge() {
     if (page) post('nav', { page, clicks: Number(to.query.clicks ?? 0), tab, seq: seq++ })
   })
 
+  // Slidev's camera bubble goes to viewers too.
+  import('./camera').then(({ startCamera }) => startCamera())
+
   // Forward interactive slide state to the dev server, which relays it.
   const channel = new BroadcastChannel(SYNC_CHANNEL)
   channel.onmessage = (event) => {

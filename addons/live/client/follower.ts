@@ -3,7 +3,7 @@ import { drawingState, lockShortcuts, onDrawingUpdate, onSharedUpdate, useNav } 
 import { createStatus } from './status'
 import { SYNC_CHANNEL } from './bridge'
 import { sanitizeDrawing } from './sanitize'
-import { createScreen } from './screen'
+import { createMedia, type Shown } from './media'
 
 declare const __SLIDEV_LIVE_RELAY__: string
 declare const __SLIDEV_LIVE_DECK__: string
@@ -11,7 +11,7 @@ declare const __SLIDEV_LIVE_BUILD__: string
 
 interface Nav { page: number, clicks: number }
 interface Message {
-  t: 'snapshot' | 'live' | 'nav' | 'cursor' | 'drawings' | 'synced' | 'presenter' | 'screen'
+  t: 'snapshot' | 'live' | 'nav' | 'cursor' | 'drawings' | 'synced' | 'presenter' | 'media'
   ts?: number
   live?: boolean
   on?: boolean
@@ -26,7 +26,7 @@ interface Message {
   deck?: string
   build?: string
   since?: number
-  screen?: { id: string } | null
+  media?: Shown
 }
 
 const SITE_POLL = 10_000
@@ -43,7 +43,7 @@ const trace: Trace[] = []
 export function startFollower() {
   const { slides, go, currentSlideNo, clicks } = useNav()
   const status = createStatus()
-  const screen = createScreen(__SLIDEV_LIVE_RELAY__)
+  const media = createMedia(__SLIDEV_LIVE_RELAY__)
   const synced = new Map<string, unknown>()
   const channel = new BroadcastChannel(SYNC_CHANNEL)
   let target: Nav | undefined
@@ -178,7 +178,7 @@ export function startFollower() {
     // means nothing here. While it is live, this page waits for the site to
     // have it.
     if (!current()) {
-      screen.active(false)
+      media.active(false)
       status.live(false)
       status.switching(stageLive ? (onStage() ? 'build' : 'deck') : false)
       return
@@ -192,15 +192,15 @@ export function startFollower() {
         if (msg.cursor !== undefined) onSharedUpdate({ cursor: msg.cursor ?? undefined })
         if (msg.nav) follow(msg.nav)
         status.live(!!msg.live && !!msg.nav)
-        screen.active(!!msg.live)
-        screen.show(msg.screen?.id)
+        media.active(!!msg.live)
+        media.show(msg.media)
         break
-      case 'screen':
-        screen.show(msg.screen?.id)
+      case 'media':
+        media.show(msg.media)
         break
       case 'live':
         status.live(!!msg.on && !!target)
-        screen.active(!!msg.on)
+        media.active(!!msg.on)
         break
       case 'nav':
         if (!msg.nav) return

@@ -140,10 +140,10 @@ export function livePlugin() {
           if (typeof key !== 'string' || key.length > 200 || typeof from !== 'string' || !Number.isInteger(seq)) return false
           publisher().synced(key, value, from, seq)
         },
-        // Answers with the relay's reply.
-        screen({ action, ...body }) {
-          if (!['publish', 'on', 'off'].includes(action)) return false
-          return publisher().screen(action, body)
+        // The screen share and the camera. Answers with the relay's reply.
+        media({ kind, action, ...body }) {
+          if (!['screen', 'camera'].includes(kind) || !['publish', 'on', 'off'].includes(action)) return false
+          return publisher().media(kind, action, body)
         },
       }
       server.middlewares.use('/__slidev-live/', async (req, res) => {
