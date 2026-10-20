@@ -56,12 +56,87 @@ export default {
       return new Response('Expected a WebSocket upgrade', { status: 426 })
     if (POST.includes(route) && request.method !== 'POST')
       return new Response('Method not allowed', { status: 405 })
-    const response = await env.ROOM.get(env.ROOM.idFromName('stage')).fetch(request)
-    if (route !== '/watch') return response
-    const withCors = new Response(response.body, response)
-    for (const [name, value] of Object.entries(CORS)) withCors.headers.set(name, value)
-    return withCors
+    const stage = env.ROOM.get(env.ROOM.idFromName('stage'))
+    if (route !== '/watch') return stage.fetch(request)
+    const response = await watch(request, env, stage)
+    for (const [name, value] of Object.entries(CORS)) response.headers.set(name, value)
+    return response
   },
+}
+
+// Each viewer keeps one SFU session for the whole talk, set up in three
+// steps: `connect` opens the session with only the SFU's server-events data
+// channel, `pull` adds the share on stage to it, and `answer` passes the
+// viewer's SDP answer on after either. Connections open as people open the
+// page, spread out, so starting a share only renegotiates them. The token
+// is signed: a viewer can only ever use the session made for it. The SFU
+// calls run here, not in the stage, which has a limit on outgoing requests
+// a whole audience would pass.
+async function watch(request, env, stage) {
+  if (!sfuReady(env)) return json({ error: 'Screen sharing is not set up' }, 501)
+  const body = await request.json().catch(() => ({}))
+  const step = new URL(request.url).searchParams.get('step')
+  try {
+    if (step === 'connect') {
+      const { sessionId } = await sfu(env, '/sessions/new', 'POST')
+      const opened = await sfu(env, `/sessions/${sessionId}/datachannels/establish`, 'POST', {
+        dataChannel: { location: 'remote', dataChannelName: 'server-events' },
+      })
+      return json({ token: await sign(env, sessionId), sdp: opened.sessionDescription.sdp })
+    }
+    const session = await verify(env, body.token)
+    if (!session) return json({ error: 'Bad token' }, 400)
+    if (step === 'answer') {
+      if (typeof body.sdp !== 'string' || body.sdp.length > MAX_SDP) return json({ error: 'Bad answer' }, 400)
+      await sfu(env, `/sessions/${session}/renegotiate`, 'PUT', { sessionDescription: { type: 'answer', sdp: body.sdp } })
+      return json({ ok: true })
+    }
+    if (step !== 'pull') return json({ error: 'Unknown step' }, 400)
+    // The share on stage, with its SFU session. Never sent to viewers.
+    const found = await stage.fetch('https://stage/screen-source')
+    if (!found.ok) return json(await found.json(), found.status)
+    const screen = await found.json()
+    const pulled = await sfu(env, `/sessions/${session}/tracks/new`, 'POST', {
+      tracks: screen.tracks.map(trackName => ({ location: 'remote', sessionId: screen.sfu, trackName })),
+    })
+    return json({ id: screen.id, sdp: pulled.sessionDescription.sdp })
+  }
+  catch (error) {
+    return json({ error: String(error.message ?? error) }, 502)
+  }
+}
+
+function sfuReady(env) {
+  return !!(env.REALTIME_APP_ID && env.REALTIME_APP_SECRET)
+}
+
+async function sfu(env, path, method, body) {
+  const res = await fetch(`${SFU}/${env.REALTIME_APP_ID}${path}`, {
+    method,
+    headers: { 'authorization': `Bearer ${env.REALTIME_APP_SECRET}`, 'content-type': 'application/json' },
+    body: body && JSON.stringify(body),
+    signal: AbortSignal.timeout(10_000),
+  })
+  const result = await res.json().catch(() => ({}))
+  const failed = result.errorCode || result.tracks?.find(t => t.errorCode)
+  if (!res.ok || failed) throw new Error(`SFU ${path.replace(/[\w-]{20,}/g, ':id')}: ${res.status} ${failed?.errorDescription ?? failed?.errorCode ?? ''}`.trim())
+  return result
+}
+
+async function sign(env, session) {
+  const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(env.REALTIME_APP_SECRET), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'])
+  const mac = new Uint8Array(await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(`watch:${session}`)))
+  return `${session}.${btoa(String.fromCharCode(...mac)).replace(/=+$/, '')}`
+}
+
+async function verify(env, token) {
+  if (typeof token !== 'string' || token.length > 300) return undefined
+  const dot = token.lastIndexOf('.')
+  const session = token.slice(0, dot)
+  if (dot < 1 || !/^[\w-]+$/.test(session)) return undefined
+  const a = new TextEncoder().encode(await sign(env, session))
+  const b = new TextEncoder().encode(token)
+  return a.length === b.length && crypto.subtle.timingSafeEqual(a, b) ? session : undefined
 }
 
 // The publisher sends the raw key. The Worker only stores its SHA-256, so the
@@ -105,10 +180,10 @@ export class LiveRoom extends DurableObject {
       case '/stop': return this.stop(url.searchParams)
       case '/build': return this.setBuild(url.searchParams)
       case '/screen': return this.screen(url.searchParams, request)
-      case '/watch': return this.watch(url.searchParams, request)
+      case '/screen-source': return this.screenSource()
       case '/status': {
         const { session, host, startedAt, stopped, retired = [] } = this.stage
-        return json({ ...this.public(), session, host, startedAt, stopped: !!stopped, connected: this.hasPublisher(), retired, screenReady: this.sfuReady() })
+        return json({ ...this.public(), session, host, startedAt, stopped: !!stopped, connected: this.hasPublisher(), retired, screenReady: sfuReady(this.env) })
       }
     }
   }
@@ -226,14 +301,14 @@ export class LiveRoom extends DurableObject {
       return json({ ok: true })
     }
     if (action !== 'publish') return json({ error: 'Unknown action' }, 400)
-    if (!this.sfuReady()) return json({ error: 'Screen sharing is not set up on the relay' }, 501)
+    if (!sfuReady(this.env)) return json({ error: 'Screen sharing is not set up on the relay' }, 501)
     const tracks = Array.isArray(body.tracks) ? body.tracks : []
     const valid = typeof body.sdp === 'string' && body.sdp.length <= MAX_SDP && tracks.length >= 1 && tracks.length <= 2
       && tracks.every(t => typeof t?.mid === 'string' && t.mid.length <= 16 && TRACK.test(t.trackName ?? ''))
     if (!valid) return json({ error: 'Bad share' }, 400)
     try {
-      const { sessionId } = await this.sfu('/sessions/new', 'POST')
-      const pushed = await this.sfu(`/sessions/${sessionId}/tracks/new`, 'POST', {
+      const { sessionId } = await sfu(this.env, '/sessions/new', 'POST')
+      const pushed = await sfu(this.env, `/sessions/${sessionId}/tracks/new`, 'POST', {
         sessionDescription: { type: 'offer', sdp: body.sdp },
         tracks: tracks.map(({ mid, trackName }) => ({ location: 'local', mid, trackName })),
       })
@@ -259,71 +334,15 @@ export class LiveRoom extends DurableObject {
     this.broadcast(JSON.stringify({ t: 'screen', screen: visible }))
   }
 
-  // A viewer pulls the share into an SFU session of its own: `/watch` returns
-  // the SFU's offer and a token for that session, and `/watch?step=answer`
-  // passes the viewer's answer on. The token is signed, so a viewer can only
-  // ever answer for a session made for it.
-  async watch(params, request) {
-    const body = await request.json().catch(() => ({}))
-    try {
-      if (params.get('step') === 'answer') {
-        const session = await this.verify(body.token)
-        if (!session || typeof body.sdp !== 'string' || body.sdp.length > MAX_SDP) return json({ error: 'Bad answer' }, 400)
-        await this.sfu(`/sessions/${session}/renegotiate`, 'PUT', { sessionDescription: { type: 'answer', sdp: body.sdp } })
-        return json({ ok: true })
-      }
-      const screen = this.stage.screen
-      if (!screen || this.snapshot.screen?.id !== screen.id || this.stage.stopped) return json({ error: 'No screen share' }, 409)
-      const minute = Math.floor(Date.now() / 60_000)
-      if (this.watches?.minute !== minute) this.watches = { minute, count: 0 }
-      if (++this.watches.count > MAX_WATCHES) return json({ error: 'Too many viewers joining' }, 503)
-      const { sessionId } = await this.sfu('/sessions/new', 'POST')
-      const pulled = await this.sfu(`/sessions/${sessionId}/tracks/new`, 'POST', {
-        tracks: screen.tracks.map(trackName => ({ location: 'remote', sessionId: screen.sfu, trackName })),
-      })
-      return json({ id: screen.id, token: await this.sign(sessionId), sdp: pulled.sessionDescription.sdp })
-    }
-    catch (error) {
-      return json({ error: String(error.message ?? error) }, 502)
-    }
-  }
-
-  sfuReady() {
-    return !!(this.env.REALTIME_APP_ID && this.env.REALTIME_APP_SECRET)
-  }
-
-  async sfu(path, method, body) {
-    const res = await fetch(`${SFU}/${this.env.REALTIME_APP_ID}${path}`, {
-      method,
-      headers: { 'authorization': `Bearer ${this.env.REALTIME_APP_SECRET}`, 'content-type': 'application/json' },
-      body: body && JSON.stringify(body),
-      signal: AbortSignal.timeout(10_000),
-    })
-    const result = await res.json().catch(() => ({}))
-    const failed = result.errorCode || result.tracks?.find(t => t.errorCode)
-    if (!res.ok || failed) throw new Error(`SFU ${path.replace(/[\w-]{20,}/g, ':id')}: ${res.status} ${failed?.errorDescription ?? failed?.errorCode ?? ''}`.trim())
-    return result
-  }
-
-  async hmac(text) {
-    const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(this.env.REALTIME_APP_SECRET), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'])
-    return new Uint8Array(await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(`watch:${text}`)))
-  }
-
-  async sign(session) {
-    const mac = await this.hmac(session)
-    return `${session}.${btoa(String.fromCharCode(...mac)).replace(/=+$/, '')}`
-  }
-
-  async verify(token) {
-    if (typeof token !== 'string' || token.length > 300) return undefined
-    const dot = token.lastIndexOf('.')
-    const session = token.slice(0, dot)
-    if (dot < 1 || !/^[\w-]+$/.test(session)) return undefined
-    const want = await this.sign(session)
-    const a = new TextEncoder().encode(want)
-    const b = new TextEncoder().encode(token)
-    return a.length === b.length && crypto.subtle.timingSafeEqual(a, b) ? session : undefined
+  // For the Worker's `/watch`: the share on stage, if any. Only the Worker
+  // can ask; it is not a public route.
+  screenSource() {
+    const screen = this.stage.screen
+    if (!screen || this.snapshot.screen?.id !== screen.id || this.stage.stopped) return json({ error: 'No screen share' }, 409)
+    const minute = Math.floor(Date.now() / 60_000)
+    if (this.watches?.minute !== minute) this.watches = { minute, count: 0 }
+    if (++this.watches.count > MAX_WATCHES) return json({ error: 'Too many viewers joining' }, 503)
+    return json(screen)
   }
 
   // Closes a publisher. The reason also goes as a message first: the closing

@@ -178,7 +178,7 @@ export function startFollower() {
     // means nothing here. While it is live, this page waits for the site to
     // have it.
     if (!current()) {
-      screen.show(undefined)
+      screen.active(false)
       status.live(false)
       status.switching(stageLive ? (onStage() ? 'build' : 'deck') : false)
       return
@@ -192,6 +192,7 @@ export function startFollower() {
         if (msg.cursor !== undefined) onSharedUpdate({ cursor: msg.cursor ?? undefined })
         if (msg.nav) follow(msg.nav)
         status.live(!!msg.live && !!msg.nav)
+        screen.active(!!msg.live)
         screen.show(msg.screen?.id)
         break
       case 'screen':
@@ -199,6 +200,7 @@ export function startFollower() {
         break
       case 'live':
         status.live(!!msg.on && !!target)
+        screen.active(!!msg.on)
         break
       case 'nav':
         if (!msg.nav) return
