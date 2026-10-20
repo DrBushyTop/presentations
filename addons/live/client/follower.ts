@@ -30,8 +30,8 @@ interface Message {
 const SITE_POLL = 10_000
 const RELOAD_GUARD = 'slidev-live-reloaded'
 // The relay answers every ping. Silence this long means a dead connection.
-const PING_INTERVAL = 20_000
-const PING_DEADLINE = 45_000
+const PING_INTERVAL = 10_000
+const PING_DEADLINE = 35_000
 
 // Timestamps for scripts/live-latency.mjs. Bounded, so it costs nothing.
 interface Trace { ts?: number, recv: number, page: number, clicks: number, painted?: number }
@@ -121,10 +121,16 @@ export function startFollower() {
   }
 
   // A reload starts clean: right for a new deck, a new build, or a new talk.
+  // At most one a minute, in case the site serves an older page; a reload
+  // held back by that runs once the minute is up.
+  let pendingReload: ReturnType<typeof setTimeout> | undefined
   function reload() {
-    const last = Number(sessionStorage.getItem(RELOAD_GUARD) ?? 0)
-    // At most one reload a minute, in case the site serves an older page.
-    if (Date.now() - last < 60_000) return false
+    const wait = Number(sessionStorage.getItem(RELOAD_GUARD) ?? 0) + 60_000 - Date.now()
+    if (wait > 0) {
+      clearTimeout(pendingReload)
+      pendingReload = setTimeout(reload, wait)
+      return false
+    }
     sessionStorage.setItem(RELOAD_GUARD, String(Date.now()))
     location.reload()
     return true
@@ -152,17 +158,22 @@ export function startFollower() {
       // interactive state by starting over.
       const restarted = stage.since !== undefined && msg.since !== stage.since && msg.deck === __SLIDEV_LIVE_DECK__
       stage = { deck: msg.deck, build: msg.build, since: msg.since }
-      if (restarted && reload()) return
+      if (restarted) {
+        if (reload()) return
+        // Until the reload runs, at least late-mounting slides get no old state.
+        synced.clear()
+      }
     }
     if (msg.t === 'snapshot' || msg.t === 'live') {
       stageLive = msg.t === 'snapshot' ? !!msg.live : !!msg.on
       waitForSite()
     }
-    // Another deck's slides mean nothing here. While it is live, this page
-    // waits for the site to have it.
-    if (!onStage()) {
+    // Another deck, or another build of this one (slide numbers can differ),
+    // means nothing here. While it is live, this page waits for the site to
+    // have it.
+    if (!current()) {
       status.live(false)
-      status.switching(stageLive)
+      status.switching(stageLive ? (onStage() ? 'build' : 'deck') : false)
       return
     }
     status.switching(false)
@@ -206,21 +217,39 @@ export function startFollower() {
   let retry = 500
   let reconnect: ReturnType<typeof setTimeout> | undefined
   let lastSeen = 0
+  let retireCurrent = () => {}
 
   function connect() {
     clearTimeout(reconnect)
     const socket = new WebSocket(url)
     ws = socket
     let ping: ReturnType<typeof setInterval> | undefined
+    // Drops this socket without waiting for its closing handshake, which can
+    // take minutes on a dead network, and connects again.
+    const retire = () => {
+      clearInterval(ping)
+      if (ws !== socket) return
+      ws = undefined
+      socket.onclose = null
+      try {
+        socket.close()
+      }
+      catch {}
+      status.connecting()
+      // Jitter, so a relay restart does not bring every viewer back at once.
+      reconnect = setTimeout(connect, retry * (0.5 + Math.random()))
+      retry = Math.min(retry * 2, 10_000)
+    }
     socket.onopen = () => {
       retry = 500
       lastSeen = Date.now()
       ping = setInterval(() => {
-        if (Date.now() - lastSeen > PING_DEADLINE) return socket.close()
+        if (Date.now() - lastSeen > PING_DEADLINE) return retire()
         if (socket.readyState === WebSocket.OPEN) socket.send('ping')
       }, PING_INTERVAL)
     }
     socket.onmessage = (event) => {
+      if (ws !== socket) return
       lastSeen = Date.now()
       if (event.data === 'pong') return
       try {
@@ -230,14 +259,10 @@ export function startFollower() {
         console.error('[live] bad message', error)
       }
     }
-    socket.onclose = () => {
-      clearInterval(ping)
-      if (ws !== socket) return
-      ws = undefined
-      status.connecting()
-      // Jitter, so a relay restart does not bring every viewer back at once.
-      reconnect = setTimeout(connect, retry * (0.5 + Math.random()))
-      retry = Math.min(retry * 2, 10_000)
+    socket.onclose = retire
+    retireCurrent = () => {
+      retry = 500
+      retire()
     }
   }
 
@@ -246,22 +271,19 @@ export function startFollower() {
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState !== 'visible') return
     const socket = ws
-    if (socket?.readyState !== WebSocket.OPEN) {
-      if (socket?.readyState !== WebSocket.CONNECTING) {
-        retry = 500
-        connect()
-      }
+    // Waiting to reconnect: do it now.
+    if (!socket) {
+      retry = 500
+      return connect()
+    }
+    if (socket.readyState !== WebSocket.OPEN) {
+      if (socket.readyState !== WebSocket.CONNECTING) retireCurrent()
       return
     }
     const asked = Date.now()
     socket.send('ping')
     setTimeout(() => {
-      if (ws === socket && lastSeen < asked) {
-        ws = undefined
-        socket.close()
-        retry = 500
-        connect()
-      }
+      if (ws === socket && lastSeen < asked) retireCurrent()
     }, 3000)
   })
 

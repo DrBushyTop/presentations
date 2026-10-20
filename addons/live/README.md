@@ -23,12 +23,18 @@ command prints the audience URL.
   a deck, on either machine, takes the site over from whatever was live. A dev
   server left running somewhere stops publishing and says so in its terminal.
   It cannot take the site back, even when its network returns. Run
-  `npm run live` there again if you do want it back.
-- **The site follows.** If the site holds another deck, or an older version
-  of this one, `npm run live` updates it in the background while you present
-  (log in `dist/live/<deck>/deploy.log`). Viewers see "The next talk is
-  starting" and reload by themselves when it is up, in a minute or two.
-  `--deploy` forces an update; `--no-deploy` skips it.
+  `npm run live` there again if you do want it back. A dev server that cannot
+  reach the relay in its first two minutes does not go live at all; start it
+  again once the network is up.
+- **The site follows.** While your talk holds the stage, `npm run live` keeps
+  the site on this version of the deck. It deploys in the background when the
+  site has another deck or an older build, whoever put it there (log in
+  `dist/live/<deck>/deploy.log`). Viewers see "The next talk is starting" or
+  "Updating the slides" and reload by themselves when it is up, in a minute or
+  two. If a deploy fails, viewers follow the version of the deck already on
+  the site, and it retries after 5 minutes. A replaced dev server abandons its
+  own upload. `--deploy` forces an update; `--no-deploy` skips it, and viewers
+  follow the version on the site.
 - **Ctrl+C** ends the talk: viewers see "This talk isn't live right now". On a
   dev server that was already replaced, it leaves the new talk alone.
 - **A crash** keeps viewers on the last slide with a "Presenter reconnecting…"
@@ -98,18 +104,22 @@ presenter tab ──► dev server ──wss──► Cloudflare Worker + Durabl
   publisher sends that faster report first and reconciles with Slidev's state
   800 ms later.
 - **Relay** (`live/relay`). A Worker with one Durable Object, the stage. Each
-  `npm run live` is a session. A session's first connection takes the stage
-  and starts it clean; its reconnects only resume it, and only its newest
-  connection may write. Ordering is by arrival at the relay, so the machines'
-  clocks do not matter. The stage keeps the latest state for late joiners and
-  survives hibernation by storing it. Viewers are read-only: any message from
-  them closes their socket.
+  `npm run live` is a session. Until its first connection opens, within two
+  minutes of starting, a session claims the stage, which starts it clean;
+  afterwards it only resumes. The stage remembers replaced sessions and never
+  takes them back, and only a session's newest connection may write. Ordering
+  is by arrival at the relay, so the machines' clocks do not matter. The stage
+  also holds the build viewers should run, which `npm run live` sets. It keeps
+  the latest state for late joiners and survives hibernation by storing it.
+  Viewers are read-only: any message from them closes their socket.
 - **Viewer** (`client/follower.ts`). Feeds the relay's messages into Slidev's
   own shared state, so slides, clicks and transitions behave like a local
   follower window. A router guard rejects every navigation the presenter did
-  not make (swipes, links, keys), and shortcuts are locked. When the stage
-  shows another deck, a newer build or a new talk, the page reloads once the
-  site has it.
+  not make (swipes, links, keys), and shortcuts are locked. It only follows
+  the deck and build it was built from, since slide numbers can differ
+  between builds. When the stage shows another deck, another build or a new
+  talk, the page reloads once the site has it. A heartbeat replaces a socket
+  that went quiet.
 - **Interactive state**. Components that keep state with `useSynced` in
   `no-slop-deck/lib/sync.ts` use the `slidev-live-sync` BroadcastChannel. The
   dev tabs forward that channel to the dev server, which keeps each tab's
@@ -122,9 +132,10 @@ presenter tab ──► dev server ──wss──► Cloudflare Worker + Durabl
   The Worker only stores its SHA-256 (`wrangler secret`). Nothing secret is in
   the repo or the viewer bundle.
 - While live, the dev server only accepts changes (any request other than
-  GET, and MCP) from loopback and Tailscale, unless `--trust-lan`. The live
-  routes (`/__slidev-live/*`) also need a custom header that blocks cross-site
-  posts.
+  GET, plus MCP, open-in-editor and inspect) from loopback and Tailscale,
+  unless `--trust-lan`, and only from its own pages: a page from another site
+  open in the presenter's browser cannot post to it. The live routes
+  (`/__slidev-live/*`) also need a custom header.
 - Viewers keep only plain SVG shapes from drawings, so markup cannot run
   script on their devices. The relay checks the shape and size of everything
   it stores, and caps viewers at 2,000.

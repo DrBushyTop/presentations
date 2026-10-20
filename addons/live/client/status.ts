@@ -2,7 +2,10 @@
 // a small notice, so the audience keeps the current slide.
 const CONNECTING = 'Connecting to the live talk…'
 const OFFLINE = 'This talk isn\'t live right now. This page follows the slides when it starts.'
-const SWITCHING = 'The next talk is starting. This page updates as soon as it\'s ready.'
+const SWITCHING = {
+  deck: 'The next talk is starting. This page updates as soon as it\'s ready.',
+  build: 'Updating the slides. This page reloads in a moment.',
+}
 
 export function createStatus() {
   const cover = document.createElement('div')
@@ -14,11 +17,11 @@ export function createStatus() {
   let live = false
   let connected = false
   let presenter = true
-  let switching = false
+  let switching: keyof typeof SWITCHING | false = false
 
   function render() {
     cover.hidden = live && !switching
-    cover.textContent = switching ? SWITCHING : connected ? OFFLINE : CONNECTING
+    cover.textContent = switching ? SWITCHING[switching] : connected ? OFFLINE : CONNECTING
     const notice = !connected ? 'Reconnecting…' : !presenter ? 'Presenter reconnecting…' : ''
     pill.hidden = !live || switching || !notice
     pill.textContent = notice
@@ -36,9 +39,9 @@ export function createStatus() {
       live = on
       render()
     },
-    switching(on: boolean) {
+    switching(kind: keyof typeof SWITCHING | false) {
       connected = true
-      switching = on
+      switching = kind
       render()
     },
     presenter(on: boolean) {

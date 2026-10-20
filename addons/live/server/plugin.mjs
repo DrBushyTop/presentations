@@ -42,10 +42,30 @@ function trustedAddress(raw = '') {
     || /^f[cd]/.test(ip) || ip.startsWith('fe80:')
 }
 
+// Dev tooling that acts on the presenter's machine, whatever the method.
+const PRIVILEGED = ['/__mcp', '/__open-in-editor', '/__inspect']
+
+// A page from another site in the presenter's own browser can still post to
+// localhost. Browsers say where a request comes from; tools like curl say
+// nothing and are judged by address alone.
+function crossSite(req) {
+  const site = req.headers['sec-fetch-site']
+  if (site && site !== 'same-origin' && site !== 'none') return true
+  const origin = req.headers.origin
+  if (!origin) return false
+  try {
+    return new URL(origin).host !== req.headers.host
+  }
+  catch {
+    return true
+  }
+}
+
 // Slidev's dev server accepts state changes from anyone who can reach it:
 // slide position and drawings (/@server-ref/), slide edits (/__slidev/) and
-// MCP. While live, those reach every viewer, so only trusted addresses may
-// change anything. Reading (the play view) stays open.
+// MCP. While live, those reach every viewer, so only trusted addresses, from
+// the dev server's own pages, may change anything. Reading (the play view)
+// stays open.
 export function liveGuardPlugin() {
   return {
     name: 'slidev-addon-live:guard',
@@ -54,8 +74,10 @@ export function liveGuardPlugin() {
       if (!publishing) return
       // Registered before Slidev's own middlewares (enforce: 'pre').
       server.middlewares.use((req, res, next) => {
-        const write = !['GET', 'HEAD', 'OPTIONS'].includes(req.method ?? 'GET') || req.url?.startsWith('/__mcp')
-        if (!write || trustedAddress(req.socket.remoteAddress)) return next()
+        const path = (req.url ?? '').split('?')[0]
+        const privileged = PRIVILEGED.some(p => path === p || path.startsWith(`${p}/`))
+        if (!privileged && ['GET', 'HEAD', 'OPTIONS'].includes(req.method ?? 'GET')) return next()
+        if (trustedAddress(req.socket.remoteAddress) && !crossSite(req)) return next()
         res.statusCode = 403
         res.end('Read-only while live. Use localhost or Tailscale, or start with --trust-lan.')
       })

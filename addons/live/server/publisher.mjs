@@ -8,13 +8,17 @@ const HINT_WINDOW = 800
 // The relay answers every ping. Silence this long means a dead connection.
 const PING_INTERVAL = 10_000
 const PING_DEADLINE = 25_000
+// How long after starting this server may claim the stage. A server that
+// has not reached the relay by then is probably forgotten, and only resumes.
+const CLAIM_WINDOW = 120_000
 
-// The relay shows one talk at a time. The first connection of a session takes
-// the stage; later ones only resume it, so a server that was replaced cannot
-// take the stage back.
+// The relay shows one talk at a time. Until its first connection opens, and
+// only within CLAIM_WINDOW of starting, this server claims the stage; after
+// that it only resumes. The relay never lets a replaced session back in.
 export function createPublisher({ relay, deck, key, session, build = '', host = '', log = console }) {
   const base = `${relay.replace(/\/$/, '')}/publish?${new URLSearchParams({ session, deck, build, host })}`
-  let resume = false
+  const created = performance.now()
+  let opened = false
   const last = { nav: undefined, cursor: undefined, drawings: undefined, synced: {} }
   let ws
   let retry = 500
@@ -23,11 +27,12 @@ export function createPublisher({ relay, deck, key, session, build = '', host = 
   let lastSeen = 0
 
   function connect() {
-    const socket = new WebSocket(resume ? `${base}&resume=1` : base, { headers: { authorization: `Bearer ${key}` } })
+    const claim = !opened && performance.now() - created < CLAIM_WINDOW
+    const socket = new WebSocket(claim ? `${base}&claim=1` : base, { headers: { authorization: `Bearer ${key}` } })
     ws = socket
     socket.addEventListener('open', () => {
-      log.info(resume ? '[live] reconnected to the relay' : `[live] publishing ${deck} to ${relay}`)
-      resume = true
+      log.info(opened ? '[live] reconnected to the relay' : `[live] publishing ${deck} to ${relay}`)
+      opened = true
       retry = 500
       send({ t: 'live', on: true })
       // A reconnect may have missed changes, so resend everything.
@@ -68,7 +73,11 @@ export function createPublisher({ relay, deck, key, session, build = '', host = 
     if (stopped) return
     if (code === 4000) {
       stopped = true
-      const why = reason === 'Stopped' ? 'The talk was stopped' : (reason || 'Another presentation took over')
+      const why = reason === 'Stopped'
+        ? 'The talk was stopped'
+        : reason === 'Not on stage'
+          ? 'The relay was out of reach for the first minutes after starting'
+          : (reason || 'Another presentation took over')
       log.warn(`[live] ${why}. This dev server no longer publishes to the live site.`)
       log.warn('[live] Run `npm run live` again to take the live site back.')
       return

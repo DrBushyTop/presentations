@@ -4,9 +4,11 @@ import { DurableObject } from 'cloudflare:workers'
 // dev server publishes over /publish and every viewer reads over /viewer.
 // Viewers can never write: any message from them closes their socket.
 //
-// The latest presentation started wins: a session's first connection takes
-// the stage. A dev server that was forgotten somewhere cannot take it back by
-// reconnecting, since a reconnect only resumes the session on stage.
+// The latest presentation started wins. A publisher may claim the stage only
+// in the first minutes after it starts; after that it can only resume. A
+// session that was replaced is remembered and never gets the stage back, so
+// a dev server forgotten somewhere cannot retake it, not even by retrying a
+// claim whose answer it never saw.
 
 const DECK = /^[a-z0-9-]{1,40}$/
 const SESSION = /^[\w-]{8,64}$/
@@ -18,18 +20,20 @@ const MAX_SYNCED = 256 * 1024
 const MAX_SYNCED_KEYS = 200
 // A talk has about 200 viewers. The cap keeps a flood of sockets bounded.
 const MAX_VIEWERS = 2000
+// Replaced sessions remembered, newest first.
+const MAX_RETIRED = 100
 
 export default {
   async fetch(request, env) {
     const url = new URL(request.url)
     const route = url.pathname
-    if (!['/viewer', '/publish', '/stop', '/status'].includes(route))
+    if (!['/viewer', '/publish', '/stop', '/status', '/build'].includes(route))
       return new Response('Not found', { status: 404 })
     if (route !== '/viewer' && !(await authorized(request, env)))
       return new Response('Forbidden', { status: 403 })
     if (['/viewer', '/publish'].includes(route) && request.headers.get('Upgrade')?.toLowerCase() !== 'websocket')
       return new Response('Expected a WebSocket upgrade', { status: 426 })
-    if (route === '/stop' && request.method !== 'POST')
+    if (['/stop', '/build'].includes(route) && request.method !== 'POST')
       return new Response('Method not allowed', { status: 405 })
     return env.ROOM.get(env.ROOM.idFromName('stage')).fetch(request)
   },
@@ -74,9 +78,10 @@ export class LiveRoom extends DurableObject {
       case '/viewer': return this.viewer()
       case '/publish': return this.publish(url.searchParams)
       case '/stop': return this.stop(url.searchParams)
+      case '/build': return this.setBuild(url.searchParams)
       case '/status': {
-        const { session, host, startedAt, stopped } = this.stage
-        return json({ ...this.public(), session, host, startedAt, stopped: !!stopped, connected: this.hasPublisher() })
+        const { session, host, startedAt, stopped, retired = [] } = this.stage
+        return json({ ...this.public(), session, host, startedAt, stopped: !!stopped, connected: this.hasPublisher(), retired })
       }
     }
   }
@@ -93,18 +98,22 @@ export class LiveRoom extends DurableObject {
   publish(params) {
     const session = params.get('session') ?? ''
     const deck = params.get('deck') ?? ''
-    const resume = params.get('resume') === '1'
+    const claim = params.get('claim') === '1'
     if (!SESSION.test(session) || !DECK.test(deck))
       return new Response('Bad publisher', { status: 400 })
 
     const { 0: client, 1: server } = new WebSocketPair()
     const stage = this.stage
     const current = session === stage.session
-    // A stopped session, or a replaced one reconnecting: tell it why and
-    // close it. Ordering by arrival, not by the publishers' clocks.
-    if (current ? stage.stopped : resume) {
+    // Refused: a stopped session, a replaced one, or a resume of a session
+    // that never held the stage. Tell it why and close it.
+    const refusal = current
+      ? stage.stopped && 'Stopped'
+      : (!claim || stage.retired?.includes(session))
+          && (stage.session ? `Taken over by ${stage.deck} on ${stage.host}` : 'Not on stage')
+    if (refusal) {
       this.ctx.acceptWebSocket(server, ['refused'])
-      this.dismiss(server, 4000, current ? 'Stopped' : `Taken over by ${stage.deck} on ${stage.host}`)
+      this.dismiss(server, 4000, refusal)
       return new Response(null, { status: 101, webSocket: client })
     }
     if (!current) {
@@ -133,7 +142,8 @@ export class LiveRoom extends DurableObject {
     // A new talk starts clean: the old one's slide, drawings and interactive
     // state do not apply, even for the same deck.
     this.snapshot = { live: false, synced: {} }
-    this.stage = next
+    const retired = [this.stage.session, ...(this.stage.retired ?? [])].filter(Boolean).slice(0, MAX_RETIRED)
+    this.stage = { ...next, retired }
     this.save('stage', 'snapshot')
     // Viewers start over from the new stage: a viewer on another deck reloads.
     this.broadcast(JSON.stringify({ t: 'snapshot', ...this.public() }))
@@ -155,6 +165,17 @@ export class LiveRoom extends DurableObject {
     for (const ws of this.ctx.getWebSockets('publisher')) this.dismiss(ws, 4000, 'Stopped')
     this.broadcast(JSON.stringify({ t: 'live', on: false }))
     return json({ stopped: true, deck: stage.deck, host: stage.host })
+  }
+
+  // The build viewers should run. `npm run live` sets it once the site has
+  // its build, or falls back to the build the site already has.
+  setBuild(params) {
+    const stage = this.stage
+    if (params.get('session') !== stage.session || stage.stopped) return json({ ok: false }, 409)
+    stage.build = (params.get('build') ?? '').slice(0, 40)
+    this.save('stage')
+    this.broadcast(JSON.stringify({ t: 'snapshot', ...this.public() }))
+    return json({ ok: true })
   }
 
   // Closes a publisher. The reason also goes as a message first: the closing

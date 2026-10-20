@@ -254,13 +254,12 @@ async function deployViewer(deck) {
   const build = process.env.SLIDEV_LIVE_BUILD || buildId(deck)
   buildViewer(deck, build)
   if (flag('build-only')) return console.log(`\nBuilt ${siteDir(deck)}`)
-  // Started by `npm run live`: if a newer presentation took over meanwhile,
-  // leave the site to it.
+  // Started by `npm run live`: upload only while that presentation holds the
+  // stage. If that cannot be confirmed, do not upload; it retries later.
   const session = process.env.SLIDEV_LIVE_SESSION
-  if (session) {
-    const stage = await relayStatus(publishKey())
-    if (stage?.session && stage.session !== session)
-      return console.log(`\nNot uploading: ${stage.deck} on ${stage.host} is live now.`)
+  if (session && !(await holdsStage(session, publishKey()))) {
+    console.log('\nNot uploading: this presentation does not hold the live site.')
+    process.exit(3)
   }
   requireAz()
   const token = az('staticwebapp', 'secrets', 'list', '-n', azure.staticWebApp, '-g', azure.resourceGroup, '--query', 'properties.apiKey')
@@ -274,6 +273,21 @@ async function deployViewer(deck) {
     env: { ...process.env, SWA_CLI_DEPLOYMENT_TOKEN: token },
   })
   console.log(`\nViewer: ${viewerUrl()}`)
+}
+
+const sleep = ms => new Promise(done => setTimeout(done, ms))
+
+// Waits for the dev server to claim the stage (it does as it starts), up to
+// two minutes. False once it was replaced or stopped, or the relay is out of
+// reach.
+async function holdsStage(session, key) {
+  for (let i = 0; i < 24; i++) {
+    const stage = await relayStatus(key)
+    if (stage?.session === session) return !stage.stopped
+    if (stage?.retired?.includes(session)) return false
+    await sleep(5000)
+  }
+  return false
 }
 
 // Ends the talk for viewers. With a session, only if that presentation is
@@ -290,21 +304,108 @@ async function stopTalk(key, params) {
 
 // Builds and uploads the viewer next to the dev server, so presenting starts
 // right away. Output goes to a log file, not over the dev server's.
-function deployInBackground(deck, env) {
+function deployInBackground(deck, env, onExit) {
   mkdirSync(liveDir(deck), { recursive: true })
   const logPath = join(liveDir(deck), 'deploy.log')
   const log = createWriteStream(logPath)
+  // Its own process group, so stopping it also stops the upload it runs.
   const child = spawn(process.execPath, [fileURLToPath(import.meta.url), 'deploy', '--deck', deck.name], {
     stdio: ['ignore', 'pipe', 'pipe'],
     env,
+    detached: true,
   })
+  child.stop = () => {
+    try {
+      process.kill(-child.pid, 'SIGTERM')
+    }
+    catch {}
+  }
   child.stdout.pipe(log)
   child.stderr.pipe(log)
   child.on('exit', (code) => {
-    if (code === 0) console.log(`\n[live] The site now shows ${deck.name}. Viewers reload to it.`)
-    else if (code !== null) console.error(`\n[live] Updating the site failed (${code}). See ${logPath}`)
+    if (code === 0) console.log(`\n[live] The site now shows this version of ${deck.name}. Viewers reload to it.`)
+    else if (code !== null && code !== 3) console.error(`\n[live] Updating the site failed (${code}). See ${logPath}`)
+    onExit(code)
   })
-  return logPath
+  console.log(`\n[live] Updating the site to this version of ${deck.name} in the background (log: ${logPath}).`)
+  console.log('[live] Viewers switch over by themselves when it is up, in a minute or two.')
+  return child
+}
+
+// Keeps the site in step with this presentation for as long as it holds the
+// stage: deploys when the site has another deck or build (whoever uploaded
+// it, and whenever), and tells the relay which build viewers should run.
+// Stops, and abandons its own upload, once another presentation takes over.
+function keepSiteInStep({ deck, build, viewerBuild, session, key, env, noDeploy, force }) {
+  let held = false
+  let done = false
+  let busy = false
+  let deploying
+  let retryAt = 0
+
+  async function setViewerBuild(next) {
+    if (next === viewerBuild) return
+    try {
+      await relayCall('/build', key, { session, build: next }, 'POST')
+      viewerBuild = next
+    }
+    catch {}
+  }
+
+  async function check() {
+    if (done || busy) return
+    busy = true
+    try {
+      const stage = await relayStatus(key)
+      if (!stage) return
+      const holds = stage.session === session && !stage.stopped
+      if (holds) held = true
+      if (!holds && (held || stage.session === session || stage.retired?.includes(session))) {
+        done = true
+        deploying?.stop()
+        return
+      }
+      // Only the presentation on stage touches the site. Until the dev
+      // server's claim arrives, wait.
+      if (!holds || deploying || Date.now() < retryAt) return
+      const site = await siteInfo()
+      if (!site) return
+      if (site.deck === deck.name && site.build === build && !force) {
+        if (held) await setViewerBuild(build)
+        return
+      }
+      // Without a deploy, viewers follow whatever version of this deck the
+      // site has.
+      if (noDeploy) {
+        if (held && site.deck === deck.name) await setViewerBuild(site.build)
+        return
+      }
+      force = false
+      deploying = deployInBackground(deck, env, async (code) => {
+        deploying = undefined
+        if (code !== 0 && !done) {
+          retryAt = Date.now() + 5 * 60_000
+          const now = await siteInfo()
+          if (now?.deck === deck.name && now.build !== viewerBuild) {
+            await setViewerBuild(now.build)
+            console.error('[live] Viewers follow the version of the slides already on the site. Retrying in 5 minutes.')
+          }
+        }
+        check()
+      })
+    }
+    finally {
+      busy = false
+    }
+  }
+
+  check()
+  const timer = setInterval(check, 10_000)
+  return () => {
+    done = true
+    clearInterval(timer)
+    deploying?.stop()
+  }
 }
 
 async function start(deck) {
@@ -319,28 +420,33 @@ async function start(deck) {
   if (stage?.deck && !stage.stopped && (stage.connected || stage.live))
     console.log(`\nTaking over the live site from ${stage.deck} on ${stage.host}.`)
 
+  // With --no-deploy, viewers run the version of this deck the site has.
+  const noDeploy = flag('no-deploy')
+  const viewerBuild = noDeploy && site?.deck === deck.name ? site.build : build
+  if (noDeploy && site?.deck && site.deck !== deck.name)
+    console.warn(`\nThe site shows ${site.deck}, not ${deck.name}. Viewers wait until it is deployed.`)
+
   const env = {
     ...process.env,
     SLIDEV_LIVE_RELAY: relay,
     SLIDEV_LIVE_DECK: deck.name,
     SLIDEV_LIVE_KEY: key,
     SLIDEV_LIVE_SESSION: session,
-    SLIDEV_LIVE_BUILD: build,
+    SLIDEV_LIVE_BUILD: viewerBuild,
     // While live, only localhost and Tailscale may change the deck (phone
     // remote included). --trust-lan also lets the local network in.
     ...(flag('trust-lan') ? { SLIDEV_LIVE_TRUST_LAN: '1' } : {}),
   }
-
-  const stale = site?.deck !== deck.name || site?.build !== build
-  if (flag('no-deploy')) {
-    if (site?.deck && site.deck !== deck.name)
-      console.warn(`\nThe site shows ${site.deck}, not ${deck.name}. Viewers wait until it is deployed.`)
-  }
-  else if (stale || flag('deploy')) {
-    const log = deployInBackground(deck, env)
-    console.log(`\nUpdating the site to this version of ${deck.name} in the background (log: ${log}).`)
-    console.log('Viewers switch over by themselves when it is up, in a minute or two.')
-  }
+  const stopSync = keepSiteInStep({
+    deck,
+    build,
+    viewerBuild,
+    session,
+    key,
+    env: { ...env, SLIDEV_LIVE_BUILD: build },
+    noDeploy,
+    force: flag('deploy'),
+  })
 
   console.log(`\nLive: viewers follow this dev server through ${relay}`)
   if (url) console.log(`Audience URL: ${url}`)
@@ -352,6 +458,7 @@ async function start(deck) {
 
   const child = spawn('npm', ['run', `start:${deck.name}`], { stdio: 'inherit', env })
   child.on('exit', async (code, signal) => {
+    stopSync()
     if (interrupted || signal === 'SIGINT' || signal === 'SIGTERM') {
       const result = await stopTalk(key, { session })
       if (result?.stopped) console.log('\nThe talk is no longer live for viewers.')
