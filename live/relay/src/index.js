@@ -22,20 +22,45 @@ const MAX_SYNCED_KEYS = 200
 const MAX_VIEWERS = 2000
 // Replaced sessions remembered, newest first.
 const MAX_RETIRED = 100
+// Screen sharing goes through Cloudflare Realtime: the presenter's browser
+// pushes the screen to an SFU session, and each viewer pulls it into its own.
+const SFU = 'https://rtc.live.cloudflare.com/v1/apps'
+const TRACK = /^[\w-]{1,32}$/
+const MAX_SDP = 64 * 1024
+// Viewers joining a share per minute. A whole audience joins in a few seconds.
+const MAX_WATCHES = 1000
+
+const ROUTES = ['/viewer', '/publish', '/stop', '/status', '/build', '/screen', '/watch']
+// Open to anyone. Everything else needs the publish key.
+const PUBLIC = ['/viewer', '/watch']
+const POST = ['/stop', '/build', '/screen', '/watch']
+// The viewer page is on another origin.
+const CORS = {
+  'access-control-allow-origin': '*',
+  'access-control-allow-methods': 'POST',
+  'access-control-allow-headers': 'content-type',
+  'access-control-max-age': '86400',
+}
 
 export default {
   async fetch(request, env) {
     const url = new URL(request.url)
     const route = url.pathname
-    if (!['/viewer', '/publish', '/stop', '/status', '/build'].includes(route))
+    if (!ROUTES.includes(route))
       return new Response('Not found', { status: 404 })
-    if (route !== '/viewer' && !(await authorized(request, env)))
+    if (route === '/watch' && request.method === 'OPTIONS')
+      return new Response(null, { status: 204, headers: CORS })
+    if (!PUBLIC.includes(route) && !(await authorized(request, env)))
       return new Response('Forbidden', { status: 403 })
     if (['/viewer', '/publish'].includes(route) && request.headers.get('Upgrade')?.toLowerCase() !== 'websocket')
       return new Response('Expected a WebSocket upgrade', { status: 426 })
-    if (['/stop', '/build'].includes(route) && request.method !== 'POST')
+    if (POST.includes(route) && request.method !== 'POST')
       return new Response('Method not allowed', { status: 405 })
-    return env.ROOM.get(env.ROOM.idFromName('stage')).fetch(request)
+    const response = await env.ROOM.get(env.ROOM.idFromName('stage')).fetch(request)
+    if (route !== '/watch') return response
+    const withCors = new Response(response.body, response)
+    for (const [name, value] of Object.entries(CORS)) withCors.headers.set(name, value)
+    return withCors
   },
 }
 
@@ -79,9 +104,11 @@ export class LiveRoom extends DurableObject {
       case '/publish': return this.publish(url.searchParams)
       case '/stop': return this.stop(url.searchParams)
       case '/build': return this.setBuild(url.searchParams)
+      case '/screen': return this.screen(url.searchParams, request)
+      case '/watch': return this.watch(url.searchParams, request)
       case '/status': {
         const { session, host, startedAt, stopped, retired = [] } = this.stage
-        return json({ ...this.public(), session, host, startedAt, stopped: !!stopped, connected: this.hasPublisher(), retired })
+        return json({ ...this.public(), session, host, startedAt, stopped: !!stopped, connected: this.hasPublisher(), retired, screenReady: this.sfuReady() })
       }
     }
   }
@@ -161,6 +188,7 @@ export class LiveRoom extends DurableObject {
     if (!match) return json({ stopped: false, ...this.public(), host: stage.host })
     stage.stopped = true
     this.snapshot.live = false
+    this.setScreen(undefined)
     this.save('stage', 'snapshot')
     for (const ws of this.ctx.getWebSockets('publisher')) this.dismiss(ws, 4000, 'Stopped')
     this.broadcast(JSON.stringify({ t: 'live', on: false }))
@@ -176,6 +204,126 @@ export class LiveRoom extends DurableObject {
     this.save('stage')
     this.broadcast(JSON.stringify({ t: 'snapshot', ...this.public() }))
     return json({ ok: true })
+  }
+
+  // The presenter's screen share, in three steps from its dev server:
+  // `publish` pushes the browser's tracks to a new SFU session and answers its
+  // offer; `on` shows it to viewers once the browser is connected; `off` ends
+  // it. The SFU session stays here: a viewer who knew it could renegotiate it.
+  async screen(params, request) {
+    const stage = this.stage
+    if (params.get('session') !== stage.session || stage.stopped) return json({ error: 'Not on stage' }, 409)
+    const action = params.get('action')
+    const body = await request.json().catch(() => ({}))
+    // A tab ends only its own share, not a newer one from another tab.
+    if (action === 'off') {
+      if (stage.screen && body.id === stage.screen.id) this.setScreen(undefined)
+      return json({ ok: true })
+    }
+    if (action === 'on') {
+      if (!stage.screen || body.id !== stage.screen.id) return json({ error: 'Not this share' }, 409)
+      this.setScreen(stage.screen)
+      return json({ ok: true })
+    }
+    if (action !== 'publish') return json({ error: 'Unknown action' }, 400)
+    if (!this.sfuReady()) return json({ error: 'Screen sharing is not set up on the relay' }, 501)
+    const tracks = Array.isArray(body.tracks) ? body.tracks : []
+    const valid = typeof body.sdp === 'string' && body.sdp.length <= MAX_SDP && tracks.length >= 1 && tracks.length <= 2
+      && tracks.every(t => typeof t?.mid === 'string' && t.mid.length <= 16 && TRACK.test(t.trackName ?? ''))
+    if (!valid) return json({ error: 'Bad share' }, 400)
+    try {
+      const { sessionId } = await this.sfu('/sessions/new', 'POST')
+      const pushed = await this.sfu(`/sessions/${sessionId}/tracks/new`, 'POST', {
+        sessionDescription: { type: 'offer', sdp: body.sdp },
+        tracks: tracks.map(({ mid, trackName }) => ({ location: 'local', mid, trackName })),
+      })
+      // The session can have changed while the SFU answered.
+      if (params.get('session') !== this.stage.session || this.stage.stopped) return json({ error: 'Not on stage' }, 409)
+      const id = crypto.randomUUID()
+      this.stage.screen = { id, sfu: sessionId, tracks: tracks.map(t => t.trackName) }
+      this.save('stage')
+      return json({ id, sdp: pushed.sessionDescription.sdp })
+    }
+    catch (error) {
+      return json({ error: String(error.message ?? error) }, 502)
+    }
+  }
+
+  // Shows a share to viewers, or ends it (undefined).
+  setScreen(screen) {
+    const visible = screen ? { id: screen.id } : null
+    if (!screen) delete this.stage.screen
+    if ((this.snapshot.screen?.id ?? null) === (visible?.id ?? null)) return
+    this.snapshot.screen = visible
+    this.save('stage', 'snapshot')
+    this.broadcast(JSON.stringify({ t: 'screen', screen: visible }))
+  }
+
+  // A viewer pulls the share into an SFU session of its own: `/watch` returns
+  // the SFU's offer and a token for that session, and `/watch?step=answer`
+  // passes the viewer's answer on. The token is signed, so a viewer can only
+  // ever answer for a session made for it.
+  async watch(params, request) {
+    const body = await request.json().catch(() => ({}))
+    try {
+      if (params.get('step') === 'answer') {
+        const session = await this.verify(body.token)
+        if (!session || typeof body.sdp !== 'string' || body.sdp.length > MAX_SDP) return json({ error: 'Bad answer' }, 400)
+        await this.sfu(`/sessions/${session}/renegotiate`, 'PUT', { sessionDescription: { type: 'answer', sdp: body.sdp } })
+        return json({ ok: true })
+      }
+      const screen = this.stage.screen
+      if (!screen || this.snapshot.screen?.id !== screen.id || this.stage.stopped) return json({ error: 'No screen share' }, 409)
+      const minute = Math.floor(Date.now() / 60_000)
+      if (this.watches?.minute !== minute) this.watches = { minute, count: 0 }
+      if (++this.watches.count > MAX_WATCHES) return json({ error: 'Too many viewers joining' }, 503)
+      const { sessionId } = await this.sfu('/sessions/new', 'POST')
+      const pulled = await this.sfu(`/sessions/${sessionId}/tracks/new`, 'POST', {
+        tracks: screen.tracks.map(trackName => ({ location: 'remote', sessionId: screen.sfu, trackName })),
+      })
+      return json({ id: screen.id, token: await this.sign(sessionId), sdp: pulled.sessionDescription.sdp })
+    }
+    catch (error) {
+      return json({ error: String(error.message ?? error) }, 502)
+    }
+  }
+
+  sfuReady() {
+    return !!(this.env.REALTIME_APP_ID && this.env.REALTIME_APP_SECRET)
+  }
+
+  async sfu(path, method, body) {
+    const res = await fetch(`${SFU}/${this.env.REALTIME_APP_ID}${path}`, {
+      method,
+      headers: { 'authorization': `Bearer ${this.env.REALTIME_APP_SECRET}`, 'content-type': 'application/json' },
+      body: body && JSON.stringify(body),
+      signal: AbortSignal.timeout(10_000),
+    })
+    const result = await res.json().catch(() => ({}))
+    const failed = result.errorCode || result.tracks?.find(t => t.errorCode)
+    if (!res.ok || failed) throw new Error(`SFU ${path.replace(/[\w-]{20,}/g, ':id')}: ${res.status} ${failed?.errorDescription ?? failed?.errorCode ?? ''}`.trim())
+    return result
+  }
+
+  async hmac(text) {
+    const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(this.env.REALTIME_APP_SECRET), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'])
+    return new Uint8Array(await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(`watch:${text}`)))
+  }
+
+  async sign(session) {
+    const mac = await this.hmac(session)
+    return `${session}.${btoa(String.fromCharCode(...mac)).replace(/=+$/, '')}`
+  }
+
+  async verify(token) {
+    if (typeof token !== 'string' || token.length > 300) return undefined
+    const dot = token.lastIndexOf('.')
+    const session = token.slice(0, dot)
+    if (dot < 1 || !/^[\w-]+$/.test(session)) return undefined
+    const want = await this.sign(session)
+    const a = new TextEncoder().encode(want)
+    const b = new TextEncoder().encode(token)
+    return a.length === b.length && crypto.subtle.timingSafeEqual(a, b) ? session : undefined
   }
 
   // Closes a publisher. The reason also goes as a message first: the closing

@@ -115,15 +115,19 @@ async function relayStatus(key) {
   }
 }
 
-// What the site serves: { deck, build }, or undefined if that cannot be told.
+// What the site serves: { deck, build }; {} when the site has no live viewer
+// (a new site, or a broken upload); undefined when it is out of reach.
 async function siteInfo() {
+  let res
   try {
-    const res = await fetch(new URL('live.json', viewerUrl()), { cache: 'no-store', signal: AbortSignal.timeout(8000) })
-    return res.ok ? await res.json() : undefined
+    res = await fetch(new URL('live.json', viewerUrl()), { cache: 'no-store', signal: AbortSignal.timeout(8000) })
   }
   catch {
     return undefined
   }
+  if (res.status >= 500) return undefined
+  const info = res.ok ? await res.json().catch(() => ({})) : {}
+  return typeof info?.deck === 'string' && typeof info.build === 'string' ? { deck: info.deck, build: info.build } : {}
 }
 
 // The audience address: the custom domain from live/config.json, or the
@@ -236,10 +240,16 @@ function ask(question, { hidden = false } = {}) {
 
 // Screen sharing uses a Cloudflare Realtime SFU app. Its token stays in the
 // Worker as a secret, like the publish key's hash.
+// Read from Key Vault (`realtime-app-id`, `realtime-api-token`) when they
+// are there, otherwise asked for.
 async function screenSetup() {
-  console.log('Create the app in the Cloudflare dashboard: Realtime > Serverless SFU > Create.')
-  const appId = process.env.REALTIME_APP_ID || await ask('App ID: ')
-  const token = process.env.REALTIME_APP_SECRET || await ask('App token (hidden): ', { hidden: true })
+  requireAz()
+  const fromVault = name => azTry('keyvault', 'secret', 'show', '--vault-name', azure.keyVault, '--name', name, '--query', 'value')
+  let appId = process.env.REALTIME_APP_ID || fromVault('realtime-app-id')
+  let token = process.env.REALTIME_APP_SECRET || fromVault('realtime-api-token')
+  if (!appId || !token) console.log('Create the app in the Cloudflare dashboard: Realtime > Serverless SFU > Create.')
+  appId ||= await ask('App ID: ')
+  token ||= await ask('App token (hidden): ', { hidden: true })
   if (!/^[\w-]{16,64}$/.test(appId)) fail('That does not look like an App ID.')
   if (token.length < 32) fail('That does not look like the app token.')
   wrangler(['secret', 'put', 'REALTIME_APP_ID'], { input: appId, stdio: ['pipe', 'inherit', 'inherit'] })

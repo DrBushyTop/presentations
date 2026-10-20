@@ -34,3 +34,18 @@
 .slidev-live-viewer nav:has(button[title='Go to next slide']) {
   display: none;
 }
+
+/* The presenter's screen share, over the slides and under the notices. */
+.slidev-live-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #000;
+}
+
+.slidev-live-screen[hidden] {
+  display: none;
+}

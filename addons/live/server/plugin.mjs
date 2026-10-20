@@ -74,8 +74,16 @@ export function liveGuardPlugin() {
       if (!publishing) return
       // Registered before Slidev's own middlewares (enforce: 'pre').
       server.middlewares.use((req, res, next) => {
-        const path = (req.url ?? '').split('?')[0]
-        const privileged = PRIVILEGED.some(p => path === p || path.startsWith(`${p}/`))
+        // Connect mounts match any case and also end at a dot, so anything
+        // that starts like a privileged path counts as one.
+        let path
+        try {
+          path = decodeURIComponent((req.url ?? '').split('?')[0]).toLowerCase()
+        }
+        catch {
+          path = PRIVILEGED[0]
+        }
+        const privileged = PRIVILEGED.some(p => path.startsWith(p))
         if (!privileged && ['GET', 'HEAD', 'OPTIONS'].includes(req.method ?? 'GET')) return next()
         if (trustedAddress(req.socket.remoteAddress) && !crossSite(req)) return next()
         res.statusCode = 403
@@ -132,6 +140,11 @@ export function livePlugin() {
           if (typeof key !== 'string' || key.length > 200 || typeof from !== 'string' || !Number.isInteger(seq)) return false
           publisher().synced(key, value, from, seq)
         },
+        // Answers with the relay's reply.
+        screen({ action, ...body }) {
+          if (!['publish', 'on', 'off'].includes(action)) return false
+          return publisher().screen(action, body)
+        },
       }
       server.middlewares.use('/__slidev-live/', async (req, res) => {
         const route = routes[req.url?.split('?')[0].slice(1)]
@@ -144,7 +157,13 @@ export function livePlugin() {
           return res.end()
         }
         try {
-          res.statusCode = route(await readJson(req)) === false ? 400 : 204
+          const result = await route(await readJson(req))
+          if (result && typeof result === 'object') {
+            res.statusCode = result.status
+            res.setHeader('content-type', 'application/json')
+            return res.end(JSON.stringify(result.body))
+          }
+          res.statusCode = result === false ? 400 : 204
         }
         catch {
           res.statusCode = 400

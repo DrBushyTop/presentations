@@ -3,6 +3,7 @@ import { drawingState, lockShortcuts, onDrawingUpdate, onSharedUpdate, useNav } 
 import { createStatus } from './status'
 import { SYNC_CHANNEL } from './bridge'
 import { sanitizeDrawing } from './sanitize'
+import { createScreen } from './screen'
 
 declare const __SLIDEV_LIVE_RELAY__: string
 declare const __SLIDEV_LIVE_DECK__: string
@@ -10,7 +11,7 @@ declare const __SLIDEV_LIVE_BUILD__: string
 
 interface Nav { page: number, clicks: number }
 interface Message {
-  t: 'snapshot' | 'live' | 'nav' | 'cursor' | 'drawings' | 'synced' | 'presenter'
+  t: 'snapshot' | 'live' | 'nav' | 'cursor' | 'drawings' | 'synced' | 'presenter' | 'screen'
   ts?: number
   live?: boolean
   on?: boolean
@@ -25,6 +26,7 @@ interface Message {
   deck?: string
   build?: string
   since?: number
+  screen?: { id: string } | null
 }
 
 const SITE_POLL = 10_000
@@ -41,6 +43,7 @@ const trace: Trace[] = []
 export function startFollower() {
   const { slides, go, currentSlideNo, clicks } = useNav()
   const status = createStatus()
+  const screen = createScreen(__SLIDEV_LIVE_RELAY__)
   const synced = new Map<string, unknown>()
   const channel = new BroadcastChannel(SYNC_CHANNEL)
   let target: Nav | undefined
@@ -50,6 +53,8 @@ export function startFollower() {
   // has it.
   let stage: { deck?: string, build?: string, since?: number } = {}
   let stageLive = false
+  // A new talk of this deck started since this page loaded.
+  let restarted = false
   const onStage = () => !stage.deck || stage.deck === __SLIDEV_LIVE_DECK__
   const current = () => onStage() && (!stage.build || !__SLIDEV_LIVE_BUILD__ || stage.build === __SLIDEV_LIVE_BUILD__)
 
@@ -154,15 +159,16 @@ export function startFollower() {
 
   function handle(msg: Message) {
     if (msg.t === 'snapshot') {
-      // A new talk of this same deck: drop the old one's drawings and
-      // interactive state by starting over.
-      const restarted = stage.since !== undefined && msg.since !== stage.since && msg.deck === __SLIDEV_LIVE_DECK__
-      stage = { deck: msg.deck, build: msg.build, since: msg.since }
-      if (restarted) {
-        if (reload()) return
+      // A new talk of this same deck and build: drop the old one's drawings
+      // and interactive state by starting over. For another build, the reload
+      // waits for the site to have it (below).
+      if (stage.since !== undefined && msg.since !== stage.since && msg.deck === __SLIDEV_LIVE_DECK__) {
+        restarted = true
         // Until the reload runs, at least late-mounting slides get no old state.
         synced.clear()
       }
+      stage = { deck: msg.deck, build: msg.build, since: msg.since }
+      if (restarted && current() && reload()) return
     }
     if (msg.t === 'snapshot' || msg.t === 'live') {
       stageLive = msg.t === 'snapshot' ? !!msg.live : !!msg.on
@@ -172,6 +178,7 @@ export function startFollower() {
     // means nothing here. While it is live, this page waits for the site to
     // have it.
     if (!current()) {
+      screen.show(undefined)
       status.live(false)
       status.switching(stageLive ? (onStage() ? 'build' : 'deck') : false)
       return
@@ -185,6 +192,10 @@ export function startFollower() {
         if (msg.cursor !== undefined) onSharedUpdate({ cursor: msg.cursor ?? undefined })
         if (msg.nav) follow(msg.nav)
         status.live(!!msg.live && !!msg.nav)
+        screen.show(msg.screen?.id)
+        break
+      case 'screen':
+        screen.show(msg.screen?.id)
         break
       case 'live':
         status.live(!!msg.on && !!target)

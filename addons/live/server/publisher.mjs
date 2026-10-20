@@ -124,6 +124,24 @@ export function createPublisher({ relay, deck, key, session, build = '', host = 
   connect()
 
   return {
+    // The presenter's screen share, passed on with the key (see the relay's
+    // `screen`). The browser never sees the key.
+    async screen(action, body) {
+      if (stopped) return { status: 409, body: { error: 'This dev server no longer publishes' } }
+      const url = `${relay.replace(/^ws/, 'http').replace(/\/$/, '')}/screen?${new URLSearchParams({ session, action })}`
+      try {
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'authorization': `Bearer ${key}`, 'content-type': 'application/json' },
+          body: JSON.stringify(body ?? {}),
+          signal: AbortSignal.timeout(15_000),
+        })
+        return { status: res.status, body: await res.json().catch(() => ({})) }
+      }
+      catch (error) {
+        return { status: 502, body: { error: `Relay out of reach: ${error.message}` } }
+      }
+    },
     // The presenter tab's own report, sent before it renders. Fastest path.
     navHint(page, clicks, tab, seq) {
       // Separate requests can overtake each other; keep each tab's order.
