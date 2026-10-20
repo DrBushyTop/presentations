@@ -35,6 +35,20 @@ npm run dev:no-slop
 `npm run build` builds every deck. Use `npm run export` or
 `npm run export-pptx` to select one for export.
 
+## Live viewer
+
+The audience can follow any deck on their own devices at
+`https://live.huuhka.net/`. The page is read-only and stays on the
+presenter's slide. The site holds the last deployed deck.
+
+```bash
+npm run live:deploy -- --deck no-slop   # after slide changes: build and upload the viewer
+npm run live -- --deck no-slop          # present; Ctrl+C ends the talk for viewers
+```
+
+See [the live addon guide](addons/live/README.md) for setup, presenting from
+m1 or m4, how it works and the measured latency.
+
 ## Rehearsal timing
 
 All five primary Slidev decks include a rehearsal timer in presenter view. Click **Rehearsal**

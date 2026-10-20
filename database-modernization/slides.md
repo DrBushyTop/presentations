@@ -3,6 +3,7 @@ theme: zure
 addons:
   - slidev-addon-rehearsal
   - slidev-addon-t3-annotate
+  - slidev-addon-live
   - slidev-addon-shared-mermaid
 title: Modernizing databases
 titleTemplate: '%s · Zure'

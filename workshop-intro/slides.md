@@ -3,6 +3,7 @@ theme: zure
 addons:
   - slidev-addon-rehearsal
   - slidev-addon-t3-annotate
+  - slidev-addon-live
 title: App modernization lab
 duration: 10min
 rehearsal:

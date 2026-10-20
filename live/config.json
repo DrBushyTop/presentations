@@ -1,0 +1,12 @@
+{
+  "relay": "wss://slides-live.slides-live-relay.workers.dev",
+  "siteUrl": "https://live.huuhka.net",
+  "azure": {
+    "subscription": "ede0939c-80c4-4dfe-bf3d-84521f3f6d1f",
+    "resourceGroup": "rg-slides-live",
+    "location": "westeurope",
+    "staticWebApp": "swa-slides-live",
+    "keyVault": "kv-slides-live-5b6d38",
+    "keySecret": "live-publish-key"
+  }
+}

@@ -1,0 +1,36 @@
+.slidev-live-cover {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 2rem;
+  background: #0b1020;
+  color: #e5e7eb;
+  font: 500 1.25rem/1.5 system-ui, sans-serif;
+  text-align: center;
+}
+
+.slidev-live-pill {
+  position: fixed;
+  top: 0.75rem;
+  left: 50%;
+  z-index: 1000;
+  transform: translateX(-50%);
+  padding: 0.35rem 0.9rem;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 0.7);
+  color: #fff;
+  font: 500 0.85rem/1.4 system-ui, sans-serif;
+  pointer-events: none;
+}
+
+.slidev-live-cover[hidden],
+.slidev-live-pill[hidden] {
+  display: none;
+}
+
+/* Viewers are locked to the presenter, so Slidev's nav bar has nothing to offer. */
+.slidev-live-viewer nav:has(button[title='Go to next slide']) {
+  display: none;
+}
