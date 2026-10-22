@@ -867,17 +867,16 @@ About 1 minute.
 layout: none
 ---
 
-<DemoSlide title="Review bots and a local babysitter" :minutes="3" prepared agent="T3 Code · two real PRs" prompt="Babysit this PR until it can merge. Read every review comment and CI result. Fix the findings that come with a repro or a failing check, and reply to the rest with your reason. Push, wait for CI and the next review round, repeat. Merge when everything passes on the latest commit. Stop and ask me after three rounds, or when reviewers disagree." />
+<DemoSlide title="Review bots and a local babysitter" :minutes="3" prepared agent="T3 Code · a real PR" prompt="Babysit this PR until it can merge. Read every review comment and CI result. Fix the findings that come with a repro or a failing check, and reply to the rest with your reason. Push, wait for CI and the next review round, repeat. Merge when everything passes on the latest commit. Stop and ask me after three rounds, or when reviewers disagree." />
 
 <!--
 Prepared walkthrough in T3 Code, about 3 minutes.
 
 - On screen: the babysitter's own prompt. This is what I hand the agent once the PR is open. It's the stop rule from two slides back, written into the prompt: what earns a fix, when to merge, and when to stop and ask me.
-- Then switch to T3 Code and the two public PRs on the next slide.
-1. PR one: show the different bots' actual comments. Pick a finding that earned a fix and one that didn't, and the reply that explains why.
-2. PR two: compare the one-line CSS change with the recorded behaviour and measurements. Check which commit the approval covers: a new commit needs new evidence.
-3. If the babysitter is ready, show its fix, push, the next CI results and where it actually stopped or escalated. Don't imply a working integration I haven't shown.
-- Keep the local implementation and subagent loop on the earlier diagram. These PRs demonstrate the outer loop.
+- Probably talk this through instead of switching to T3 Code. The next slide shows the real bot findings. If there's time:
+1. Show the different bots' actual comments on the PR from the next slide. Pick a finding that earned a fix and one that didn't, and the reply that explains why.
+2. If the babysitter is ready, show its fix, push, the next CI results and where it actually stopped or escalated. Don't imply a working integration I haven't shown.
+- Keep the local implementation and subagent loop on the earlier diagram. This PR demonstrates the outer loop.
 - Merging is the babysitter's last step only when the change's level allows it. For a migration, the prompt ends at "tell me it's ready" instead.
 - Source for the bot architecture and bounded fixes: https://www.huuhka.net/building-your-own-pr-reviewer-with-coding-agents/
 -->
@@ -887,25 +886,22 @@ part: Review
 class: ns
 ---
 
-# Real PRs carry their own before and after
+# A real PR carries its own evidence
 
 <T3PrExamples />
 
 <!--
-About 1 minute. Both are merged PRs with playable recordings and explicit agent credits. The PR numbers and video buttons open the original sources in a new tab.
+About 1 minute. A merged PR with playable recordings and real review-bot findings. The PR number, video buttons and thread links open the original sources in a new tab.
 
-- On screen: two merged PRs from T3 Code, the tool I run my agents in. Each card shows what changed and links to the clips the agent recorded.
-- Left, PR #11354, merged 12 September 2026: pressing Enter in the browser preview sent the human's unfinished draft. Play the 10-second before clip, then the 14-second after clip. The draft diagram is an illustration; the linked clips show the actual app. The PR credits GPT-6-Astra in Codex and reports 105 focused tests. Native macOS remained unverified.
-- For the review walkthrough, show a finding that earned a fix and one that didn't. The agent reproduced a clipboard sanitization bug before fixing it, then repeated the check: https://github.com/pingdotgg/t3code/pull/11354#discussion_r3994847850
-- Macroscope and CodeRabbit both questioned native text selection behaviour. The agent checked the bundled Electron runtime; CodeRabbit withdrew its finding after that: https://github.com/pingdotgg/t3code/pull/11354#discussion_r3994836449
-- Right, PR #15265, merged 3 October 2026: one production line, two CSS selectors. 4,316 elements restyled before and 5 after one small DOM change. That's per change, not for a whole typing session.
-- The comparison video is 14.48 seconds; the stress video is 47.32 seconds. Both use 4× CPU throttling. The PR includes production-build traces and visual checks across 32 layout, theme and width combinations.
-- GPT-6-Astra in Codex found and fixed the performance issue. Claude Opus 5.5 in Claude Code measured it and opened the PR, both inside T3 Code. The measurements are the authors' reported results.
-- These show agent development, verification and review responses. They don't show the configuration or budget of an unattended babysitter.
+- On screen, left: a PR from T3 Code, the tool I run my agents in, merged 12 September 2026. Pressing Enter in the browser preview sent the human's unfinished draft. Play the 10-second before clip, then the 14-second after clip. The draft diagram is an illustration; the clips show the actual app. The PR credits GPT-6-Astra in Codex and reports 105 focused tests. Native macOS remained unverified.
+- Right: two bot findings on the same PR, and how each ended. This is the stop rule in a real PR.
+- Macroscope, high: pasting HTML into the preview could run a script. The agent reproduced it in the real app before fixing it, then pasted the same clipboard again: the formatting stayed and nothing ran. https://github.com/pingdotgg/t3code/pull/11354#discussion_r3994847850
+- CodeRabbit, major: it assumed text selection wouldn't move in input fields. The agent checked in the app's own Electron runtime that it does, and CodeRabbit withdrew the finding. https://github.com/pingdotgg/t3code/pull/11354#discussion_r3994836449
+- Say: "Neither finding was settled by arguing. One was reproduced, the other was disproved by running it."
+- This shows agent development, verification and review responses. It doesn't show the configuration or budget of an unattended babysitter.
 
 Sources:
 - https://github.com/pingdotgg/t3code/pull/11354
-- https://github.com/pingdotgg/t3code/pull/15265
 -->
 
 ---

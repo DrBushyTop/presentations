@@ -33,27 +33,26 @@
 
     <article class="example">
       <header>
-        <a href="https://github.com/pingdotgg/t3code/pull/15265" target="_blank" rel="noopener noreferrer">PR #15265 ↗</a>
-        <span>Merged 3 Oct 2026</span>
+        <span>Review bots on the same PR</span>
       </header>
-      <h2>A one-line fix for UI stalls</h2>
+      <h2>Two findings, settled by running it</h2>
 
-      <div class="restyles">
-        <p class="metric-label">Elements restyled by a small DOM change</p>
-        <div class="counts">
-          <div><span>Before</span><strong class="before-count">4,316</strong></div>
-          <span class="arrow" aria-hidden="true">→</span>
-          <div><span>After</span><strong class="after-count">5</strong></div>
+      <div class="findings">
+        <div class="finding kept">
+          <p class="by"><b>Macroscope</b> · High</p>
+          <p class="claim">Pasted HTML could run a script in the preview</p>
+          <p class="end"><strong>Fixed</strong>Reproduced first, then checked again</p>
         </div>
-        <div class="selector ns-mono">
-          <div class="removed">- +:has([data-chat-composer-form])</div>
-          <div class="added">+ +*</div>
+        <div class="finding dropped">
+          <p class="by"><b>CodeRabbit</b> · Major</p>
+          <p class="claim">Selection won't move in text fields</p>
+          <p class="end"><strong>Withdrawn</strong>The agent showed it works in Electron</p>
         </div>
       </div>
 
-      <nav aria-label="PR 15265 videos">
-        <a href="https://gh-file-drop-api-prod-galwoqjslzlnws6s.oliver-boorstein.workers.dev/f/394e1521973c46e6/pr-b-real-4x.mp4" target="_blank" rel="noopener noreferrer">▶ Compare · 15 s</a>
-        <a href="https://gh-file-drop-api-prod-galwoqjslzlnws6s.oliver-boorstein.workers.dev/f/78e9787a48b5e37a/pr-b-stress-4x.mp4" target="_blank" rel="noopener noreferrer">▶ Stress test · 47 s</a>
+      <nav aria-label="PR 11354 review threads">
+        <a href="https://github.com/pingdotgg/t3code/pull/11354#discussion_r3994847850" target="_blank" rel="noopener noreferrer">Fix thread ↗</a>
+        <a href="https://github.com/pingdotgg/t3code/pull/11354#discussion_r3994836449" target="_blank" rel="noopener noreferrer">Withdrawal ↗</a>
       </nav>
     </article>
   </div>
@@ -99,8 +98,7 @@ header span {
   letter-spacing: -0.02em;
 }
 
-.drafts,
-.restyles {
+.drafts {
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -113,8 +111,7 @@ header span {
   max-width: none;
 }
 
-.trigger,
-.metric-label {
+.trigger {
   font-size: 20px;
   line-height: 1.4;
 }
@@ -160,46 +157,58 @@ kbd {
 }
 
 .before .draft { border-color: var(--ns-red); }
-.before strong, .before-count { color: var(--ns-red); }
+.before strong { color: var(--ns-red); }
 .after .draft { border-color: var(--ns-teal); }
-.after strong, .after-count { color: var(--ns-teal); }
+.after strong { color: var(--ns-teal); }
 
-.counts {
-  display: flex;
-  align-items: center;
-  gap: 28px;
-}
-
-.counts div {
+.findings {
+  flex: 1;
   display: flex;
   flex-direction: column;
+  justify-content: center;
+  gap: 14px;
 }
 
-.counts div > span {
-  font-size: 18px;
-  color: var(--z-grey-600);
-}
-
-.counts strong {
-  font-size: 88px;
-  line-height: 1.1;
-  letter-spacing: -0.04em;
-}
-
-.arrow {
-  font-size: 40px;
-  color: var(--z-grey-600);
-}
-
-.selector {
+.finding {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
   padding: 12px 14px;
-  background: var(--z-ink);
-  font-size: 17px;
-  line-height: 1.6;
+  border-left: 4px solid;
+  background: var(--ns-soft);
 }
 
-.removed { color: #ff9a8a; }
-.added { color: var(--z-teal-300); }
+.finding .by {
+  font-size: 17px;
+  color: var(--z-grey-600);
+}
+
+.finding .by b {
+  color: var(--z-ink);
+}
+
+.finding .claim {
+  font-size: 20px;
+  line-height: 1.3;
+}
+
+.finding .end {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-size: 17px;
+  color: var(--z-ink-800);
+}
+
+.finding .end strong {
+  font-size: 17px;
+  white-space: nowrap;
+}
+
+.kept { border-color: var(--ns-teal); }
+.kept .end strong { color: var(--ns-teal); }
+.dropped { border-color: var(--z-grey-600); }
+.dropped .end strong { color: var(--z-grey-600); }
 
 nav {
   display: flex;
