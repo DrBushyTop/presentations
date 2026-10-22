@@ -866,6 +866,58 @@ About 1.5 minutes.
 ---
 part: Review
 class: ns
+clicks: 4
+---
+
+# The reviewer reads once, then forks
+
+<ReviewForks :step="$clicks" />
+
+<!--
+About 1.5 minutes.
+
+- On screen: step two of the last slide, opened up. It's one review subagent, not three. The implementer isn't drawn. Only its handoff is: the issue, the decisions and the diff, not its conversation.
+
+[click] The reviewer reads the files the change touches and searches for the callers. Most of a review's input is this reading. Here it's about 48,000 tokens.
+
+[click] Then the reviewer forks itself. Each fork starts with the reviewer's whole context: the same system prompt, tools, model and everything it has read. Only the last message differs, and that's the lens. Because the start is identical, each fork's first request reads the reviewer's prompt cache.
+- Claude Code's docs say a fork "reuses the parent's prompt cache… a fork costs less than a fresh subagent for tasks that need the same context."
+
+[click] Each fork still reads a few files for its own lens: the functional one opens the end-to-end test, the security one the session code. Those reads are new, so they cost full price. A fresh subagent would read them too.
+- The forks send their findings back. Two of them found the same reload bug from different sides, and the reviewer reports it once. Security found nothing above the bar, and that's a result too. One summary goes to the implementer, which decides what to fix, as on the last slide.
+
+[click] The cost of the shared part. Three fresh subagents would each read the same 48k. Forks pay for the reading once. Their own reads cost the same either way, so the bars leave them out.
+- Cache reads cost a tenth of the base input price, and a twentieth on Opus 5.5 and Sonnet 5.5. A five-minute cache write costs 1.25 times the base price.
+- My arithmetic on Opus 5.5: writing 48k costs about 24 cents, and a fork reading it costs about 1 cent. Three fresh reviewers pay the 24 cents three times. One reviewer and three forks pay it once, plus 3 cents, which is about a third of the cost. Forks also skip the reading turns, so they start at once.
+- Caveats:
+  - Forks share the reviewer's framing. If it misread the issue, all three inherit that. This is why I fork the reviewer, not the implementer: the reviewer's context holds the decisions and the diff, not the builder's reasons.
+  - A fork runs on the same model. A second opinion from a different model comes at the PR, on the next slides.
+  - The cache is per model, and in Claude Code a subagent's cache lives five minutes by default. Fork right after reading.
+- How many more findings? No public study compares forked reviewers with lenses against one reviewer on the same PRs. The closest numbers:
+  - SWR-Bench, 1,000 real PRs: merging ten runs of Gemini 2.5 Flash more than doubled recall, from about 14% to 30%, and raised F1 by 44%. These are repeated runs, not lenses.
+  - CodeX-Verify, 99 samples: four specialised agents against one, accuracy 33% to 72%. Each added agent helped less: 15, then 14, then 11 points.
+  - MultiVer, vulnerability detection: four lenses (security, correctness, performance, style) added 17 points of recall over a security agent alone. Precision fell to 49%.
+  - Anthropic's Code Review runs several agents in parallel, verifies, then dedupes. At Anthropic, the share of PRs with substantive comments went from 16% to 54%, and under 1% of findings were marked incorrect. That's against human review, not a single agent. It costs $15 to $25 a review.
+  - Cursor's Bugbot launched with eight parallel passes and kept only bugs found in more than one.
+  - Against: a controlled October 2026 study of one agent against a team of three, on financial memos rather than code. The team caught 8 to 10 points more defects, raised more false alarms on all four models and used 2.2 to 2.4 times the tokens. Balanced accuracy barely moved.
+  - Anthropic's multi-agent research post: a lead agent with parallel subagents beat a single agent by 90% on research tasks, at about 15 times the tokens of a chat. It notes coding has fewer parallel parts than research.
+- So: more reviewers find more, and they flag more. Merge and verify before the implementer sees the list. Forking makes the extra reviewers cheap. It doesn't make their findings any more correct.
+- Sources:
+  - https://code.claude.com/docs/en/sub-agents
+  - https://code.claude.com/docs/en/prompt-caching
+  - https://platform.claude.com/docs/en/build-with-claude/prompt-caching
+  - https://arxiv.org/abs/2509.01494
+  - https://arxiv.org/abs/2511.16708
+  - https://arxiv.org/abs/2602.17875
+  - https://claude.com/blog/code-review
+  - https://cursor.com/blog/building-bugbot
+  - https://arxiv.org/abs/2610.27488
+  - https://www.anthropic.com/engineering/multi-agent-research-system
+-->
+
+---
+part: Review
+class: ns
 clicks: 2
 ---
 
