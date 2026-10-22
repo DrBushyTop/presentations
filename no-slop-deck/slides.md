@@ -1311,6 +1311,7 @@ clicks: 11
 About 3 minutes.
 
 - On screen: the real T3 thread for PR #540, recorded from the T3 web UI. Production URLs and resource names are blacked out, and the cursor is drawn in. Each click plays on to the next moment and zooms in.
+- The PR, if I want to show it: [PR #540](https://github.com/DrBushyTop/testing-harness/pull/540). The repo is private, so only open it from my signed-in browser. The before and after screenshots and both review rounds are in its body.
 - 22:35, on my phone: a production session's audio keeps stopping. "Can you test it?"
 
 [click] While it worked, I kept sending what I saw: a screenshot, "I skipped around", "only works from the very start". Six messages in three minutes. That was my part.
@@ -1333,7 +1334,9 @@ About 3 minutes.
 
 [click] 23:10: One minor finding, with file and line. A malformed recording could make the fix flip a byte outside its own block. The reviewer reproduced it instead of guessing. It's not a blocker, and the real Safari file wasn't affected.
 
-[click] 23:17: Fixed with a failing test first. One re-review, no findings. Local CI passed, merged.
+[click] 23:17: Fixed with a failing test first. One re-review, no findings. Then it took the PR to merge itself. The first local CI run passed but didn't count: master had moved on, and the script won't record a pass for a commit that's behind master. So it merged master in, reran, and merged on the green run.
+- That's the babysitter's job from the review section, done by the implementer. No human approval.
+- It also posted that CI result as the required check itself. Anyone with write access could. That's one of the places I still take the agent's word.
 -->
 
 ---
