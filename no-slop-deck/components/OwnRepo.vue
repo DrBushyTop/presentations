@@ -1,20 +1,20 @@
 <!--
   Placeholder: my own project, where agents merge their own PRs. Numbers are
-  from the repo's harness report as of 16 Oct 2026; refresh them before the
-  talk. The four layers go from advice to enforcement.
+  from the repo's harness report as of 22 Oct 2026 (master at e0f2868);
+  refresh them before the talk. The four layers go from advice to enforcement.
   0 the numbers · 1 the four layers
 -->
 <script setup lang="ts">
 withDefaults(defineProps<{ step?: number }>(), { step: 0 })
 
 const stats = [
-  { n: '5.5', t: 'days since the first commit' },
-  { n: '150', t: 'merged PRs' },
-  { n: '~30', t: 'rules and gates checked by code' },
+  { n: '11', t: 'days since the first commit' },
+  { n: '288', t: 'merged PRs' },
+  { n: '1,103', t: 'agent threads on two machines' },
   { n: '0', t: 'human approvals required to merge', key: true },
 ]
 const layers = [
-  { name: 'Map', verb: 'tells', t: 'A 66-line AGENTS.md that routes each task to a skill', ex: ['AGENTS.md', 'CONTEXT.md', 'docs/decisions.md'] },
+  { name: 'Map', verb: 'tells', t: 'A 67-line AGENTS.md that routes each task to a skill', ex: ['AGENTS.md', 'CONTEXT.md', 'docs/decisions.md'] },
   { name: 'Playbooks', verb: 'guides', t: 'Skills that own one workflow end to end', ex: ['worktree-delivery', 'verify', 'repository-checks'] },
   { name: 'Gates', verb: 'blocks', t: 'Refuse the change, and say how to fix it', ex: ['pre-commit hook', 'architecture tests', 'local CI, required'] },
   { name: 'Record', verb: 'proves', t: 'The PR body says what was checked', ex: ['verification', 'review findings', 'before and after media'] },

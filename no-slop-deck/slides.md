@@ -1284,13 +1284,14 @@ clicks: 1
 <OwnRepo :step="$clicks" />
 
 <!--
-PLACEHOLDER, about 1.5 minutes. The project is new. Refresh every number before the talk, and decide in rehearsal whether this stays. Numbers as of 16 October 2026, from the repo's harness report.
+PLACEHOLDER, about 1.5 minutes. The project is new. Refresh every number before the talk, and decide in rehearsal whether this stays. Numbers as of 22 October 2026 (master at e0f2868), from the repo's harness report.
 
 - On screen: my current project, a real product. Agents claim issues, build, verify in the real app, review each other's work and merge. Branch protection requires zero human approvals. I make the decisions; agents own the delivery.
-- 150 merged PRs in five and a half days. That's only possible because about 30 rules and gates are checked by code, not by me.
+- 288 merged PRs and 1,318 commits in eleven days, from 1,103 agent threads on my MacBook and my home server. That's only possible because the rules that matter are tests, scripts and branch protection, checked by code, not by me.
 
 [click] How it's built, from advice to enforcement. A short AGENTS.md that routes each kind of task to the skill that owns it. Skills that guide a workflow end to end. Gates that refuse the change: a pre-commit hook, architecture tests, a local CI run that has to pass before merge. And the PR body as the record: what was verified, who reviewed, before and after media.
-- Over five days, rules moved down that line: out of a long AGENTS.md, into skills, then into checks. None of it was designed up front. Each rule arrived when a problem showed up: parallel agents sharing an instance, merged migration snapshots, green tests on features that didn't work.
+- In the first five days, rules moved down that line: out of a 13.7 KB AGENTS.md, into skills, then into checks. None of it was designed up front. Each rule arrived when a problem showed up: parallel agents sharing an instance, merged migration snapshots, green tests on features that didn't work.
+- After 16 October the checks barely changed. The work moved to how tickets are written and how deep reviews go.
 - I still use the app myself before anyone else does. My involvement is decisions and clicking through it, not approving PRs.
 - One honest difference from OpenAI: I block harder, because some data in this product is a one-way door.
 -->
