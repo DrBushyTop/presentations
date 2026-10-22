@@ -1299,7 +1299,7 @@ PLACEHOLDER, about 1.5 minutes. The project is new. Refresh every number before 
 ---
 part: Close
 class: ns
-clicks: 8
+clicks: 11
 ---
 
 # From my phone to merged in 42 minutes
@@ -1307,9 +1307,9 @@ clicks: 8
 <ThreadVideo :step="$clicks" />
 
 <!--
-About 2.5 minutes.
+About 3 minutes.
 
-- On screen: the real T3 thread for PR #540, recorded from the T3 web UI. Production URLs and resource names are blacked out. Each click plays on to the next moment and zooms in.
+- On screen: the real T3 thread for PR #540, recorded from the T3 web UI. Production URLs and resource names are blacked out, and the cursor is drawn in. Each click plays on to the next moment and zooms in.
 - 22:35, on my phone: a production session's audio keeps stopping. "Can you test it?"
 
 [click] While it worked, I kept sending what I saw: a screenshot, "I skipped around", "only works from the very start". Six messages in three minutes. That was my part.
@@ -1326,7 +1326,13 @@ About 2.5 minutes.
 
 [click] 23:08: The report says what it didn't test: real Safari and a real Android phone. And it flagged one decision for me.
 
-[click] A different model reviewed it, GPT-6.1 Sol: one minor finding. Fixed with a failing test first, second round clean. Local CI passed, merged at 23:17.
+[click] Then it handed the PR to a reviewer on a different model, GPT-6.1 Sol. The reviewer is a subagent with a thread of its own, so let's click in.
+
+[click] This is the brief the agent wrote for it. Read-only: no edits, no GitHub comments. The verified root cause, the acceptance checks, the evidence it already had, and where to look hardest. It ends with "If nothing important, say so plainly."
+
+[click] 23:10: One minor finding, with file and line. A malformed recording could make the fix flip a byte outside its own block. The reviewer reproduced it instead of guessing. It's not a blocker, and the real Safari file wasn't affected.
+
+[click] 23:17: Fixed with a failing test first. One re-review, no findings. Local CI passed, merged.
 -->
 
 ---

@@ -3,13 +3,14 @@
   the video on to the next beat, pauses there and zooms to the message.
   Going back jumps straight to that beat. Thumbnails and exports show a
   still of the beat instead of the video.
-  0 to 8: the beats in lib/thread540.ts
+  0 to 11: the beats in lib/thread540.ts. The three review beats share one
+  rail item.
 -->
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useSlideContext } from '@slidev/client'
 import { prefersReducedMotion, useIsActive } from '../lib/active'
-import { BEATS } from '../lib/thread540'
+import { BEATS, type Who } from '../lib/thread540'
 
 const props = withDefaults(defineProps<{ step?: number }>(), { step: 0 })
 
@@ -17,6 +18,14 @@ const { $renderContext } = useSlideContext()
 const active = useIsActive()
 const live = computed(() => ['slide', 'presenter'].includes($renderContext.value as string))
 const target = computed(() => Math.min(Math.max(props.step, 0), BEATS.length - 1))
+
+// One rail item per run of beats with the same label.
+const rail: { label: string, who: Who, first: number, last: number }[] = []
+BEATS.forEach((b, i) => {
+  const prev = rail.at(-1)
+  if (prev?.label === b.label) prev.last = i
+  else rail.push({ label: b.label, who: b.who, first: i, last: i })
+})
 
 const video = ref<HTMLVideoElement>()
 // The beat the video is paused on, and whether it is zoomed in on it.
@@ -127,12 +136,12 @@ const spotStyle = computed(() => {
 
     <ol class="rail">
       <li
-        v-for="(b, i) in BEATS"
-        :key="b.id"
-        :class="[b.who, { on: i === target, past: i < target, later: i > target }]"
+        v-for="r in rail"
+        :key="r.first"
+        :class="[r.who, { on: target >= r.first && target <= r.last, later: target < r.first }]"
       >
-        <span class="clock ns-mono">{{ b.clock }}</span>
-        <span class="label">{{ b.label }}</span>
+        <span class="clock ns-mono">{{ BEATS[Math.min(Math.max(target, r.first), r.last)].clock }}</span>
+        <span class="label">{{ r.label }}</span>
       </li>
     </ol>
   </div>
@@ -199,7 +208,7 @@ const spotStyle = computed(() => {
   flex-direction: column;
   gap: 1px;
   margin: 0;
-  padding: 4px 0 4px 14px;
+  padding: 3px 0 3px 14px;
   border-left: 4px solid var(--ns-line);
   transition: opacity 400ms var(--ns-ease), border-color 400ms var(--ns-ease);
 }
