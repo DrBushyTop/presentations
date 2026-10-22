@@ -19,13 +19,13 @@ const notes = [
   'Who writes a state: the researcher or the app\'s developer?',
   'Does a task still need a reset between runs?',
   'What does the participant see while the app gets ready?',
-  'Which sessions can we trust to report the app\'s states?',
+  'How do we know the app can get to the state?',
 ]
 
 const options = [
-  { h: 'Any session that registers states', p: 'Simple, but a participant\'s browser can be tampered with.' },
-  { h: 'Only sessions we started', p: 'Self-tests and automated explorations. A participant\'s report only checks their own run.', pick: true },
-  { h: 'States typed into the project by hand', p: 'Nothing to trust, but the list drifts from the app.' },
+  { h: 'The researcher, in free text', p: 'What we have today. Nothing checks that the app can get there.' },
+  { h: 'The researcher, from a list in the project', p: 'Someone has to keep the list in step with the app.' },
+  { h: 'The app\'s developer, in the SDK', p: 'The app registers named states, and the researcher picks one.', pick: true },
 ]
 
 const chat = [
@@ -102,14 +102,14 @@ watch(() => props.step, measure)
                   <span class="kind"><Icon name="branch" />Decision</span>
                   <span class="answered">Answered by <b>Pasi Huuhka</b></span>
                 </div>
-                <b class="q-h">Trusted reports</b>
-                <span class="ask">Which sessions can add to an app's list of states?</span>
+                <b class="q-h">Defining states</b>
+                <span class="ask">Who defines the starting states a task can use?</span>
                 <div v-for="o in options" :key="o.h" class="opt" :class="{ pick: o.pick }">
                   <i class="radio" />
                   <span><b>{{ o.h }}</b>{{ o.p }}</span>
                 </div>
               </div>
-              <p :ref="mark(2)" class="changed reveal" :class="{ on: step >= 2 }">States are kept per app, and only self-tests and automated explorations add to the list.</p>
+              <p :ref="mark(2)" class="changed reveal" :class="{ on: step >= 2 }">The app's developer registers each state in the SDK, with a label and a description. The researcher picks one, or "As is".</p>
             </div>
 
             <!-- 3-4: research inside the plan, then what's open -->

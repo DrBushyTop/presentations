@@ -424,11 +424,11 @@ About 2 minutes. Add material now; decide timing in rehearsal.
 - GitHub Next's argument: "The important work is now everything that happens before and after code gets written: planning and review." And "all the tools on the market are designed as single-player experiences." My grilling session was one: me, one agent, and a decision log only I write to.
 - It starts from rough notes. Roosa, a user researcher, says what went wrong in the pilot. I ask the agent, which Chopin calls Planner, to turn the notes into a plan, and anything it isn't sure about into decisions.
 
-[click] Planner reads the plan and the repo first, then puts the open choices into the plan as questions, each with options and their tradeoffs. Which sessions can add to an app's list of states? Any session is the easy answer, but a participant's browser can be tampered with.
+[click] Planner reads the plan and the repo first, then puts the open choices into the plan as questions, each with options and their tradeoffs. Who defines the starting states a task can use? Today the researcher types free text, and nothing checks that the app can get there.
 
-[click] I answer it: only sessions we started, so self-tests and automated explorations. Planner writes the answer into the plan. That one I really changed on the day, from "any session counts".
-- The answer is signed, and it goes to a separate Decisions tab, in GitHub Next's words "so a later rewrite cannot silently change what the team decided". That's grill with docs, shared and live.
-- The third option is reconstructed; the first two are what I chose between.
+[click] I answer it: the app's developer, in the SDK. The app registers named states, and the researcher picks one. Planner writes the answer into the plan.
+- It's the same decision as on the grilling slide. The difference is that the team sees it, and it's signed. It goes to a separate Decisions tab, in GitHub Next's words "so a later rewrite cannot silently change what the team decided". That's grill with docs, shared and live.
+- Free text was the agent's recommendation in the grilling session; the middle option is reconstructed.
 
 [click] Research happens inside the plan. Antti, a frontend developer, asks what reads the starting state today. The answer lands in the plan with its sources: only a hook that hands the app the free text.
 
