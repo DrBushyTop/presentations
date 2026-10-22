@@ -3,8 +3,11 @@
   the room has seen the map before the first divider zooms into it. Each click
   fills the track through one group, lights its names and shows the question
   each part answers. The arc under verify and review is the per-slice loop,
-  drawn as on the dividers.
-  0 the track · 1 before code · 2 for each slice and after merge
+  drawn as on the dividers. The last click splits a band under the parts:
+  your steering is worth most on the left but is done by hand; towards the
+  right, checks take over because they keep up with the agent.
+  0 the track · 1 before code · 2 for each slice and after merge · 3 who
+  carries each part
 -->
 <script setup lang="ts">
 import { gates } from '../lib/gates'
@@ -52,6 +55,15 @@ const groups = [
         <b class="w">{{ p.name }}</b>
         <span class="node" aria-hidden="true"><i class="dot" /></span>
         <p>{{ p.q }}</p>
+      </div>
+
+      <div class="lev" :class="{ on: step >= 3 }">
+        <svg viewBox="0 0 1136 72" preserveAspectRatio="none" aria-hidden="true">
+          <polygon class="you" points="0,0 1136,0 0,72" />
+          <polygon class="checks" points="1136,0 1136,72 0,72" />
+        </svg>
+        <span class="tag you"><b>You steer</b> most leverage, all by hand</span>
+        <span class="tag checks"><b>Checks take over</b> at the agent's speed</span>
       </div>
     </div>
   </div>
@@ -265,5 +277,76 @@ h1 {
 .part.on p {
   opacity: 1;
   transform: none;
+}
+
+/* ---------- Who carries each part ----------
+   One band split on the diagonal: your share shrinks to the right, the
+   checks' share grows. Each half wipes in from its own end. */
+
+.lev {
+  position: absolute;
+  left: 0;
+  top: 584px;
+  width: 1136px;
+  height: 72px;
+}
+
+.lev svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.lev polygon {
+  transition: clip-path 900ms var(--ns-ease);
+}
+
+.lev polygon.you {
+  fill: #e6e6e6;
+  clip-path: inset(0 100% 0 0);
+}
+
+.lev polygon.checks {
+  fill: var(--ok);
+  clip-path: inset(0 0 0 100%);
+  transition-delay: 300ms;
+}
+
+.lev.on polygon {
+  clip-path: inset(0);
+}
+
+.tag {
+  position: absolute;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-size: 18px;
+  line-height: 22px;
+  color: var(--z-ink-800);
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 500ms var(--ns-ease) 700ms;
+}
+
+.tag b {
+  font-size: 21px;
+  color: var(--z-ink);
+}
+
+.tag.you {
+  left: 16px;
+  top: 10px;
+}
+
+.tag.checks {
+  right: 16px;
+  bottom: 10px;
+  transition-delay: 1000ms;
+}
+
+.lev.on .tag {
+  opacity: 1;
 }
 </style>

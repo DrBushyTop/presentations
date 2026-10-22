@@ -106,7 +106,34 @@ About 1 minute.
 - It doesn't matter who wrote it. Humans write slop too. I have. The difference now is volume.
 
 [click] So the obvious fix is you. Read every line, run it, click through it. That works until the agent writes faster than you can check. GitHub Next puts writing against reading at about 15 to 1.
-- Say: "And that's where you become the bottleneck."
+- Say: "So how far can the agent go without you checking everything?"
+-->
+
+---
+part: Agents that merge
+class: ns
+clicks: 1
+---
+
+# How far can the agent go without you?
+
+<TrustLadder mode="goal" :step="$clicks" />
+
+<!--
+About 1.5 minutes.
+
+- On screen: five levels of how much the agent does on its own. Poteto, who works on agent tooling at SpaceX AI, calls this the trust ladder.
+- Checking everything yourself is the bottom of it. Level 1: you relay everything between the agent and the world, and you read every line, or say you do.
+- This is the trust from the title. The agent earns each level with evidence; you don't hand it over.
+
+[click] The top level: the agent merges its own PRs. Poteto works backwards from there: "How do I get to the point where my agent can merge its own code?"
+- Say: "This isn't a talk about reading less. It's about replacing reading with something better, one level at a time."
+- That's how this fits with no slop. A 1,940-line PR with "LGTM" on it is slop with a human signature. An agent's merge backed by checks that can fail, a clip of it running and a rollout you can undo isn't.
+- Climbing without the evidence is the slop version. Call it vibe merging.
+- One thing doesn't go away on any level: you still click through it yourself. More on that in verify.
+- The middle levels stay faint for now. We fill them in at the end.
+- Say: "To climb, start from where you're stuck today."
+- Source: https://www.youtube.com/watch?v=MN9dGgmLyso
 -->
 
 ---
@@ -122,40 +149,15 @@ clicks: 2
 <!--
 About 1 minute.
 
-- On screen: the agent on the left, the things it needs on the right: a browser, the code, Slack and the ticket tracker, CI and the review bots. Right now every wire runs through you.
-- Reading isn't the only place you're the bottleneck. The bigger one is you as the relay. Everything the agent can't reach goes through you: you copy the error out of the browser, answer a question the code could have answered, paste in the bug report from Slack, tell it which CI check failed.
+- On screen: level 1 up close. The agent on the left, the things it needs on the right: a browser, the code, Slack and the ticket tracker, CI and the review bots. Every wire runs through you.
+- This is what checking everything yourself looks like in a normal day. You copy the error out of the browser, answer a question the code could have answered, paste in the bug report from Slack, tell it which CI check failed.
 - Each relay is slow, and it's lossy. You summarise, you forget a detail, the agent fills the gap with a guess. And the agent can't loop on its own work while you're in the middle.
 
-[click] Poteto, who works on agent tooling at SpaceX AI, described the start of their performance work this way: they were "the meat proxy between my agent and Chrome DevTools".
+[click] Poteto described the start of their performance work this way: they were "the meat proxy between my agent and Chrome DevTools".
 
-[click] Each of those wires can go straight to the agent: a browser it drives, code it reads and cites, a routine that passes reports in, a babysitter that reads the checks. Your job moves to setting that up. Poteto's question for every task: "Why do my agents need me to answer this question?"
+[click] Each of those wires can go straight to the agent: a browser it drives, code it reads and cites, a routine that passes reports in, a babysitter that reads the checks. Your job moves to setting that up. That's the top of the ladder: you fix the environment, not the code. Poteto's question for every task: "Why do my agents need me to answer this question?"
 - The rest of the talk keeps asking it: where are you the relay, and what would let the agent check for itself?
 - Source: Poteto on Matt Pocock's channel, 3 October 2026. https://www.youtube.com/watch?v=MN9dGgmLyso
--->
-
----
-part: Agents that merge
-class: ns
-clicks: 1
----
-
-# Where this goes: agents that merge
-
-<TrustLadder mode="goal" :step="$clicks" />
-
-<!--
-About 1.5 minutes.
-
-- On screen: five levels of how much the agent does on its own. Poteto from SpaceX AI calls this the trust ladder. Level 1 is the bottleneck slide: you relay everything, and you read every line, or say you do.
-- This is the trust from the title. The agent earns each level with evidence; you don't hand it over.
-
-[click] The top level: the agent merges its own PRs. Poteto works backwards from there: "How do I get to the point where my agent can merge its own code?"
-- Say: "This isn't a talk about reading less. It's about replacing reading with something better, one level at a time."
-- That's how this fits with no slop. A 1,940-line PR with "LGTM" on it is slop with a human signature. An agent's merge backed by checks that can fail, a clip of it running and a rollout you can undo isn't.
-- Climbing without the evidence is the slop version. Call it vibe merging.
-- One thing doesn't go away on any level: you still click through it yourself. More on that in verify.
-- The middle levels stay faint for now. We fill them in at the end.
-- Source: https://www.youtube.com/watch?v=MN9dGgmLyso
 -->
 
 ---
@@ -171,6 +173,7 @@ clicks: 2
 <!--
 About 1.5 minutes. The project is new: refresh every number before the talk. Numbers as of 22 October 2026 (master at e0f2868), from the repo's harness report.
 
+- Say: "This is what it looks like when the wires go to the agent."
 - On screen: where the examples come from, my current project. A UX research tool. A researcher sets up a study with tasks. A participant tries a prototype app, and the session records the screen, their voice and a transcript. Researchers write findings from the replay, and coding agents use the same data through MCP.
 - Those are the words the examples use: study, task, prototype, session, replay, finding.
 - The opening animation was a change in this repo, and so was the PR the inspector stamped.
@@ -185,7 +188,7 @@ About 1.5 minutes. The project is new: refresh every number before the talk. Num
 
 ---
 layout: none
-clicks: 2
+clicks: 3
 transition: gate | gate-back
 ---
 
@@ -200,6 +203,11 @@ About 1 minute. This is the agenda. Keep it quick.
 
 [click] Two for every slice: verify and review, in a loop until the feature is done. One after merge: production.
 - Each part opens with how agent work goes wrong at that point, and where you're the bottleneck. Then what we do about it.
+
+[click] Who carries each part. On the left, your steering has the most leverage. Changing what gets built costs a conversation before any code exists, and a wrong decision there is paid for in every later part. But it's manual: questions, decisions, the issue.
+- To the right, the agent produces code faster than anyone can read it. So you rely more and more on checks that run without you: tests, scripts, review agents, rollout gates.
+- Say: "Spend your attention on the left. The right has to run at the agent's speed."
+- You don't disappear on the right. You still click through it, and you decide what the checks are. You just don't run them by hand.
 -->
 
 ---
