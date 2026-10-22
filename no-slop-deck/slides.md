@@ -410,23 +410,32 @@ About 1.5 minutes.
 ---
 part: Design
 class: ns
-clicks: 2
+clicks: 3
 ---
 
-# Planning needs better tools
+# Plans should be shared, not a private chat
 
 <PlanningTools :step="$clicks" />
 
 <!--
-About 1 minute. Add material now; decide timing in rehearsal.
+About 2 minutes. Add material now; decide timing in rehearsal.
 
-- On screen, top: a shared plan, redrawn after GitHub Next's Chopin, a research prototype for planning with people and agents. Not a screenshot of the product. Bottom: HumanLayer's workflow phases.
+- On screen: my starting-states plan from the last slide, as it would look in a shared planning tool. The interface is redrawn after GitHub Next's Chopin, a research prototype for planning with people and agents; it's not a screenshot. The plan is my repo's issue: the notes, the decision, the research answer and the open bug are real, shortened. It didn't happen in Chopin, and Roosa and Antti, two colleagues from Zure, didn't take part. Their lines are made up to show what the tool is for.
+- GitHub Next's argument: "The important work is now everything that happens before and after code gets written: planning and review." And "all the tools on the market are designed as single-player experiences." My grilling session was one: me, one agent, and a decision log only I write to.
+- It starts from rough notes. Roosa, a user researcher, says what went wrong in the pilot. I ask the agent, which Chopin calls Planner, to turn the notes into a plan, and anything it isn't sure about into decisions.
 
-[click] Threads sit on the specific lines they're about. A plan can hold research, a discussion per decision and diagrams, with decisions teammates can trace.
+[click] Planner reads the plan and the repo first, then puts the open choices into the plan as questions, each with options and their tradeoffs. Which sessions can add to an app's list of states? Any session is the easy answer, but a participant's browser can be tampered with. So only sessions we started count: self-tests and automated explorations. That one I really changed on the day, from "any session counts".
+- The answer is signed, and it goes to a separate Decisions tab, in GitHub Next's words "so a later rewrite cannot silently change what the team decided". That's grill with docs, shared and live.
+- The third option is reconstructed; the first two are what I chose between.
 
-[click] HumanLayer invests in the workflow around those artifacts: objective research, a design discussion and an outline of vertical phases before implementation. Their current default doesn't require a detailed code-level plan.
-- The point is that tool builders are putting attention into the work before implementation. Don't claim these prototypes are generally available.
-- Sources: https://githubnext.com/projects/chopin/ https://docs.humanlayer.com/explanation/workflow-phases https://docs.humanlayer.com/reference/skills-workflows
+[click] Research happens inside the plan. Antti, a frontend developer, asks what reads the starting state today. The answer lands in the plan with its sources: only a hook that hands the app the free text. And the plan says what's open: a state that navigates triggers a replay bug we already knew about.
+
+[click] Anyone can comment on a passage. Antti asks what happens if apply navigates, because prototypes often do full page loads. He applies the comment, and Planner rewrites the passage: apply routes inside the app, and a page load while it runs is a failure. That's a real decision from the issue.
+- Say: "This is the steering from the agenda, the part that's all by hand. Tools like this make it cheaper, and make it shared."
+- Chopin's status: published September 2026 and open source under MIT, but in their words "neither a product nor a finished prototype. We don't recommend you attempt to use it today." A team at GitHub is working on collaborative planning documents for github.com. Don't claim any of it is available.
+- In Chopin's own demo, Maggie Appleton and Krzysztof Cieślak plan a drawing canvas, and Planner also draws Mermaid diagrams on request. Their page argues for visuals because people read about 15 times slower than agents write. That's the figure from the slop slide.
+- HumanLayer puts its effort in the same place: research, a design discussion and an outline of vertical phases before implementation. That's the workflow slide in research.
+- Sources: https://githubnext.com/projects/chopin/ https://github.com/githubnext/chopin https://docs.humanlayer.com/explanation/workflow-phases
 -->
 
 ---
