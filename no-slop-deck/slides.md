@@ -410,7 +410,7 @@ About 1.5 minutes.
 ---
 part: Design
 class: ns
-clicks: 3
+clicks: 6
 ---
 
 # Plans should be shared, not a private chat
@@ -424,13 +424,19 @@ About 2 minutes. Add material now; decide timing in rehearsal.
 - GitHub Next's argument: "The important work is now everything that happens before and after code gets written: planning and review." And "all the tools on the market are designed as single-player experiences." My grilling session was one: me, one agent, and a decision log only I write to.
 - It starts from rough notes. Roosa, a user researcher, says what went wrong in the pilot. I ask the agent, which Chopin calls Planner, to turn the notes into a plan, and anything it isn't sure about into decisions.
 
-[click] Planner reads the plan and the repo first, then puts the open choices into the plan as questions, each with options and their tradeoffs. Which sessions can add to an app's list of states? Any session is the easy answer, but a participant's browser can be tampered with. So only sessions we started count: self-tests and automated explorations. That one I really changed on the day, from "any session counts".
+[click] Planner reads the plan and the repo first, then puts the open choices into the plan as questions, each with options and their tradeoffs. Which sessions can add to an app's list of states? Any session is the easy answer, but a participant's browser can be tampered with.
+
+[click] I answer it: only sessions we started, so self-tests and automated explorations. Planner writes the answer into the plan. That one I really changed on the day, from "any session counts".
 - The answer is signed, and it goes to a separate Decisions tab, in GitHub Next's words "so a later rewrite cannot silently change what the team decided". That's grill with docs, shared and live.
 - The third option is reconstructed; the first two are what I chose between.
 
-[click] Research happens inside the plan. Antti, a frontend developer, asks what reads the starting state today. The answer lands in the plan with its sources: only a hook that hands the app the free text. And the plan says what's open: a state that navigates triggers a replay bug we already knew about.
+[click] Research happens inside the plan. Antti, a frontend developer, asks what reads the starting state today. The answer lands in the plan with its sources: only a hook that hands the app the free text.
 
-[click] Anyone can comment on a passage. Antti asks what happens if apply navigates, because prototypes often do full page loads. He applies the comment, and Planner rewrites the passage: apply routes inside the app, and a page load while it runs is a failure. That's a real decision from the issue.
+[click] Roosa asks what the plan puts at risk, and it says so under Open: a state that navigates triggers a replay bug we already knew about.
+
+[click] Anyone can comment on a passage. Antti asks what happens if apply navigates, because prototypes often do full page loads.
+
+[click] He applies the comment, and Planner rewrites the passage: apply routes inside the app, and a page load while it runs is a failure. That's a real decision from the issue.
 - Say: "This is the steering from the agenda, the part that's all by hand. Tools like this make it cheaper, and make it shared."
 - Chopin's status: published September 2026 and open source under MIT, but in their words "neither a product nor a finished prototype. We don't recommend you attempt to use it today." A team at GitHub is working on collaborative planning documents for github.com. Don't claim any of it is available.
 - In Chopin's own demo, Maggie Appleton and Krzysztof Cieślak plan a drawing canvas, and Planner also draws Mermaid diagrams on request. Their page argues for visuals because people read about 15 times slower than agents write. That's the figure from the slop slide.

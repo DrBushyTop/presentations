@@ -4,10 +4,11 @@
   states, the feature from the grilling slide: the notes, decisions, research
   answer and open bug are real, shortened. It didn't happen in Chopin, and
   the colleagues' lines are made up.
-  The document scrolls to each new part; the conversation grows from the
-  bottom.
-  0 the rough notes · 1 decisions as questions · 2 research and what it
-  risks · 3 a comment the agent applies
+  The document scrolls to what each click adds; the conversation grows from
+  the bottom. One change per click.
+  0 the rough notes · 1 a decision as a question · 2 the answer, written back
+  · 3 research in the plan · 4 what's open · 5 a comment · 6 the agent
+  applies it
 -->
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
@@ -31,22 +32,25 @@ const chat = [
   { at: 0, who: 'Roosa Melkko', av: 'RM', t: 'In the pilot nobody filled in "Preparing the app". Could it be a pick list?' },
   { at: 0, who: 'Pasi Huuhka', av: 'PH', t: '@chopin Read our notes and turn this into a plan. Anything you\'re not sure about, turn into decisions.' },
   { at: 1, who: 'Planner', bot: true, t: 'I\'ll read the plan and the repo first.', tool: 'Questions · 4 open', t2: 'Now the open choices as questions in the plan.' },
-  { at: 1, who: 'Planner', bot: true, t: 'Answers are in. Writing them into the prose.', late: true },
-  { at: 2, who: 'Antti Sartjärvi', av: 'AS', t: '@chopin What reads the starting state today?' },
-  { at: 2, who: 'Planner', bot: true, t: 'Researching it in the plan.', tool: 'Search repository' },
-  { at: 3, sys: true, t: 'Antti Sartjärvi applied a comment' },
-  { at: 3, who: 'Planner', bot: true, t: 'Answering Antti\'s question in the prose: apply routes inside the app, and a page load during it is a failure.', late: true },
+  { at: 2, who: 'Planner', bot: true, t: 'Answers are in. Writing them into the prose.' },
+  { at: 3, who: 'Antti Sartjärvi', av: 'AS', t: '@chopin What reads the starting state today?' },
+  { at: 3, who: 'Planner', bot: true, t: 'Researching it in the plan.', tool: 'Search repository' },
+  { at: 4, who: 'Roosa Melkko', av: 'RM', t: '@chopin Can you call out what this puts at risk?' },
+  { at: 4, who: 'Planner', bot: true, t: 'Added one under Open.' },
+  { at: 6, sys: true, t: 'Antti Sartjärvi applied a comment' },
+  { at: 6, who: 'Planner', bot: true, t: 'Answering Antti\'s question in the prose: apply routes inside the app, and a page load during it is a failure.' },
 ]
 
-// Scroll the document so the part for this click is in view, keeping as
-// much of what came before as fits.
+// Scroll the document so what this click adds is in view, keeping as much
+// of what came before as fits. `marks[i]` is what click i adds.
 const view = ref<HTMLElement>()
-const parts = ref<HTMLElement[]>([])
+const marks = ref<HTMLElement[]>([])
 const shift = ref(0)
+const mark = (i: number) => (el: unknown) => { marks.value[i] = el as HTMLElement }
 
 function measure() {
   const v = view.value
-  const el = parts.value[Math.max(0, Math.min(props.step, 3))]
+  const el = marks.value[Math.max(0, Math.min(props.step, 6))]
   if (!v || !el || !v.clientHeight) return
   const bottom = el.offsetTop + el.offsetHeight
   shift.value = Math.max(0, Math.min(el.offsetTop - 8, bottom - v.clientHeight + 18))
@@ -77,13 +81,13 @@ watch(() => props.step, measure)
       <div class="doc">
         <div class="tabs">
           <span class="ptab on">Document</span>
-          <span class="ptab">Decisions <em>{{ step >= 1 ? 3 : 4 }}</em></span>
+          <span class="ptab">Decisions <em>{{ step >= 2 ? 3 : 4 }}</em></span>
         </div>
 
         <div ref="view" class="view">
           <div class="col" :style="{ transform: `translateY(${-shift}px)` }">
             <!-- 0: the rough notes -->
-            <div :ref="el => (parts[0] = el as HTMLElement)" class="part">
+            <div :ref="mark(0)" class="part">
               <div class="doc-h1">Tasks start from states the app registers</div>
               <p>In the pilot, both "Preparing the app" fields were left at their placeholders.</p>
               <p>Today the text reaches the app only through a hook whose code has to interpret prose.</p>
@@ -91,9 +95,9 @@ watch(() => props.step, measure)
               <p v-for="n in notes" :key="n" class="rough">{{ n }}</p>
             </div>
 
-            <!-- 1: a decision put to the team, and the answer written back -->
-            <div :ref="el => (parts[1] = el as HTMLElement)" class="part reveal" :class="{ on: step >= 1 }">
-              <div class="card">
+            <!-- 1-2: a decision put to the team, then the answer written back -->
+            <div class="part" :class="{ settled: step >= 2 }">
+              <div :ref="mark(1)" class="card reveal" :class="{ on: step >= 1 }">
                 <div class="meta">
                   <span class="kind"><Icon name="branch" />Decision</span>
                   <span class="answered">Answered by <b>Pasi Huuhka</b></span>
@@ -105,12 +109,12 @@ watch(() => props.step, measure)
                   <span><b>{{ o.h }}</b>{{ o.p }}</span>
                 </div>
               </div>
-              <p class="changed">States are kept per app, and only self-tests and automated explorations add to the list.</p>
+              <p :ref="mark(2)" class="changed reveal" :class="{ on: step >= 2 }">States are kept per app, and only self-tests and automated explorations add to the list.</p>
             </div>
 
-            <!-- 2: research inside the plan, and the risk it found -->
-            <div :ref="el => (parts[2] = el as HTMLElement)" class="part reveal" :class="{ on: step >= 2 }">
-              <div class="card">
+            <!-- 3-4: research inside the plan, then what's open -->
+            <div class="part">
+              <div :ref="mark(3)" class="card reveal" :class="{ on: step >= 3 }">
                 <div class="meta">
                   <span class="kind"><Icon name="search" />Research</span>
                   <span class="ready"><Icon name="check" />Research ready</span>
@@ -119,17 +123,17 @@ watch(() => props.step, measure)
                 <p>Only the SDK's <code>onTaskStart</code> hook. It hands the app the free text, and nothing checks that the app can produce the state.</p>
                 <span class="foot">Sources: the SDK, docs/decisions.md · Researched by Planner</span>
               </div>
-              <div class="doc-h2">Open</div>
-              <div class="callout">
+              <div class="doc-h2 reveal" :class="{ on: step >= 4 }">Open</div>
+              <div :ref="mark(4)" class="callout reveal" :class="{ on: step >= 4 }">
                 <b><Icon name="alert" />A state that navigates hits #476</b>
                 <p>Replay freezes after the first route change. Out of scope here, but every task start will trigger it.</p>
               </div>
             </div>
 
-            <!-- 3: a comment on a passage, applied by the agent -->
-            <div :ref="el => (parts[3] = el as HTMLElement)" class="part reveal cm" :class="{ on: step >= 3 }">
+            <!-- 5-6: a comment on a passage, then the agent applies it -->
+            <div class="part" :class="{ commented: step >= 5, applied: step >= 6 }">
               <p><span class="anchor">A state's <code>apply</code> brings the app there from any state, so it's the reset too.</span></p>
-              <div class="pop">
+              <div :ref="mark(5)" class="pop reveal" :class="{ on: step >= 5 }">
                 <div class="pop-who"><i>AS</i><b>Antti Sartjärvi</b></div>
                 <p>Our prototypes often do full page loads. What happens if <code>apply</code> navigates?</p>
                 <div class="pop-foot">
@@ -137,7 +141,7 @@ watch(() => props.step, measure)
                   <b class="apply"><span class="todo">Apply feedback</span><span class="done"><Icon name="check" />Applied</span></b>
                 </div>
               </div>
-              <p class="changed late"><code>apply</code> routes inside the app. A page load while it runs counts as a failure, and the next page load offers "Try again".</p>
+              <p :ref="mark(6)" class="changed reveal" :class="{ on: step >= 6 }"><code>apply</code> routes inside the app. A page load while it runs counts as a failure, and the next page load offers "Try again".</p>
             </div>
           </div>
         </div>
@@ -147,7 +151,7 @@ watch(() => props.step, measure)
         <div class="tabs"><span class="ptab">Conversation</span></div>
         <div class="msgs">
           <template v-for="(m, i) in chat" :key="i">
-            <div v-if="step >= m.at" class="msg" :class="{ sys: m.sys, late: m.late, fresh: m.at === step }">
+            <div v-if="step >= m.at" class="msg" :class="{ sys: m.sys, fresh: m.at === step }">
               <template v-if="m.sys">{{ m.t }}</template>
               <template v-else>
                 <i class="av" :class="{ bot: m.bot }">{{ m.bot ? '' : m.av }}</i>
@@ -310,8 +314,8 @@ code {
   transition: transform 900ms var(--ns-ease);
 }
 
+/* Not positioned, so the marks' offsetTop is measured from .col. */
 .part {
-  position: relative;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -345,11 +349,12 @@ code {
 }
 
 .reveal {
-  transition: opacity 600ms var(--ns-ease) 300ms;
+  transition: opacity 600ms var(--ns-ease) 250ms, transform 700ms var(--ns-ease) 250ms;
 }
 
 .reveal:not(.on) {
   opacity: 0;
+  transform: translateY(8px);
 }
 
 /* Cards: a decision and a research result */
@@ -416,36 +421,27 @@ code {
   transition: border-color 300ms, box-shadow 300ms;
 }
 
-/* The answer lands a moment after the card. */
-.on .pick .radio {
+/* The answer: the chosen option, signed. */
+.settled .pick .radio {
   border-color: var(--ns-teal);
   box-shadow: inset 0 0 0 3px #fff, inset 0 0 0 8px var(--ns-teal);
-  transition-delay: 1300ms;
 }
 
-.answered {
+.meta .answered {
   opacity: 0;
   transition: opacity 500ms var(--ns-ease);
 }
 
-.on .answered {
+.settled .meta .answered {
   opacity: 1;
-  transition-delay: 1500ms;
 }
 
-.answered b { color: var(--z-ink); }
+.meta .answered b { color: var(--z-ink); }
 
 .part .changed {
   padding: 4px 8px;
   margin: 0 -8px;
   background: var(--chg);
-  opacity: 0;
-  transition: opacity 600ms var(--ns-ease);
-}
-
-.reveal.on .changed {
-  opacity: 1;
-  transition-delay: 1900ms;
 }
 
 .foot {
@@ -472,9 +468,13 @@ code {
 
 .callout p { font-size: 17px; }
 
-/* A comment on a passage: Apply feedback, then the agent's answer lands in
+/* A comment on a passage, then Apply feedback and the agent's answer in
    the prose. */
 .anchor {
+  transition: background-color 500ms, box-shadow 500ms;
+}
+
+.commented .anchor {
   background: var(--hl);
   box-shadow: 0 2px 0 #e2c94c;
 }
@@ -530,18 +530,17 @@ code {
 
 .apply .done { opacity: 0; }
 
-.on .apply {
+.apply {
+  transition: background-color 300ms, color 300ms;
+}
+
+.applied .apply {
   background: var(--ns-teal);
   color: #fff;
-  transition: background-color 300ms 1600ms, color 300ms 1600ms;
 }
 
-.on .apply .todo { opacity: 0; transition-delay: 1600ms; }
-.on .apply .done { opacity: 1; transition-delay: 1600ms; }
-
-.reveal.on .changed.late {
-  transition-delay: 2400ms;
-}
+.applied .apply .todo { opacity: 0; }
+.applied .apply .done { opacity: 1; }
 
 /* ---------- Conversation ---------- */
 
@@ -565,11 +564,11 @@ code {
 
 .msg.fresh {
   animation: msg 600ms var(--ns-ease) both;
-  animation-delay: 500ms;
+  animation-delay: 600ms;
 }
 
-.msg.fresh.late {
-  animation-delay: 2300ms;
+.msg.fresh + .msg.fresh {
+  animation-delay: 1100ms;
 }
 
 @keyframes msg {
