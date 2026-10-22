@@ -25,7 +25,7 @@ const gaps = [
       <p class="gap"><Icon name="alert" />{{ g.gap }}</p>
       <p class="next"><Icon name="arrow" />{{ g.next }}</p>
     </div>
-    <p class="take" :class="{ on: step >= 1 }">No slop doesn't mean no trust. It means knowing where you still trust.</p>
+    <p class="take" :class="{ on: step >= 1 }">No slop doesn't mean checking everything. It means knowing where you still take the agent's word.</p>
   </div>
 </template>
 

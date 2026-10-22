@@ -272,7 +272,7 @@
   font-size: 26px;
   line-height: 1.3;
   color: var(--z-ink-800);
-  max-width: 22ch;
+  max-width: 30ch;
   margin: 0 0 28px;
 }
 
@@ -301,7 +301,7 @@
   line-height: 1.06;
   font-weight: 800;
   letter-spacing: -0.035em;
-  max-width: 21ch;
+  max-width: 26ch;
   margin: 0;
   text-wrap: balance;
 }

@@ -12,7 +12,7 @@ rehearsal:
 titleTemplate: '%s · Pasi Huuhka'
 author: Pasi Huuhka
 info: |
-  Practices for shipping agent-written code you can explain. ESPC 2026, 60 minutes.
+  Earning trust in agent-written code. ESPC 2026, 60 minutes.
   Click-build variant: each slide builds with clicks.
 class: text-left
 highlighter: shiki
@@ -34,7 +34,7 @@ layout: none
 <div class="ns-cover">
   <div class="ns-cover-text">
     <h1>The <span>no slop</span><br />engineer</h1>
-    <p class="sub">Practices for shipping agent-written code you can explain</p>
+    <p class="sub">Earning trust in agent-written code</p>
     <p class="meta">Pasi Huuhka · Zure · ESPC 2026</p>
   </div>
   <div class="ns-cover-art"><AgentStream /></div>
@@ -45,7 +45,7 @@ About 30 seconds.
 
 - On screen: the title, and an agent working on the change we'll follow all talk, exporting a team's tasks as CSV.
 - Let the stream run for a moment before speaking.
-- This talk is about the practices I use so that code I didn't type is still code I can explain: what it does and why, how I know it works, and where to look when it breaks.
+- This talk is about how code I didn't type earns my trust: evidence of how it behaves, someone who can explain why it's built that way, and somewhere to look when it breaks. The trust has to be earned. It isn't a setting you turn on.
 - The introduction of me is the next slide. Don't repeat it here.
 - Timings in the notes are estimates per slide, not rehearsed. Rehearse before deciding what to cut.
 -->
@@ -91,7 +91,7 @@ clicks: 2
 ---
 
 <div class="ns-dark ns-statement">
-  <p class="big">Slop is a change <em>nobody can vouch for.</em></p>
+  <p class="big">Slop is a change<br /><em>nobody has a reason to trust.</em></p>
   <Show :step="$clicks" :at="1" class="small">No evidence of how it behaves. Nobody who can explain why it's built that way.</Show>
   <Show :step="$clicks" :at="2" class="small next">The usual fix: check everything yourself.</Show>
 </div>
@@ -102,7 +102,7 @@ About 1 minute.
 - On screen: my working definition for the talk, not a dictionary one.
 - Slop isn't "AI code". It's a change accepted on vibes: green checks, a confident summary, a reviewer who skimmed.
 
-[click] Two halves, and the talk covers both. Evidence: did anyone check how it behaves? Explanation: could anyone say why it's built this way, and where to look when it breaks? A change can pass every test and still be slop if nobody understands it.
+[click] Two reasons to trust a change, and the talk covers both. Evidence: did anyone check how it behaves? Explanation: could anyone say why it's built this way, and where to look when it breaks? A change can pass every test and still be slop if nobody understands it.
 - It doesn't matter who wrote it. Humans write slop too. I have. The difference now is volume.
 
 [click] So the obvious fix is you. Read every line, run it, click through it. That works until the agent writes faster than you can check. GitHub Next puts writing against reading at about 15 to 1.
@@ -147,6 +147,7 @@ clicks: 1
 About 1.5 minutes.
 
 - On screen: five levels of how much the agent does on its own. Poteto from SpaceX AI calls this the trust ladder. Level 1 is the bottleneck slide: you relay everything, and you read every line, or say you do.
+- This is the trust from the title. The agent earns each level with evidence; you don't hand it over.
 
 [click] The top level: the agent merges its own PRs. Poteto works backwards from there: "How do I get to the point where my agent can merge its own code?"
 - Say: "This isn't a talk about reading less. It's about replacing reading with something better, one level at a time."
@@ -1354,7 +1355,7 @@ PLACEHOLDER, about 1 minute. From the harness report's "Where we still rely on t
 - "I verified it in the app" and the screenshots are self-reported. The PR check sees that the section isn't empty, not that a UI change carries a picture.
 - "Write the failing test first" is a sentence in a skill. Nothing fails when code changes without a test.
 
-[click] No slop doesn't mean no trust. It means knowing where you still trust, and having a plan for each one.
+[click] No slop doesn't mean checking everything. It means knowing where you still take the agent's word, and having a plan for each one.
 -->
 
 ---
