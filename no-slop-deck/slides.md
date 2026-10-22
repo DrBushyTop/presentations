@@ -1298,6 +1298,39 @@ PLACEHOLDER, about 1.5 minutes. The project is new. Refresh every number before 
 ---
 part: Close
 class: ns
+clicks: 8
+---
+
+# From my phone to merged in 42 minutes
+
+<ThreadVideo :step="$clicks" />
+
+<!--
+About 2.5 minutes.
+
+- On screen: the real T3 thread for PR #540, recorded from the T3 web UI. Production URLs and resource names are blacked out. Each click plays on to the next moment and zooms in.
+- 22:35, on my phone: a production session's audio keeps stopping. "Can you test it?"
+
+[click] While it worked, I kept sending what I saw: a screenshot, "I skipped around", "only works from the very start". Six messages in three minutes. That was my part.
+
+[click] 22:38: "Confirmed." It wasn't. A missing seek index was the obvious theory.
+
+[click] 22:41: It tested the theory before fixing anything. Desktop Chromium seeks a file without a seek index just fine, so it dropped the theory.
+
+[click] 22:44: It downloaded the real recording. Safari's recorder never sets the keyframe flag, on any of 30,511 blocks. The cause came from the file, not from a guess.
+
+[click] 22:47: The test came first. Then its fix matched a hand-patched copy of the file byte for byte.
+
+[click] 23:06: It ran the real app. On master playback stops at 0:06; with the fix it plays on to 0:08. Those screenshots are in the PR.
+
+[click] 23:08: The report says what it didn't test: real Safari and a real Android phone. And it flagged one decision for me.
+
+[click] A different model reviewed it, GPT-6.1 Sol: one minor finding. Fixed with a failing test first, second round clean. Local CI passed, merged at 23:17.
+-->
+
+---
+part: Close
+class: ns
 clicks: 1
 ---
 
