@@ -1052,16 +1052,49 @@ transition: gate | gate-back
 <!--
 About 2 minutes. The controls work. Change reviewers, rounds or the lens live if there's time.
 
-- On screen: a small model of a review loop. Controls on top for reviewers, rounds and the lens. One bar per round, split into real issues and noise to triage. Start with one reviewer, one round. It finds some real issues and some noise.
+- On screen: a small model of the PR review loop, run the way I run it. The agent triages every finding and fixes what's real. I look once, at the end. Controls on top for reviewers, rounds and the lens. One bar per round, split into real issues and noise. Start with one reviewer, one round: about 14 minutes of my attention, most of it the look at the end.
 
-[click] Three reviewers from different providers. More real issues in round one, and a lot more noise to triage.
+[click] Three reviewers from different providers. More real issues in round one, and a lot more noise. My attention goes from 14 to 18 minutes, not double, because the agent handles the noise. What grows is the few findings it can't settle and sends to me, and the extra changes I read.
 
-[click] Keep going to five rounds. Real findings drop fast. Noise doesn't. The stop marker is where a round finds less than half a real issue.
+[click] Keep going to five rounds. Real findings drop fast. Noise doesn't. The stop marker is where a round finds less than half a real issue. Past it, a round mostly adds waiting, model cost and noise: findings the agent sends me, or code it changes anyway to please a reviewer.
 
-[click] The same run in money. For a manager, the model runs are the cheap part. People's time is the expensive part. Developers feel it as attention, managers see it as salary.
-- Same stop rule as the local loop. Here the budget is other people's attention.
-- The model is illustrative. Assumptions: 6 real issues, each reviewer catches a remaining one with p 0.35 (extra reviewers only partly independent), each fix adds 0.12 new issues, 2.5 noise findings per reviewer per round, 3 minutes to triage a finding, 8 to review a fix, €90 an hour, €0.60 per model run, 300 PRs a month.
+[click] The same run in money. With three reviewers for five rounds, the model runs are €30 per PR and my time is €53. Model runs aren't negligible once you multiply reviewers by rounds. Rounds past the stop cost money and buy almost nothing.
+- Same stop rule as the local loop. Here the budget is rounds and money, and the little attention that's left.
+- The model is illustrative. Assumptions:
+  - 6 real issues.
+  - Each reviewer catches a remaining issue with p 0.35. Extra reviewers are only partly independent.
+  - Each fix adds 0.12 new issues.
+  - 2.5 noise findings per reviewer per round. That makes 46% of the first round's findings real.
+  - The agent sends 10% of the findings to me, at 3 minutes each, and changes code for 15% of the noise anyway.
+  - My look at the end takes 10 minutes, plus 1 minute for each change.
+  - €90 an hour, €2 a review run, 300 PRs a month.
+- Where the numbers come from:
+  - Noise: in 31,073 CodeRabbit comments, 36.4% were accepted and 56.3% rejected (July 2026). At OpenAI, 52.7% of review comments lead to a code change. At Uber, 65% are addressed, against 51% of human comments. At Atlassian, 38.7% lead to a change.
+  - The look at the end: Uber estimates a second human reviewer would need 10 minutes per commit to find what its bot finds. Nobody has published measured minutes per agent-written PR.
+  - Per finding: the only measurement I found is from Mozilla and Ubisoft, a median of 43 seconds per patch to inspect generated comments. The 3 minutes for a finding the agent sends me is my assumption.
+  - Run price: Greptile charges $1 to $10 a review. Anthropic's Code Review averages $15 to $25.
+- Why the agent should take the findings first:
+  - Meta: showing AI fix suggestions to reviewers made reviews over 5% longer. Showing them only to authors removed the slowdown.
+  - Beko: when developers handled a review bot's comments themselves, average PR closure went from 5 h 52 min to 8 h 20 min. 73.8% of the comments were resolved.
+  - Atlassian: with its review agent, PR cycle time fell 30.8% and human-written comments fell 35.6%.
+- The caveat: my attention can't go to zero.
+  - In open source, reviewers of agent PRs approved more over time, from 30.1% to 36.8%, and wrote 22% fewer inline comments (June 2026).
+  - Merged agent PRs needed follow-up fixes at 1.62 times the odds of human PRs. The agents wrote most of those fixes themselves (September 2026).
+  - At a company that doubled merged PRs per engineer, automated review overtook human review and merge and revert rates held. The authors call those rates coarse proxies (July 2026).
 - Uber benchmarks its review bots on precision, recall, F1, cost per review, latency and noise. That's the right shape of measurement. https://www.uber.com/gb/en/blog/efficient-software-factory/
+- Sources:
+  - https://arxiv.org/abs/2607.03316
+  - https://alignment.openai.com/scaling-code-verification/
+  - https://www.uber.com/blog/ureview/
+  - https://arxiv.org/abs/2601.01129
+  - https://arxiv.org/abs/2411.07091
+  - https://www.greptile.com/pricing
+  - https://claude.com/blog/code-review
+  - https://arxiv.org/abs/2507.13499
+  - https://arxiv.org/abs/2412.18531
+  - https://arxiv.org/abs/2606.22721
+  - https://arxiv.org/abs/2609.26847
+  - https://arxiv.org/abs/2607.01904
 -->
 
 ---

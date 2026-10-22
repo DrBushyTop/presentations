@@ -1,11 +1,13 @@
 <!--
   When does another review stop paying off? A small, deliberately
-  illustrative model you can drive live. Assumptions (in the speaker notes
-  too): 6 real issues; each reviewer catches a remaining issue with
-  p = 0.35, extra reviewers only partly independent; every fix adds 0.12
-  new issues; 2.5 noise findings per reviewer per round; triage 3 min per
-  finding, 8 min per real fix;
-  €90 an hour for people, €0.60 per model review run; 300 PRs a month.
+  illustrative model you can drive live. The agent triages every finding and
+  fixes what's real; the person looks once, at the end. Assumptions (in the
+  speaker notes too, with sources): 6 real issues; each reviewer catches a
+  remaining issue with p = 0.35, extra reviewers only partly independent;
+  every fix adds 0.12 new issues; 2.5 noise findings per reviewer per round;
+  the agent sends 10% of findings to the person, 3 min each, and changes code
+  for 15% of the noise anyway; the person's look is 10 min plus 1 min per
+  change; €90 an hour for people, €2 per review run; 300 PRs a month.
 
   0 one reviewer, one round · 1 three providers · 2 five rounds, the stop
   3 the same run in money
@@ -29,15 +31,22 @@ watch(() => props.step, () => { manual.value = null })
 const s = computed(() => manual.value ?? byStep.value)
 const set = (patch: Partial<{ k: number, rounds: number, lens: Lens }>) => { manual.value = { ...s.value, ...patch } }
 
-const ISSUES = 6
-const P = 0.35
-const NOISE = 2.5
-const TRIAGE = 3
-const FIXREVIEW = 8
+const ISSUES = 6 // real issues in the PR before review
+const P = 0.35 // chance one reviewer catches a remaining issue
+const NOISE = 2.5 // noise findings per reviewer per round
+const NEW = 0.12 // new issues per fix
+const CHURN = 0.15 // share of noise the agent changes code for anyway
+const SENT = 0.1 // share of findings the agent sends to you
+const LOOK = 10 // your one look at the finished PR, minutes
+const PER_CHANGE = 1 // minutes that look grows for each change the agent made
+const PER_SENT = 3 // minutes for each finding the agent sends you
 const EUR_MIN = 1.5
-const EUR_RUN = 0.6
+const EUR_RUN = 2
 const PRS = 300
 
+// The agent triages every finding and fixes what's real. You look once, at
+// the end: a fixed look, a little more for each change, and the few findings
+// the agent sends you because it can't settle them.
 const sim = computed(() => {
   const catchRate = 1 - (1 - P) ** (1 + 0.6 * (s.value.k - 1))
   let remaining = ISSUES
@@ -45,26 +54,29 @@ const sim = computed(() => {
   for (let r = 1; r <= 6; r++) {
     const real = remaining * catchRate
     const noise = NOISE * s.value.k
-    remaining = remaining - real + 0.12 * real
-    const minutes = (real + noise) * TRIAGE + real * FIXREVIEW
-    rounds.push({ r, real, noise, minutes, people: minutes * EUR_MIN, model: s.value.k * EUR_RUN })
+    remaining = remaining - real + NEW * real
+    const sent = SENT * (real + noise)
+    const minutes = (real + CHURN * noise) * PER_CHANGE + sent * PER_SENT
+    rounds.push({ r, real, noise, sent, minutes, left: remaining, people: minutes * EUR_MIN, model: s.value.k * EUR_RUN })
   }
   const stopAt = rounds.findIndex(x => x.real < 0.5) + 1 || 6
   const used = rounds.slice(0, s.value.rounds)
   const sum = (f: (x: typeof rounds[number]) => number) => used.reduce((a, x) => a + f(x), 0)
+  const minutes = LOOK + sum(x => x.minutes)
   return {
     rounds,
     stopAt,
-    caught: sum(x => x.real),
+    left: used[used.length - 1].left,
     findings: sum(x => x.real + x.noise),
-    minutes: sum(x => x.minutes),
-    people: sum(x => x.people),
+    sent: sum(x => x.sent),
+    minutes,
+    people: minutes * EUR_MIN,
     model: sum(x => x.model),
   }
 })
 
 const maxAttention = 12
-const maxMoney = 160
+const maxMoney = 24
 const bars = computed(() => sim.value.rounds.map((x) => {
   const money = s.value.lens === 'money'
   const a = money ? x.model / maxMoney : x.real / maxAttention
@@ -106,7 +118,7 @@ const eur = (v: number) => `€${Math.round(v).toLocaleString('en-US')}`
         </div>
       </div>
       <div class="legend">
-        <template v-if="s.lens === 'attention'"><i class="a" /> real issues <i class="b" /> noise to triage</template>
+        <template v-if="s.lens === 'attention'"><i class="a" /> real issues <i class="b" /> noise the agent triages</template>
         <template v-else><i class="a" /> model runs <i class="b" /> people's time</template>
         <em>Illustrative model</em>
       </div>
@@ -114,14 +126,14 @@ const eur = (v: number) => `€${Math.round(v).toLocaleString('en-US')}`
 
     <div class="sum">
       <template v-if="s.lens === 'attention'">
-        <div><span>Real issues caught</span><b>{{ sim.caught.toFixed(1) }} <small>of 6</small></b></div>
-        <div><span>Findings to triage</span><b>{{ Math.round(sim.findings) }}</b></div>
+        <div><span>Real issues left</span><b>{{ sim.left.toFixed(1) }} <small>of 6 at the start</small></b></div>
+        <div><span>Findings the agent triaged</span><b>{{ Math.round(sim.findings) }} <small>{{ sim.sent.toFixed(1) }} sent to you</small></b></div>
         <div class="big"><span>Your attention, per PR</span><b>{{ hm(sim.minutes) }}</b></div>
       </template>
       <template v-else>
         <div><span>Model runs, per PR</span><b>{{ eur(sim.model) }}</b></div>
         <div><span>People's time, per PR</span><b>{{ eur(sim.people) }}</b></div>
-        <div class="big"><span>At 300 PRs a month</span><b>{{ eur((sim.model + sim.people) * PRS) }}</b></div>
+        <div class="big"><span>At 300 PRs a month</span><b>{{ eur(Math.round((sim.model + sim.people) * PRS / 100) * 100) }}</b></div>
       </template>
     </div>
   </div>
