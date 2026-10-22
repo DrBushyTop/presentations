@@ -10,7 +10,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useSlideContext } from '@slidev/client'
-import { useIsActive } from '../lib/active'
+import { prefersReducedMotion, useIsActive } from '../lib/active'
 import { gates } from '../lib/gates'
 
 const props = defineProps<{ current: number }>()
@@ -50,30 +50,70 @@ let timers: ReturnType<typeof setTimeout>[] = []
 const later = (ms: number, fn: () => void) => timers.push(setTimeout(fn, ms))
 const clear = () => { timers.forEach(clearTimeout); timers = [] }
 
+// The zoom runs from one animation frame loop: the headline's size, the
+// row's position and the label all read the same progress, so they stay in
+// step on a slow device. A CSS font-size transition next to a transform
+// transition drifts apart there: the word grows, then the row catches up.
+const ZOOM_MS = 1300
+// cubic-bezier(0.16, 1, 0.3, 1), the deck's --ns-ease
+function ease(t: number) {
+  const bez = (a: number, b: number, u: number) => 3 * a * u * (1 - u) ** 2 + 3 * b * u * u * (1 - u) + u ** 3
+  let lo = 0
+  let hi = 1
+  for (let k = 0; k < 24; k++) {
+    const mid = (lo + hi) / 2
+    if (bez(0.16, 0.3, mid) < t) lo = mid
+    else hi = mid
+  }
+  return bez(1, 1, (lo + hi) / 2)
+}
+const zoom = ref(0)
+let raf = 0
+function runZoom() {
+  cancelAnimationFrame(raf)
+  if (prefersReducedMotion()) {
+    zoom.value = 1
+    return
+  }
+  const start = performance.now()
+  const tick = (now: number) => {
+    const t = Math.min(1, (now - start) / ZOOM_MS)
+    zoom.value = ease(t)
+    if (t < 1) raf = requestAnimationFrame(tick)
+  }
+  raf = requestAnimationFrame(tick)
+}
+function stopZoom() {
+  cancelAnimationFrame(raf)
+  zoom.value = 0
+}
+
 // Slidev mounts the next slide hidden, so measure again once it's on screen.
 // On leaving, wait for the page turn before resetting, or the reset shows.
 watch(active, async (on) => {
   clear()
   if (!on) {
-    later(1500, () => { phase.value = 'arrive' })
+    later(1500, () => { phase.value = 'arrive'; stopZoom() })
     return
   }
   phase.value = 'arrive'
+  stopZoom()
   await measure()
   later(900, () => { phase.value = 'handoff' })
-  later(2900, () => { phase.value = 'zoom' })
+  later(2900, () => { phase.value = 'zoom'; runZoom() })
 }, { immediate: true })
-onBeforeUnmount(clear)
+onBeforeUnmount(() => { clear(); cancelAnimationFrame(raf) })
 
 const shown = computed<Phase>(() => (still.value ? 'zoom' : phase.value))
+const z = computed(() => (still.value ? 1 : zoom.value))
 const reached = computed(() => (shown.value === 'arrive' ? props.current - 1 : props.current))
 function state(i: number) {
   if (i < reached.value) return 'done'
   if (i === reached.value) return 'run'
   return 'queued'
 }
-const x = computed(() => (shown.value === 'zoom' ? xZoom.value : xWhole.value))
-const labelX = computed(() => (shown.value === 'zoom' ? labelZoom.value : labelWhole.value))
+const x = computed(() => xWhole.value + (xZoom.value - xWhole.value) * z.value)
+const labelX = computed(() => labelWhole.value + (labelZoom.value - labelWhole.value) * z.value)
 </script>
 
 <template>
@@ -82,7 +122,8 @@ const labelX = computed(() => (shown.value === 'zoom' ? labelZoom.value : labelW
       <div class="row" :style="{ transform: `translateX(${x}px)` }">
         <div
           v-for="(g, i) in gates" :key="g.name"
-          class="st" :class="['s-' + state(i), { big: shown === 'zoom' && i === current }]"
+          class="st" :class="'s-' + state(i)"
+          :style="i === current ? { '--z': z } : undefined"
         >
           <b class="w">{{ g.name }}</b>
           <i class="fill l" />
@@ -141,7 +182,6 @@ const labelX = computed(() => (shown.value === 'zoom' ? labelZoom.value : labelW
   align-items: flex-end;
   gap: var(--gap);
   white-space: nowrap;
-  transition: transform 1300ms var(--ease);
 }
 
 .measure {
@@ -206,23 +246,24 @@ const labelX = computed(() => (shown.value === 'zoom' ? labelZoom.value : labelW
   transition-delay: 400ms;
 }
 
+/* This part's headline grows with --z, from 0 (the whole row) to 1. */
 .w {
   font-family: var(--z-font-display);
-  font-size: 36px;
+  font-size: calc(36px + 132px * var(--z, 0));
   line-height: 1;
   font-weight: 800;
-  letter-spacing: -0.02em;
+  letter-spacing: calc(-0.02em - 0.025em * var(--z, 0));
   color: #5a5a5a;
-  transition: font-size 1300ms var(--ease), letter-spacing 1300ms var(--ease), color 600ms var(--ease);
+  transition: color 600ms var(--ease);
 }
 
-.big .w {
+.measure .big .w {
   font-size: 168px;
   letter-spacing: -0.045em;
 }
 
 .s-done .w { color: var(--ok); }
-.s-run .w { color: #fff; transition-delay: 0ms, 0ms, 800ms; }
+.s-run .w { color: #fff; transition-delay: 800ms; }
 
 /* ---------- Nodes ---------- */
 
@@ -351,7 +392,6 @@ const labelX = computed(() => (shown.value === 'zoom' ? labelZoom.value : labelW
   font-size: 18px;
   line-height: 22px;
   color: #8f8f8f;
-  transition: left 1300ms var(--ease);
 }
 
 /* ---------- Question ---------- */
@@ -385,11 +425,6 @@ const labelX = computed(() => (shown.value === 'zoom' ? labelZoom.value : labelW
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .row,
-  .w {
-    transition: none;
-  }
-
   .ping {
     animation: none !important;
   }
