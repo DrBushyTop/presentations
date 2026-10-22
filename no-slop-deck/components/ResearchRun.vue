@@ -40,7 +40,7 @@ const hitRank = (i: number) => files.slice(0, i).filter(f => f.hit).length
 
 const elsewhere = [
   { icon: 'globe', label: 'Docs', line: 'Exec stream limits' },
-  { icon: 'db', label: 'Logs', line: 'Failed runs and sizes' },
+  { icon: 'db', label: 'Telemetry', line: 'Failed runs and sizes' },
   { icon: 'clock', label: 'Past notes', line: 'Earlier sandbox research' },
 ] as const
 const OUT = { y: 352, h: 158, w: 167, gap: 12 }

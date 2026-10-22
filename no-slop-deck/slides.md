@@ -164,46 +164,42 @@ class: ns
 clicks: 2
 ---
 
-# One repo, six places it can go wrong
+# In my repo, agents merge
+
+<OwnRepo :step="$clicks" />
+
+<!--
+About 1.5 minutes. The project is new: refresh every number before the talk. Numbers as of 22 October 2026 (master at e0f2868), from the repo's harness report.
+
+- On screen: where the examples come from, my current project. A UX research tool. A researcher sets up a study with tasks. A participant tries a prototype app, and the session records the screen, their voice and a transcript. Researchers write findings from the replay, and coding agents use the same data through MCP.
+- Those are the words the examples use: study, task, prototype, session, replay, finding.
+- The opening animation was a change in this repo, and so was the PR the inspector stamped.
+
+[click] Agents build it, review it and merge it. Eleven days old: 288 merged PRs and 1,318 commits, from 1,103 agent threads on my MacBook and my home server. Branch protection requires zero human approvals.
+
+[click] It runs on three rules. Humans steer: I decide what gets built, and the decisions are written into the issue before any code exists. Agents own delivery: one agent, one worktree, one PR, owned through merge, with a model from another provider reviewing. Code holds the line: tests, scripts and branch protection refuse a bad change, not prose.
+- I still use the app myself before anyone else does. My part is decisions and clicking through it, not approving PRs.
+- At the end we'll follow one real change through all of it, from my phone to merged.
+- Each part of the talk uses something that really happened here, plus a few outside examples from teams further along.
+-->
+
+---
+layout: none
+clicks: 2
+transition: gate | gate-back
+---
 
 <PartMap :step="$clicks" />
 
 <!--
 About 1 minute. This is the agenda. Keep it quick.
 
-- On screen: where the examples come from. My current project: a UX research tool. Researchers invite people to try prototype apps, and it records what happens: the screen, the audio, a transcript. Researchers write findings from it, and coding agents use the same data through MCP.
-- Agents build it, review it and merge it. The opening animation was a change in this repo, and so was the PR the inspector stamped. The numbers are on the next slide.
-- Each part uses something that really happened in this repo, plus a few outside examples from teams further along.
+- On screen: the six parts on one track. It's the same track the part dividers use, so the room will recognise it each time.
 
-[click] Six parts, each with the question it answers. Three before any code: research, design, slice.
+[click] Three before any code: research, design, slice. Each part answers one question.
 
 [click] Two for every slice: verify and review, in a loop until the feature is done. One after merge: production.
 - Each part opens with how agent work goes wrong at that point, and where you're the bottleneck. Then what we do about it.
--->
-
----
-part: Agents that merge
-class: ns
-clicks: 1
-transition: gate | gate-back
----
-
-# In my repo, agents merge
-
-<OwnRepo :step="$clicks" />
-
-<!--
-PLACEHOLDER, about 1.5 minutes. The project is new. Refresh every number before the talk, and decide in rehearsal whether this stays. Numbers as of 22 October 2026 (master at e0f2868), from the repo's harness report.
-
-- On screen: the numbers behind the repo from the last slide, so the rest of the talk has something real to stand on. Agents claim issues, build, verify in the real app, review each other's work and merge. Branch protection requires zero human approvals. I make the decisions; agents own the delivery.
-- 288 merged PRs and 1,318 commits in eleven days, from 1,103 agent threads on my MacBook and my home server. That's only possible because the rules that matter are tests, scripts and branch protection, checked by code, not by me.
-
-[click] How it's built, from advice to enforcement. A short AGENTS.md that routes each kind of task to the skill that owns it. Skills that guide a workflow end to end. Gates that refuse the change: a pre-commit hook, architecture tests, a local CI run that has to pass before merge. And the PR body as the record: what was verified, who reviewed, before and after media.
-- In the first five days, rules moved down that line: out of a 13.7 KB AGENTS.md, into skills, then into checks. None of it was designed up front. Each rule arrived when a problem showed up: parallel agents sharing an instance, merged migration snapshots, green tests on features that didn't work.
-- After 16 October the checks barely changed. The work moved to how tickets are written and how deep reviews go.
-- I still use the app myself before anyone else does. My involvement is decisions and clicking through it, not approving PRs.
-- OpenAI's harness team, who come up in verify and review, keep blocking merge gates minimal. I block harder, because some data in this product is a one-way door.
-- Then into the six parts, starting with research.
 -->
 
 ---
@@ -261,7 +257,7 @@ About 1 minute.
 - On screen, the same layout opens every part: how it goes wrong on the left, what you'd see in the middle, and at the bottom, where you're the bottleneck.
 - Guessing: the agent answers a factual question from its priors. "The guest probably can't rebuild a split reply." That was the suspected cause written into an issue in my repo, and it was wrong. It sounds right, and nothing on screen says it was a guess.
 - Rereading: every phase reads the same 30 files again, and the reading crowds out the work.
-- Where you're the bottleneck: the agent asks you things the code, the logs or the tickets could answer. Or it doesn't ask, and guesses.
+- Where you're the bottleneck: the agent asks you things the code, the telemetry or the tickets could answer. Or it doesn't ask, and guesses.
 
 [click] The fixes: answer from the system itself, with a reference you can open, and do the reading once so later contexts start from a short map.
 -->
@@ -284,7 +280,7 @@ About 1.5 minutes. This is how research runs in my OpenCode setup, which builds 
 
 [click] The research agent hands the reading to subagents. A locator finds where things live, an analyzer reads how they work and keeps file and line references, a pattern finder looks for similar code. They search for stdin and the reply size limit, and that points them at four files. It could open any of them, but it opens only those. That's the difference from guessing: it finds where to look before it answers.
 
-[click] Then it looks outside the code. A web subagent reads the platform's docs on exec stream limits. The agent queries the logs for failed runs and their reply sizes; it has read access through the Azure CLI. And it searches notes from earlier research on the sandbox.
+[click] Then it looks outside the code. A web subagent reads the platform's docs on exec stream limits. The agent queries telemetry for failed runs and their reply sizes; it has read access through the Azure CLI. And it searches notes from earlier research on the sandbox.
 - It doesn't ask me any of these. They're facts, and facts have a place you can look them up.
 
 [click] It writes research.md: four findings, each with a file and line. The next context starts from this, not from 30 files. The next slide opens it.
@@ -333,12 +329,13 @@ About 1 minute.
 
 - On screen: four questions the agent could have brought to me about that bug. Research is one case of a broader rule: when the agent has a factual question, it shouldn't ask you and it shouldn't guess.
 
-[click] It looks in the place that knows. The logs: every reply over about 12 KB failed; 9 KB worked, 12.3 KB didn't. The code: the guest already rebuilds lines. The tests: one sends 50 KB, but its fake socket takes any size, and it allows pieces up to 24 KB. So no test could catch this.
+[click] It looks in the place that knows. The telemetry: every reply over about 12 KB failed; 9 KB worked, 12.3 KB didn't. The code: the guest already rebuilds lines. The tests: one sends 50 KB, but its fake socket takes any size, and it allows pieces up to 24 KB. So no test could catch this.
 - The last question had no answer in the code or the docs. So the agent measured it: a throwaway sandbox environment, messages of growing size. 16,376 bytes arrived. 16,404 vanished, with no error and no close. Then it deleted the environment.
 - That closes the loop: 16 KiB pieces become about 21,900-byte messages after base64, and the platform drops them silently. The fix was smaller pieces, a test fake that drops oversized messages like the real platform, and tests at 100 KB, 1 MiB and 8 MiB. From issue to merge took a little over an hour.
 
 [click] Poteto's question: "How do I get the agent to answer its own question? Not by hallucinating, not by guessing, but actually real data." What comes back to you are the product choices, which is where the design part starts.
-- What makes this work is access, not a smarter model: read access to the logs, a place to run experiments, notes it can search.
+- What makes this work is access, not a smarter model: read access to telemetry, a place to run experiments, notes it can search.
+- Say telemetry, not logs. With OpenTelemetry, failures arrive as structured events with attributes like the reply size, so the agent can query them instead of grepping text.
 - Source: https://www.youtube.com/watch?v=MN9dGgmLyso
 -->
 
@@ -1350,6 +1347,31 @@ About 3 minutes.
 [click] 23:17: Fixed with a failing test first. One re-review, no findings. Then it took the PR to merge itself. The first local CI run passed but didn't count: master had moved on, and the script won't record a pass for a commit that's behind master. So it merged master in, reran, and merged on the green run.
 - That's the babysitter's job from the review section, done by the implementer. No human approval.
 - The pass belongs to one exact commit. That's the stop rule from the review part: a new commit makes old results stale. Make sure only the CI run can record that pass, not the agent that wants to merge.
+-->
+
+---
+part: Close
+class: ns
+clicks: 2
+---
+
+# Rules were added as problems showed up
+
+<RulesGrew :step="$clicks" />
+
+<!--
+About 1 minute.
+
+- On screen: commits per day in my repo's first twelve days. None of the system from the start of the talk was designed up front.
+- 11 to 13 October: the start. Feature slices, CONTEXT.md required, browser evidence in every PR. Most rules were still prose, in a 13.7 KB AGENTS.md.
+
+[click] 14 to 16 October: the checks arrived. The 14th was the hardening day: scripts/check and the pre-commit hook, AGENTS.md cut to a 7.3 KB map, the verify skill, local CI and the PR template. The 15th: review by another provider's model, CI once per PR, a visual check by implementer and reviewer, API parity enforced. The 16th: the owner decisions ledger, squashed migrations, Linux CI.
+- Each rule arrived when a problem showed up: parallel agents sharing an instance, merged migration snapshots, green tests on features that didn't work.
+
+[click] 17 to 19 October: tickets and reviews. Every issue gets a size, and a Medium is questioned when work starts. Tickets are vertical slices. Review depth follows the ticket. And a cleanup command, after orphaned databases filled SQL Server.
+- After the 16th the checks barely changed. The work moved to how tickets are written and how deep reviews go.
+- Add a check when a mistake repeats or escapes. The next slide is what's still missing.
+- Counts and dates are from the repo's harness report, 22 October 2026.
 -->
 
 ---

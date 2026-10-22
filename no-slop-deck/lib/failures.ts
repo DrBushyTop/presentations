@@ -14,7 +14,7 @@ export const failures: Failure[][] = [
     {
       name: 'The agent guesses instead of looking',
       seen: 'agent: "The guest probably can\'t rebuild a split reply."',
-      fix: 'Answer from the code, logs and tickets, with a reference',
+      fix: 'Answer from the code, telemetry and tickets, with a reference',
     },
     {
       name: 'The agent rereads the system every time',
