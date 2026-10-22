@@ -2,23 +2,24 @@
   Grilling as it really looks: the agent asks a batch of numbered questions,
   each with its own recommendation. The person answers by number, accepting
   most and overriding the one that matters. grill-with-docs writes the
-  settled answers into CONTEXT.md. Only the caller-team answer is fixed for
-  the teaching case; the others stand in for the real design run.
+  settled answers into CONTEXT.md and the decision log. From my repo's
+  issue #526 (starting states): the answers and the CONTEXT.md entry are
+  real; the agent's recommendations weren't kept and are reconstructed.
   0 the prompt · 1 the agent's batch · 2 the reply · 3 the record
 -->
 <script setup lang="ts">
 withDefaults(defineProps<{ step?: number }>(), { step: 0 })
 const qs = [
-  { n: 'Q1', q: 'Can someone export another team\'s tasks?', r: 'No. Take the team from the session and ignore any team in the request.' },
-  { n: 'Q2', q: 'Which tasks go in the file?', r: 'All of the team\'s tasks.' },
-  { n: 'Q3', q: 'What is out of the first version?', r: 'Scheduling, other formats and column choices.' },
+  { n: 'Q1', q: 'How does a researcher set where a task starts?', r: 'Free text, as the decision log says.' },
+  { n: 'Q2', q: 'What does a participant see while the app gets ready?', r: '"Getting the app ready…", then Try again or Skip.' },
+  { n: 'Q3', q: 'Does a task also need a reset between runs?', r: 'No. Applying the state again is the reset.' },
 ]
 </script>
 
 <template>
   <div class="grill">
     <section class="chat">
-      <div class="msg me req"><small>You</small>Grill me on this plan so we can both close the gaps in our understanding.</div>
+      <div class="msg me req"><small>You</small>Grill me on starting states, so we both close the gaps before any code.</div>
 
       <div class="msg agent" :class="{ on: step >= 1 }">
         <small>Agent asks</small>
@@ -29,21 +30,20 @@ const qs = [
       </div>
 
       <div class="msg me reply" :class="{ on: step >= 2 }">
-        <span>Q1 agree.</span>
-        <span class="over">Q2 no: only what the list shows now, with its filter.</span>
-        <span>Q3 agree.</span>
+        <span class="over">Q1 no: pick from states the app registers. Drop the free text.</span>
+        <span>Q2 agree. Q3 agree.</span>
       </div>
     </section>
 
     <section class="doc" :class="{ on: step >= 3 }">
       <header><span class="ns-mono">CONTEXT.md</span><em>grill with docs</em></header>
       <dl>
-        <dt>Export</dt>
-        <dd>A CSV of the caller's team's tasks, with the list's current filter.</dd>
-        <dt>Team</dt>
-        <dd>Comes from the session, never from the request.</dd>
+        <dt>Starting state</dt>
+        <dd>A named state the app registers through the SDK. A task names one, or none: "As is".</dd>
+        <dt class="avoid">Avoid</dt>
+        <dd>Reset requirement; describing a starting state in free text.</dd>
       </dl>
-      <footer class="ns-mono">+ docs/adr/0007-export-scope.md</footer>
+      <footer class="ns-mono">+ docs/decisions.md</footer>
     </section>
   </div>
 </template>
@@ -178,6 +178,11 @@ dt {
   font-family: var(--z-font-display);
   font-size: 26px;
   font-weight: 800;
+}
+
+dt.avoid {
+  font-size: 20px;
+  color: var(--ns-red);
 }
 
 dd {

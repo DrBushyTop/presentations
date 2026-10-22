@@ -1,17 +1,19 @@
 <!--
   The agent answers its own factual questions from real sources, each answer
   with a reference, so only the product choices come back to a person.
-  The first answer is the demo app's real code. The others are illustrative.
+  From my repo's issue #257: the logs, code and tests are real; the last
+  question had no answer in code or docs, so the agent measured it in a
+  throwaway environment. The numbers are that probe's.
   0 the questions · 1 sources and answers · 2 what still comes to you
 -->
 <script setup lang="ts">
 withDefaults(defineProps<{ step?: number }>(), { step: 0 })
 
 const rows = [
-  { q: 'Does the list show done tasks?', src: 'Code', a: "Yes. 'all' is the default filter.", ref: 'client/TaskList.tsx:27' },
-  { q: 'How big does one team\'s export get?', src: 'Database', a: 'Largest team: 8,412 tasks', ref: 'SELECT count(*) … GROUP BY team_id' },
-  { q: 'Has anyone asked for this before?', src: 'Linear, Slack', a: 'Two tickets. Both want open tasks only.', ref: 'DOC-118 · DOC-131' },
-  { q: 'How did we fix CSV quoting last time?', src: 'Past sessions', a: 'Quote every field, double inner quotes', ref: 'recall: session of 14 Sep' },
+  { q: 'Which replies fail?', src: 'Logs', a: 'Every one over about 12 KB', ref: 'sandbox_protocol_failure, by size' },
+  { q: 'Does the guest rebuild split replies?', src: 'Code', a: 'Yes. It reads whole lines.', ref: 'worker-v2.mjs:49' },
+  { q: 'Does a test send big replies?', src: 'Tests', a: 'One sends 50 KB, in pieces up to 24 KB.', ref: 'ExecStreamTests.cs:60' },
+  { q: 'Does the platform cap one message?', src: 'A live test', a: '16,376 bytes arrive. 16,404 vanish.', ref: 'throwaway environment, then deleted' },
 ]
 </script>
 

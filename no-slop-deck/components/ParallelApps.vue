@@ -1,21 +1,22 @@
 <!--
   One copy of the app per agent, on one machine. Each worktree starts its own
   instance with its own ports, data and browser, so several agents can verify
-  at once. Worktree names and ports are illustrative. The fixed ports are the
-  demo app's real configuration (Vite 5176, proxy to 4323).
+  at once. The setup is my repo's: each worktree's instance takes the first
+  free block of ports from 5300 up and gets its own database and storage
+  container. The worktree names are illustrative.
   0 one instance · 1 three in parallel · 2 what stops it
 -->
 <script setup lang="ts">
 withDefaults(defineProps<{ step?: number }>(), { step: 0 })
 
 const lanes = [
-  { wt: 'export-csv', api: 4401, ui: 5201, check: 'Export opens with five rows' },
-  { wt: 'fix-quoting', api: 4402, ui: 5202, check: 'A-102 stays in one column' },
-  { wt: 'sync-status', api: 4403, ui: 5203, check: 'Sidebar shows last sync' },
+  { wt: 'replay-routes', api: 5300, ui: 5301, check: 'Replay shows the invoice' },
+  { wt: 'starting-states', api: 5310, ui: 5311, check: 'Task opens on its state' },
+  { wt: 'safari-audio', api: 5320, ui: 5321, check: 'Safari recording seeks' },
 ]
 const blockers = [
-  { bad: 'Fixed ports', good: 'Ports from the environment' },
-  { bad: 'One shared database', good: 'Seed data per worktree' },
+  { bad: 'Fixed ports', good: 'Free ports per worktree' },
+  { bad: 'One shared database', good: 'A database per worktree' },
   { bad: 'One browser profile', good: 'A browser per agent' },
 ]
 </script>
@@ -26,9 +27,9 @@ const blockers = [
       <section v-for="(l, i) in lanes" :key="l.wt" class="lane" :class="{ on: i === 0 || step >= 1 }" :style="{ '--i': i }">
         <header class="ns-mono"><Icon name="branch" /> {{ l.wt }}</header>
         <div class="term ns-mono">
-          <p class="cmd">$ npm run reset &amp;&amp; npm run dev</p>
-          <p class="dim">API :{{ l.api }} · UI :{{ l.ui }}</p>
-          <p class="dim">data/tasks.sqlite · own copy</p>
+          <p class="cmd">$ scripts/dev/instance.sh start</p>
+          <p class="dim">api :{{ l.api }} · web :{{ l.ui }}</p>
+          <p class="dim">own database and storage</p>
         </div>
         <div class="browser">
           <div class="bar"><i /><i /><i /><span class="ns-mono">localhost:{{ l.ui }}</span></div>

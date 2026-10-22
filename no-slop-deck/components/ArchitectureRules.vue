@@ -48,7 +48,7 @@ const col = (i: number) => 80 + i * ((W - 160) / 5)
 
     <div class="lint ns-mono">
       <p class="hd"><b>✗</b> structural test · layer-deps</p>
-      <p class="msg">service/exports.ts imports ui/columnLabels.ts. Service may not import UI. Move the labels to types/ and import them from there.</p>
+      <p class="msg">service/invoices.ts imports ui/formatMoney.ts. Service may not import UI. Move the formatter to types/ and import it from there.</p>
     </div>
 
     <p class="take">Choose the boundaries. Let the checks enforce them.</p>

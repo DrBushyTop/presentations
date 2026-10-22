@@ -27,8 +27,8 @@ const gods = [10.2, 14.8, 11.6, 10.4, 12.9, 10.1, 16.3, 11.0]
       <h3>One directory per feature</h3>
       <div class="tree ns-mono">
         <p>features/</p>
-        <p class="d">export/</p>
-        <p class="f">route.ts · query.ts · view.tsx · export.test.ts</p>
+        <p class="d">search/</p>
+        <p class="f">route.ts · query.ts · view.tsx · search.test.ts</p>
         <p class="d">sync-status/</p>
         <p class="f">route.ts · query.ts · view.tsx · sync-status.test.ts</p>
         <p class="r">registry discovers every feature</p>

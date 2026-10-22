@@ -1,8 +1,9 @@
 <!--
   The plan has to work for the team, not only the author.
   Left: Honeycomb's Tenant team, before and after reviewing plans together.
-  Right: the export three weeks later. Someone who didn't build it answers
-  from the decision record. Illustrative, from the running example.
+  Right: a question about my repo three weeks after a decision. Someone who
+  didn't build it answers from the decision log. The decision is the repo's
+  (docs/decisions.md, 17 Oct); the conversation is illustrative.
   0 producers and reviewers · 1 team plan review · 2 three weeks later · 3 the question
 -->
 <script setup lang="ts">
@@ -35,15 +36,15 @@ withDefaults(defineProps<{ step?: number }>(), { step: 0 })
     </section>
 
     <section class="later" :class="{ on: step >= 2 }">
-      <header>DOC-142, three weeks later</header>
+      <header>Three weeks later</header>
       <div class="msg q">
-        <small><Icon name="user" />Support</small>
-        <p>"Why does the export skip done tasks?"</p>
+        <small><Icon name="user" />A researcher</small>
+        <p>"Why did my session stop recording the screen?"</p>
       </div>
       <div class="msg a">
         <small><Icon name="user" />On call, didn't build it</small>
-        <p>"It exports what the list shows. We decided that in plan review."</p>
-        <span class="ns-mono">docs/adr/0007-export-scope.md</span>
+        <p>"It hit its 2 GiB budget. Only the screen stops; voice keeps going. We decided that in plan review."</p>
+        <span class="ns-mono">docs/decisions.md · 17 Oct</span>
       </div>
     </section>
 

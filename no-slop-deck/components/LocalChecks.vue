@@ -1,74 +1,130 @@
 <!--
-  The local check run after a slice, as terminal output. The lint rule and
-  paths are the demo app's real ones (eslint.config.js, no-restricted-imports).
-  The message follows a fix / why / don't shape; the full text is in the
-  demo app's config, shortened here.
-  0 the failing run, with the fix in the message · 1 where it runs · 2 the rerun
-  Both runs share one grid cell and crossfade, so nothing shifts.
+  Three of my repo's architecture rules failing at commit, then the full local
+  CI run before merge. Rule ids, messages and the Day each rule arrived come
+  from the repo (tests/Discovery.Architecture.Tests/SourceRules.cs, git log);
+  the edited files and lines are illustrative, and long Fix lines are
+  shortened. The rail on the right lists the rules by the day they arrived.
+  0 time-provider · 1 handler-project-access · 2 retriable-transactions ·
+  3 local CI and merge
+  The frames share one grid cell and crossfade, so nothing shifts.
 -->
 <script setup lang="ts">
 withDefaults(defineProps<{ step?: number }>(), { step: 0 })
+
+const checks = [
+  {
+    verb: 'edit',
+    file: 'Features/Retention/PurgeExpired.cs',
+    add: 'var cutoff = DateTimeOffset.UtcNow - policy.KeepFor;',
+    id: 'time-provider',
+    line: 48,
+    what: 'Reads the wall clock through DateTimeOffset.UtcNow.',
+    fix: 'Inject TimeProvider and call time.GetUtcNow(), or use ctx.Now inside an action handler.',
+    why: 'Tests and retention rules need a controllable clock.',
+    after: 'injects TimeProvider',
+  },
+  {
+    verb: 'add',
+    file: 'Features/Findings/ArchiveFinding.cs',
+    add: 'public static async Task<IResult> Handle(ArchiveFinding req, ActionContext ctx, …)',
+    id: 'handler-project-access',
+    line: 12,
+    what: 'Handlers in this file take ActionContext ctx but never call ctx.Access.RequireAsync.',
+    fix: 'Make the first statement of each project-scoped handler ctx.Access.RequireAsync(projectId, role, ct).',
+    why: 'Non-members must get 404 before any work.',
+    after: 'adds the access check',
+  },
+  {
+    verb: 'edit',
+    file: 'Features/Invitations/EditInvitation.cs',
+    add: 'await using var tx = await db.Database.BeginTransactionAsync(ct);',
+    id: 'retriable-transactions',
+    line: 31,
+    what: 'Begins a user transaction, but nothing in this file runs it through the execution strategy.',
+    fix: 'Run the whole unit inside db.Database.CreateExecutionStrategy().ExecuteAsync(...).',
+    why: 'SQL Server\'s retrying strategy refuses a bare user transaction, so the action returns 500 there while SQLite tests pass (#215).',
+    after: 'wraps it in the strategy',
+  },
+]
+
+const rules = [
+  { day: 'Day 1', name: 'Features stay independent', id: 'feature-isolation' },
+  { day: 'Day 1', name: 'Time from TimeProvider', id: 'time-provider', walk: 0 },
+  { day: 'Day 1', name: 'Access check comes first', id: 'handler-project-access', walk: 1 },
+  { day: 'Day 4', name: 'Every failure names its fix', id: 'Fix · Why · Don\'t' },
+  { day: 'Day 5', name: 'MCP matches the API', id: 'ApiParityTests' },
+  { day: 'Day 6', name: 'Transactions survive retries', id: 'after a 500 in production', walk: 2 },
+]
 </script>
 
 <template>
-  <div class="checks">
+  <div class="lc">
     <section class="term ns-mono">
-      <header><i /><i /><i /><span>demo-app · after slice 2</span></header>
-      <div class="runs">
-        <div class="run" :class="{ on: step < 2 }">
-          <p class="cmd">$ npm run check</p>
-          <p class="st ok"><b>✓</b> tsc <em>types line up</em></p>
-          <p class="st bad"><b>✗</b> eslint <em>1 error</em></p>
+      <header><i /><i /><i /><span>my repo · agent worktree</span></header>
+      <div class="frames">
+        <div v-for="(c, i) in checks" :key="c.id" class="frame" :class="{ on: step === i }">
+          <p class="who"><b>agent</b> {{ c.verb }} {{ c.file }}</p>
+          <p class="diff">+ {{ c.add }}</p>
+          <p class="cmd">$ git commit <em>pre-commit runs scripts/check</em></p>
+          <p class="steps"><span class="ok">✓ format</span><span class="ok">✓ build</span><span class="bad">✗ architecture</span></p>
           <div class="err">
-            <p class="loc">src/client/TaskList.tsx:4</p>
-            <p class="code">import { findTasks } from '../lib/tasks.js'</p>
-            <p class="msg">Browser code must use the HTTP API.</p>
+            <p class="id">✗ [{{ c.id }}] {{ c.file.split('/').pop() }}:{{ c.line }}</p>
+            <p class="what">{{ c.what }}</p>
             <dl>
-              <dt>Fix</dt><dd>Call the server through src/client/api.ts.</dd>
-              <dt>Why</dt><dd>Server modules read the database directly.</dd>
-              <dt>Don't</dt><dd>Add eslint-disable or edit the rule.</dd>
+              <dt>Fix</dt><dd>{{ c.fix }}</dd>
+              <dt>Why</dt><dd>{{ c.why }}</dd>
+              <dt class="dont">Don't</dt><dd>add a baseline/allowlist entry or weaken the rule to make this pass.</dd>
             </dl>
-            <p class="rule">no-restricted-imports</p>
           </div>
-          <p class="st skip"><b>·</b> vitest <em>not run</em></p>
+          <p class="after"><b>agent</b> {{ c.after }}, commits again <span class="ok">✓</span></p>
         </div>
-        <div class="run" :class="{ on: step >= 2 }">
-          <p class="cmd">agent: edit src/client/TaskList.tsx</p>
-          <p class="diff del">- import { findTasks } from '../lib/tasks.js'</p>
-          <p class="diff add">+ import { api } from './api.js'</p>
-          <p class="cmd gap">$ npm run check</p>
-          <p class="st ok"><b>✓</b> tsc</p>
-          <p class="st ok"><b>✓</b> eslint</p>
-          <p class="st ok"><b>✓</b> vitest <em>11 passed</em></p>
-          <p class="done">Slice 2 ready for review.</p>
+
+        <div class="frame" :class="{ on: step >= 3 }">
+          <p class="cmd">$ scripts/ci <em>full suite, before the PR can merge</em></p>
+          <p class="steps col">
+            <span class="ok">✓ checks</span>
+            <span class="ok">✓ architecture <em>13 rules</em></span>
+            <span class="ok">✓ api <em>2,404 tests on SQL Server</em></span>
+            <span class="ok">✓ web <em>1,087 tests</em></span>
+          </p>
+          <p class="rec">pass recorded for HEAD a41c9e0</p>
+          <p class="cmd gap">$ scripts/pr merge</p>
+          <p class="steps col">
+            <span class="ok">✓ PR body: problem, scope, verification, review, media</span>
+            <span class="ok">✓ local-ci passed on this exact commit</span>
+          </p>
+          <p class="done">Merged. The suite ran on the agent's machine;<br>GitHub only checked the result.</p>
         </div>
       </div>
     </section>
 
-    <aside class="where" :class="{ on: step >= 1 }">
-      <div class="lane now">
-        <b>On your machine</b>
-        <span>After every slice. Seconds.</span>
-      </div>
-      <i class="link" />
-      <div class="lane">
-        <b>In CI</b>
-        <span>Same checks again, on every push.</span>
-      </div>
-      <p class="note">The error says how to fix it, so the agent repairs it in one turn.</p>
+    <aside class="rail">
+      <h3>My repo's rules, by the day they arrived</h3>
+      <ol>
+        <li
+          v-for="r in rules"
+          :key="r.name"
+          :class="{ on: r.walk === step, past: step >= 3 || (r.walk !== undefined && r.walk < step) }"
+        >
+          <span class="day ns-mono">{{ r.day }}</span>
+          <span class="name">{{ r.name }}</span>
+          <span class="rid ns-mono">{{ r.id }}</span>
+        </li>
+      </ol>
     </aside>
   </div>
 </template>
 
 <style scoped>
-.checks {
+.lc {
   height: 510px;
   display: grid;
-  grid-template-columns: 1fr 330px;
-  gap: 32px;
+  grid-template-columns: minmax(0, 1fr) 372px;
+  gap: 30px;
 }
 
 .term {
+  min-width: 0;
   background: var(--z-ink);
   color: #d6d6d6;
   display: flex;
@@ -80,9 +136,9 @@ withDefaults(defineProps<{ step?: number }>(), { step: 0 })
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 12px 18px;
+  padding: 11px 18px;
   border-bottom: 1px solid #333;
-  font-size: 16px;
+  font-size: 15px;
   color: #8f8f8f;
 }
 
@@ -97,80 +153,110 @@ withDefaults(defineProps<{ step?: number }>(), { step: 0 })
   margin-left: 8px;
 }
 
-.runs {
+.frames {
   flex: 1;
   display: grid;
-  padding: 18px 24px;
+  padding: 16px 22px 18px;
+  min-height: 0;
 }
 
-.run {
+.frame {
   grid-area: 1 / 1;
-  transition: opacity 500ms var(--ns-ease);
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  transition: opacity 450ms var(--ns-ease);
 }
 
-.run:not(.on) {
+.frame:not(.on) {
   opacity: 0;
+  pointer-events: none;
 }
 
-.run p {
+.frame p {
   margin: 0;
   max-width: none;
-  font-size: 20px;
-  line-height: 1.55;
-  white-space: pre-wrap;
+  font-size: 17px;
+  line-height: 1.6;
+}
+
+.who b,
+.after b {
+  color: var(--ns-frozen);
+  font-weight: 700;
+  margin-right: 6px;
+}
+
+.who {
+  color: #bdbdbd;
+}
+
+.diff {
+  color: var(--ns-frozen);
+  padding-left: 16px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .cmd {
+  margin-top: 10px !important;
   color: #8f8f8f;
 }
 
-.cmd.gap {
-  margin-top: 14px !important;
+.frame .cmd:first-child {
+  margin-top: 0 !important;
 }
 
-.st b {
-  display: inline-block;
-  width: 26px;
-}
-
-.st em {
+.cmd em,
+.steps em {
   font-style: normal;
-  color: #7a7a7a;
-  margin-left: 10px;
+  color: #6f6f6f;
+  margin-left: 12px;
 }
 
-.st.ok b { color: var(--ns-frozen); }
-.st.bad { color: #ff9d8f; }
-.st.bad b { color: var(--z-red-400); }
-.st.skip { color: #6a6a6a; }
+.steps {
+  display: flex;
+  gap: 22px;
+  padding-left: 16px;
+}
+
+.steps.col {
+  flex-direction: column;
+  gap: 0;
+}
+
+.ok { color: var(--ns-frozen); }
+.bad { color: #ff9d8f; }
 
 .err {
-  margin: 8px 0 10px 26px;
-  padding: 12px 16px;
+  margin: 10px 0 0 16px;
+  padding: 12px 16px 13px;
   border: 1px solid rgba(255, 120, 100, 0.45);
   background: rgba(222, 30, 5, 0.12);
 }
 
-.err .loc { color: #bdbdbd; }
-.err .code { color: #ff9d8f; }
+.err .id {
+  color: #ff9d8f;
+}
 
-.err .msg {
-  margin-top: 6px !important;
+.err .what {
+  margin-top: 2px !important;
   color: #fff;
   font-family: var(--z-font-text);
-  font-size: 21px !important;
+  font-size: 20px !important;
   font-weight: 700;
-  line-height: 1.35 !important;
+  line-height: 1.3 !important;
 }
 
 .err dl {
   display: grid;
-  grid-template-columns: 70px 1fr;
-  gap: 2px 10px;
-  margin: 6px 0 0;
+  grid-template-columns: 64px 1fr;
+  gap: 3px 8px;
+  margin: 8px 0 0;
   font-family: var(--z-font-text);
-  font-size: 19px;
-  line-height: 1.35;
+  font-size: 18px;
+  line-height: 1.34;
 }
 
 .err dt {
@@ -178,81 +264,109 @@ withDefaults(defineProps<{ step?: number }>(), { step: 0 })
   font-weight: 700;
 }
 
+.err dt.dont {
+  color: #ff9d8f;
+}
+
 .err dd {
   margin: 0;
   color: #e6e6e6;
 }
 
-.err dt:nth-of-type(3) {
-  color: #ff9d8f;
+.after {
+  margin-top: auto !important;
+  color: #bdbdbd;
 }
 
-.err .rule {
-  margin-top: 6px !important;
-  color: #7a7a7a;
-  font-size: 16px !important;
+.after .ok {
+  margin-left: 12px;
 }
 
-.diff.del { color: #ff9d8f; }
-.diff.add { color: var(--ns-frozen); }
+.rec {
+  padding-left: 16px;
+  color: #8f8f8f;
+}
+
+.cmd.gap {
+  margin-top: 18px !important;
+}
 
 .done {
-  margin-top: 16px !important;
+  margin-top: auto !important;
   color: #fff;
   font-family: var(--z-font-text);
+  font-weight: 800;
+  font-size: 22px !important;
+}
+
+.rail {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.rail h3 {
+  margin: 0 0 10px;
+  font-size: var(--ns-label);
   font-weight: 700;
-  font-size: 21px !important;
+  color: var(--z-grey-600);
 }
 
-.where {
+.rail ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  flex: 1;
   display: flex;
   flex-direction: column;
-  transition: opacity 600ms var(--ns-ease);
+  justify-content: space-between;
 }
 
-.where:not(.on) {
-  opacity: 0;
+.rail li {
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr);
+  column-gap: 8px;
+  padding: 6px 12px 7px;
+  border-left: 4px solid var(--ns-line);
+  background: transparent;
+  transition: background 400ms var(--ns-ease), border-color 400ms var(--ns-ease);
 }
 
-.lane {
-  padding: 18px 20px;
-  border-top: 4px solid var(--z-ink);
-  background: var(--ns-soft);
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+.day {
+  grid-row: 1 / 3;
+  padding-top: 3px;
+  font-size: 15px;
+  color: var(--z-grey-600);
 }
 
-.lane.now {
-  border-color: var(--ns-teal);
-  background: #e3f4f6;
-}
-
-.lane b {
-  font-size: 24px;
-}
-
-.lane span {
-  font-size: 20px;
-  line-height: 1.3;
+.name {
+  font-size: 19px;
+  font-weight: 600;
+  line-height: 1.25;
+  white-space: nowrap;
   color: var(--z-ink-800);
 }
 
-.link {
-  align-self: center;
-  width: 3px;
-  height: 34px;
-  background: repeating-linear-gradient(to bottom, var(--z-ink) 0 6px, transparent 6px 11px);
+.rid {
+  font-size: 14px;
+  color: var(--z-grey-600);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.note {
-  margin: auto 0 0;
-  max-width: none;
-  padding: 18px 20px;
-  background: var(--z-ink);
-  color: #fff;
-  font-size: 22px;
-  font-weight: 800;
-  line-height: 1.3;
+.rail li.past {
+  border-left-color: var(--ns-teal);
 }
+
+.rail li.on {
+  border-left-color: var(--ns-red);
+  background: #fff5f3;
+}
+
+.rail li.on .name {
+  color: var(--z-ink);
+  font-weight: 800;
+}
+
 </style>

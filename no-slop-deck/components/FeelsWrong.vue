@@ -1,22 +1,23 @@
 <!--
   The agent's run-and-check doesn't replace a person clicking through it.
   The agent checks what it was asked to check. A person notices what feels
-  wrong. Same export as the previous slide; the findings are illustrative.
+  wrong. Same replay as the previous slide. The Safari recording is real (my
+  repo's PR #540, found on my phone); the other findings are illustrative.
   0 what the agent checked · 1 what you noticed · 2 the takeaway
 -->
 <script setup lang="ts">
 withDefaults(defineProps<{ step?: number }>(), { step: 0 })
 
 const checked = [
-  'The export downloads a file',
-  'Five rows, three columns each',
-  'A-102 stays in one column',
+  '0:02 shows the invoice',
+  '0:04 shows the list, once',
+  'No new errors in the console',
 ]
 const noticed = [
-  'The list shows open tasks. The export has all five.',
-  'Two seconds with no sign anything happened',
-  'It saves as export (3).csv',
-  'The button says Download, the menu says Export',
+  'A recording made in Safari won\'t seek',
+  'Two seconds of blank screen before it plays',
+  'Nothing on the timeline shows the page changed',
+  'The button says Still, the tab says Snapshots',
 ]
 </script>
 

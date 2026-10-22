@@ -1,36 +1,35 @@
 <!--
-  What a research run looks like, without the agent's text. The prompt names
-  the ticket. The agent can open any file, but it searches first and opens
-  only the files that match, then looks outside the code, then writes a short
-  map for the next context. File names are the demo app's real ones (demo-app/src). The
-  run itself is illustrative.
+  What a research run looks like, without the agent's text. The input is the
+  research questions, not the ticket, so the ticket's guess can't steer it.
+  The research agent and its subagents (locator, analyzer, pattern finder)
+  can open any file, but they search first and open only the files that
+  match, then look outside the code, then write a short map for the next
+  context. The question is my repo's issue #257 (large MCP replies failing);
+  file names are real at commit af31181. The run itself is illustrative.
   0 the prompt · 1 search the code · 2 look elsewhere · 3 write research.md
 -->
 <script setup lang="ts">
 withDefaults(defineProps<{ step?: number }>(), { step: 0 })
 
 const files = [
-  { dir: '', name: 'app.ts', hit: true },
-  { dir: '', name: 'server.ts' },
-  { dir: 'routes/', name: 'session.ts' },
-  { dir: 'routes/', name: 'tasks.ts', hit: true },
-  { dir: 'lib/', name: 'session.ts', hit: true },
-  { dir: 'lib/', name: 'tasks.ts', hit: true },
-  { dir: 'lib/', name: 'db.ts' },
-  { dir: 'lib/', name: 'accounts.ts' },
-  { dir: 'client/', name: 'App.tsx' },
-  { dir: 'client/', name: 'TaskList.tsx' },
-  { dir: 'client/', name: 'api.ts' },
-  { dir: 'shared/', name: 'contracts.ts' },
+  { dir: 'McpCode/', name: 'AcaExecStream.cs', hit: true },
+  { dir: 'McpCode/', name: 'CodeExecution.cs', hit: true },
+  { dir: 'McpCode/', name: 'CodeSchema.cs' },
+  { dir: 'McpCode/', name: 'CodeJson.cs', hit: true },
+  { dir: 'Features/', name: 'McpCodeTools.cs' },
+  { dir: 'resources/', name: 'build.mjs' },
+  { dir: 'resources/', name: 'worker-v2.mjs', hit: true },
+  { dir: 'tests/', name: 'CodeV2Tests.cs' },
+  { dir: 'resources/', name: 'package.json' },
 ]
 
 // Geometry in px inside the 1136 x 510 stage.
 const AGENT = { x: 410, y: 190, w: 140, h: 120 }
 const PANEL = { x: 610, y: 0, w: 526, h: 320 }
-const TILE = { w: 117, h: 78, gap: 10, top: 52, pad: 14 }
+const TILE = { w: 159, h: 78, gap: 10, top: 52, pad: 14 }
 const tile = (i: number) => {
-  const c = i % 4
-  const r = Math.floor(i / 4)
+  const c = i % 3
+  const r = Math.floor(i / 3)
   return {
     x: PANEL.x + TILE.pad + c * (TILE.w + TILE.gap),
     y: PANEL.y + TILE.top + r * (TILE.h + TILE.gap),
@@ -40,9 +39,9 @@ const tile = (i: number) => {
 const hitRank = (i: number) => files.slice(0, i).filter(f => f.hit).length
 
 const elsewhere = [
-  { icon: 'ticket', label: 'Ticket', line: 'DOC-142 and its comments' },
-  { icon: 'db', label: 'Database', line: 'The tasks table schema' },
-  { icon: 'globe', label: 'Web', line: 'Quoting commas in CSV' },
+  { icon: 'globe', label: 'Docs', line: 'Exec stream limits' },
+  { icon: 'db', label: 'Logs', line: 'Failed runs and sizes' },
+  { icon: 'clock', label: 'Past notes', line: 'Earlier sandbox research' },
 ] as const
 const OUT = { y: 352, h: 158, w: 167, gap: 12 }
 const outX = (i: number) => PANEL.x + i * (OUT.w + OUT.gap)
@@ -66,10 +65,10 @@ const outWires = elsewhere.map((_, i) => {
 })
 
 const findings = [
-  'Session gives the user and team',
-  'The list route passes the team',
-  'Query filters by team if given one',
-  'No export route yet',
+  'Each reply is one JSON line',
+  'Send cuts it into 16 KiB pieces',
+  'Limits cap whole replies only',
+  'The guest rebuilds lines itself',
 ]
 </script>
 
@@ -83,20 +82,25 @@ const findings = [
     </svg>
 
     <section class="prompt">
-      <header><Icon name="user" /><span>You</span><b class="ns-mono"><Icon name="ticket" />DOC-142</b></header>
-      <p>Research DOC-142. How does the task list work today? Trace the session, the team filter and the shared query. Describe what exists, with file references. No design yet.</p>
+      <header><Icon name="file" /><span>Research questions</span><b>no ticket</b></header>
+      <ol>
+        <li>How does a reply reach the sandbox?</li>
+        <li>Where is it split or capped?</li>
+        <li>Which tests send large replies?</li>
+      </ol>
     </section>
 
     <div class="agent" :style="{ left: AGENT.x + 'px', top: AGENT.y + 'px', width: AGENT.w + 'px', height: AGENT.h + 'px' }">
       <span class="ring" />
       <Icon name="bot" />
-      <b>Agent</b>
+      <b>Research</b>
+      <small>+ 3 subagents</small>
     </div>
 
-    <div class="query ns-mono"><Icon name="search" />teamId · findTasks</div>
+    <div class="query ns-mono"><Icon name="search" />stdin · ReplyBytes</div>
 
     <section class="panel" :style="{ left: PANEL.x + 'px', top: PANEL.y + 'px', width: PANEL.w + 'px', height: PANEL.h + 'px' }">
-      <header><span class="ns-mono">docket / src</span><small>Opened 4 of 12</small></header>
+      <header><span class="ns-mono">src · tests</span><small>Opened 4</small></header>
     </section>
     <div class="scan" :style="{ left: PANEL.x + 2 + 'px', width: PANEL.w - 4 + 'px', '--top': PANEL.y + 46 + 'px', '--bottom': PANEL.y + PANEL.h - 6 + 'px' }" />
     <div
@@ -203,15 +207,20 @@ const findings = [
   font-size: 20px;
 }
 
+.prompt header span {
+  white-space: nowrap;
+}
+
 .prompt header b {
   margin-left: auto;
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 3px 10px;
+  padding: 2px 8px;
   background: var(--z-ink);
   color: #fff;
-  font-size: 16px;
+  font-size: 15px;
+  white-space: nowrap;
 }
 
 .prompt p {
@@ -219,6 +228,20 @@ const findings = [
   max-width: none;
   font-size: 20px;
   line-height: 1.4;
+}
+
+.prompt ol {
+  margin: 0;
+  padding-left: 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 20px;
+  line-height: 1.3;
+}
+
+.prompt ol li {
+  margin: 0;
 }
 
 /* Before the run, only the prompt is in focus. */
@@ -254,6 +277,12 @@ const findings = [
 
 .agent b {
   font-size: 22px;
+}
+
+.agent small {
+  margin-top: -6px;
+  font-size: 15px;
+  color: #bdbdbd;
 }
 
 .ring {
@@ -384,7 +413,8 @@ const findings = [
 .file span {
   display: flex;
   flex-direction: column;
-  font-size: 15px;
+  font-size: 14px;
+  white-space: nowrap;
   font-weight: 700;
   line-height: 1.2;
 }

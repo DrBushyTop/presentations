@@ -1,23 +1,24 @@
 <!--
   Test the reviewers on bugs you already found, the way Uber benchmarks
   uReview: real PRs with known bugs, graded easy, medium and hard, scored on
-  what was caught, false alarms, time and cost. The PRs and the results
-  here are illustrative.
+  what was caught, false alarms, time and cost. The bugs are real ones from
+  my repo, each with the PR that introduced it (#154, #281, #367, #215,
+  #370, #140, #257, #476, #130); the grades and results are illustrative.
   0 the known bugs · 1 today's reviewer · 2 rerun after a change
 -->
 <script setup lang="ts">
 withDefaults(defineProps<{ step?: number }>(), { step: 0 })
 
 const prs = [
-  { t: 'Crash on a null due date', g: 'Easy', a: 1, b: 1 },
-  { t: 'Formula in a CSV cell', g: 'Easy', a: 1, b: 1 },
-  { t: 'Off by one in paging', g: 'Easy', a: 0, b: 1 },
-  { t: 'Report in the wrong timezone', g: 'Medium', a: 1, b: 1 },
-  { t: 'Retry without backoff', g: 'Medium', a: 0, b: 1 },
-  { t: 'Join without an index', g: 'Medium', a: 1, b: 0 },
-  { t: 'Export ignores the team', g: 'Hard', a: 0, b: 1 },
-  { t: 'Old role kept after a change', g: 'Hard', a: 1, b: 1 },
-  { t: 'Race in the cache refresh', g: 'Hard', a: 0, b: 0 },
+  { t: 'The SDK reports completion twice', g: 'Easy', a: 1, b: 1 },
+  { t: 'Buttons the API always refuses', g: 'Easy', a: 1, b: 1 },
+  { t: 'Unknown enum value gives a 500', g: 'Easy', a: 0, b: 1 },
+  { t: 'Bare transaction on SQL Server', g: 'Medium', a: 1, b: 1 },
+  { t: 'Timestamp near the max date', g: 'Medium', a: 0, b: 1 },
+  { t: 'Error JSON saved as a .png', g: 'Medium', a: 1, b: 0 },
+  { t: 'Big replies dropped silently', g: 'Hard', a: 0, b: 1 },
+  { t: 'Replay stuck after a page change', g: 'Hard', a: 1, b: 1 },
+  { t: 'Fonts fall back, no bold', g: 'Hard', a: 0, b: 0 },
 ]
 const caught = (k: 'a' | 'b') => prs.filter(p => p[k]).length
 const summary = [

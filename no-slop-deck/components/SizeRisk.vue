@@ -1,5 +1,6 @@
 <!--
   Line count is not risk. Both minimaps use the same scale: one row per line.
+  The access check is shortened from my repo's handlers.
   1 what each change needs · 2 the takeaway
 -->
 <script setup lang="ts">
@@ -42,16 +43,16 @@ const small = minimap(10, 1, 1.5, 46)
 
     <section class="change">
       <header>
-        <b>Let members delete team tasks</b>
+        <b>Let members delete sessions</b>
         <span class="ns-mono">10 lines · 1 file</span>
       </header>
       <div class="small-row">
         <svg class="map tiny" viewBox="0 0 56 16" aria-hidden="true"><path :d="small" /></svg>
         <div class="code ns-mono">
-          <div class="del">- if (!session.isAdmin(team))</div>
-          <div class="add">+ if (!session.isMember(team))</div>
-          <div>{{ '    ' }}throw forbidden()</div>
-          <div>{{ '  ' }}await db.tasks.delete(id)</div>
+          <div class="del">- Access.RequireAsync(p, Owner)</div>
+          <div class="add">+ Access.RequireAsync(p, Member)</div>
+          <div>{{ '  ' }}db.Sessions.Remove(session);</div>
+          <div>{{ '  ' }}await db.SaveChangesAsync(ct);</div>
         </div>
       </div>
       <div class="needs bad" :class="{ on: step >= 1 }">

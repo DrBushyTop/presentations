@@ -3,8 +3,10 @@
   One step at a time: a tool call runs with a spinner, then settles with a
   result. Edits show a small diff (teal adds, red deletes), bash calls show
   output. Older steps glide up under the header and are removed only once
-  they're fully out of view; the loop carries on into the next round. The seeded bug sits in plain sight in
-  the new export file. Outside the live slide it shows a still frame.
+  they're fully out of view; the loop carries on into the next round. The
+  seeded bug sits in plain sight in the new handler: a bare user transaction,
+  which the SQLite tests accept and SQL Server's retrying strategy refuses
+  (my repo's #215). Outside the live slide it shows a still frame.
 -->
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
@@ -18,29 +20,30 @@ type Step =
   | { kind: 'bash', target: string, result: string, ms: number, out: string[] }
 
 const script: Step[] = [
-  { kind: 'say', text: 'I\'ll check how the task list scopes by team.' },
-  { kind: 'read', target: 'src/routes/tasks.ts', result: '20 lines', ms: 900 },
-  { kind: 'grep', target: '"teamId" in src', result: '6 matches', ms: 1100 },
-  { kind: 'say', text: 'The list reuses findTasks. I\'ll add the export beside it.' },
+  { kind: 'say', text: 'I\'ll check how invitations are saved today.' },
+  { kind: 'read', target: 'Features/Invitations/Invitations.cs', result: '64 lines', ms: 900 },
+  { kind: 'grep', target: '"SaveChangesAsync" in Features', result: '14 matches', ms: 1100 },
+  { kind: 'say', text: 'An edit touches two tables. I\'ll wrap it in a transaction.' },
   {
-    kind: 'write', target: 'src/routes/export.ts', result: '+7', ms: 1300,
+    kind: 'write', target: 'Features/Invitations/EditInvitation.cs', result: '+7', ms: 1300,
     diff: [
-      { k: '+', t: 'export async function exportTasks(req) {' },
-      { k: '+', t: '  const session = await requireSession(req)' },
-      { k: '+', t: '  const teamId = req.query.teamId ?? session.teamId' },
-      { k: '+', t: '  const rows = await findTasks(db, { teamId })' },
-      { k: '+', t: '  return csv(rows, COLUMNS)' },
+      { k: '+', t: 'await using var tx = await db.Database' },
+      { k: '+', t: '  .BeginTransactionAsync(ct);' },
+      { k: '+', t: 'var invite = await db.Invitations.FindAsync(id);' },
+      { k: '+', t: 'invite.Rename(req.Label);' },
+      { k: '+', t: 'await db.SaveChangesAsync(ct);' },
+      { k: '+', t: 'await tx.CommitAsync(ct);' },
     ],
   },
   {
-    kind: 'edit', target: 'src/lib/csv.ts', result: '+2 −2', ms: 1100,
+    kind: 'edit', target: 'Features/Invitations/InvitationDto.cs', result: '+2 −2', ms: 1100,
     diff: [
-      { k: '-', t: 'const row = (t) => [t.id, t.title]' },
-      { k: '+', t: 'const toRow = (t: Task) => [t.id, t.title]' },
+      { k: '-', t: 'public string Name { get; init; }' },
+      { k: '+', t: 'public required string Label { get; init; }' },
     ],
   },
-  { kind: 'delete', target: 'src/lib/legacyExport.ts', result: '−48', ms: 800 },
-  { kind: 'bash', target: 'npm test', result: '4.2 s', ms: 2400, out: ['✓ 24 passed · 0 failed'] },
+  { kind: 'delete', target: 'Features/Invitations/LegacyEdit.cs', result: '−48', ms: 800 },
+  { kind: 'bash', target: 'dotnet test', result: '38 s', ms: 2400, out: ['✓ 2,404 passed · 0 failed'] },
   { kind: 'bash', target: 'gh pr create --fill', result: '1.1 s', ms: 1400, out: ['Opened #482 · review bot: no issues'] },
   { kind: 'say', text: 'Ready to merge. Small, well-tested change.' },
 ]
@@ -153,7 +156,7 @@ onBeforeUnmount(stop)
   <div class="session" aria-hidden="true">
     <header>
       <span class="app">opencode</span>
-      <span class="ns-mono">build · agent/export-csv</span>
+      <span class="ns-mono">build · agent/edit-invitations</span>
       <span class="state" :class="{ busy: running }">
         <i class="ns-mono">{{ running ? spinner : '●' }}</i>{{ running ? 'Working' : 'Idle' }}
       </span>

@@ -13,7 +13,7 @@ export const failures: Failure[][] = [
   [
     {
       name: 'The agent guesses instead of looking',
-      seen: 'agent: "The list probably hides done tasks."',
+      seen: 'agent: "The guest probably can\'t rebuild a split reply."',
       fix: 'Answer from the code, logs and tickets, with a reference',
     },
     {
@@ -26,12 +26,12 @@ export const failures: Failure[][] = [
   [
     {
       name: 'The agent picks what the feature means',
-      seen: 'agent: "I assumed the export includes all tasks."',
+      seen: '11 decisions made in PR review, after the code existed',
       fix: 'Grill the open choices, record them in CONTEXT.md',
     },
     {
       name: 'Only the author understands it',
-      seen: '"Why does the export skip done tasks?" Nobody knows.',
+      seen: '"Why did my session stop recording?" Nobody knows.',
       fix: 'Review the plan as a team, before the code',
     },
   ],
@@ -52,17 +52,17 @@ export const failures: Failure[][] = [
   [
     {
       name: 'The agent takes the shortcut',
-      seen: "import { db } from '../server/storage'",
+      seen: 'await db.Database\n  .BeginTransactionAsync(ct);',
       fix: 'Rules that fail locally and say how to fix it',
     },
     {
       name: 'The tests only confirm the code',
-      seen: 'expect(toCsv(rows))\n  .toEqual(toCsv(rows))',
+      seen: 'Assert.True(\n  frame.Length < 24000);\n// the platform drops > 16 KiB',
       fix: 'Expectations from the decision, and a negative control',
     },
     {
       name: 'Nobody ran it',
-      seen: '✓ 3 tests passed. The button downloads an empty file.',
+      seen: '✓ 2,404 tests passed. The replay never leaves its first screen.',
       fix: 'The agent runs the app and checks it like a user',
     },
   ],
@@ -88,7 +88,7 @@ export const failures: Failure[][] = [
     },
     {
       name: 'The same mistake comes back next week',
-      seen: 'Third correction this month: "don\'t append to app.ts"',
+      seen: 'Third correction this month: "use TimeProvider"',
       fix: 'Turn the correction into a check',
     },
   ],

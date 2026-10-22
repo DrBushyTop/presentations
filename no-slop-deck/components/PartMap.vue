@@ -1,8 +1,8 @@
 <!--
-  The agenda: one change, followed through six parts. The ticket is the
-  running example for the whole talk. Same grouping as the part dividers:
-  before code, for each slice, after merge.
-  0 the running example · 1 the six parts
+  The agenda: six parts, with examples from one repo. The box introduces the
+  repo briefly; the numbers come at the end. Same grouping as the part
+  dividers: before code, for each slice, after merge.
+  0 the repo · 1 the six parts
 -->
 <script setup lang="ts">
 import { gates } from '../lib/gates'
@@ -19,12 +19,11 @@ const groups = [
 <template>
   <div class="pm">
     <section class="ticket">
-      <span class="id ns-mono"><Icon name="ticket" />DOC-142</span>
+      <span class="id ns-mono"><Icon name="branch" />my repo</span>
       <div>
-        <b>Export the team's tasks as CSV</b>
-        <p>Docket, a small team task app. Product wants it for the weekly report.</p>
+        <b>A UX research tool, built and merged by agents</b>
+        <p>It records people trying prototype apps. Agents use it through MCP.</p>
       </div>
-      <span class="tag">The example for the whole talk</span>
     </section>
 
     <div class="groups" :class="{ on: step >= 1 }">
@@ -55,7 +54,7 @@ const groups = [
 
 .ticket {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
   gap: 28px;
   padding: 20px 26px;

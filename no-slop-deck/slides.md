@@ -43,7 +43,7 @@ layout: none
 <!--
 About 30 seconds.
 
-- On screen: the title, and an agent working on the change we'll follow all talk, exporting a team's tasks as CSV.
+- On screen: the title, and an agent working in my repo. It edits an invitation, the tests pass, and it calls the change ready. The bug is in plain sight: a bare database transaction. SQLite tests accept it; SQL Server in production returns a 500. That bug really happened in my repo, and we'll see the check it turned into in verify.
 - Let the stream run for a moment before speaking.
 - This talk is about how code I didn't type earns my trust: evidence of how it behaves, someone who can explain why it's built that way, and somewhere to look when it breaks. The trust has to be earned. It isn't a setting you turn on.
 - The introduction of me is the next slide. Don't repeat it here.
@@ -82,7 +82,7 @@ Sources:
 - The layout follows the game: the height chart behind the entrant, speech bubbles over the face, the counter, the date and weight panel, and the stamp drawer that pulls out from the right edge. The panel shows the first day of ESPC 2026 (30 Nov to 3 Dec) in the game's date format and the talk length in place of the weight.
 - The documents follow the game's: the passport is issued by a Republic of Zure in Zure's brand colours (zure.com and the deck theme), with chip labels, the Zure wordmark rasterised to a 61x17 pixel grid where the game prints the country name, an entry visa block with the conference dates and an empty stamp box, and the machine-readable zone; the work record is an identity supplement tag; and the MVP permit is a scalloped entry permit in the MVP logo's blue and white, with a red seal. They lie straight, as in the game, so the pixel type stays crisp; only the stamp marks are tilted. The marks copy the game's ENTRY DENIED stamp, solid ink with the paper showing through, reading MERGE DENIED with the conference date. The stamp drawer is drawn after the game's: cylinder knobs, stamps with a rounded top face and an engraved label, hex studs and guide rods either side, a light, and the alignment strip lying over the stamps.
 - The passport number, issue and expiry years are props.
-- The PR is a prop. Its branch, agent/export-csv, is the one the agent works on in the cover stream.
+- The PR is a prop. Its branch, agent/edit-invitations, is the one the agent works on in the cover stream.
 -->
 
 ---
@@ -165,15 +165,16 @@ clicks: 1
 transition: gate | gate-back
 ---
 
-# One change, six places it can go wrong
+# One repo, six places it can go wrong
 
 <PartMap :step="$clicks" />
 
 <!--
 About 1 minute. This is the agenda. Keep it quick.
 
-- On screen: the change we follow all talk. Docket is a small team task app I built for this talk. The ticket: export the team's tasks as CSV, for a weekly report. It's the change the agent was working on in the opening animation, and the PR the inspector stamped.
-- It's deliberately small. Small enough to follow, big enough to go wrong in every way that matters: whose tasks, which columns, what a comma in a title does.
+- On screen: where the examples come from. My current project: a UX research tool. Researchers invite people to try prototype apps, and it records what happens: the screen, the audio, a transcript. Researchers write findings from it, and coding agents use the same data through MCP.
+- Agents build it, review it and merge it. The opening animation was a change in this repo, and so was the PR the inspector stamped. I'll show the numbers at the end.
+- Each part uses something that really happened in this repo, plus a few outside examples from teams further along.
 
 [click] Six parts, each with the question it answers. Three before any code: research, design, slice. Two for every slice: verify and review. One after merge: production.
 - Each part opens with how agent work goes wrong at that point, and where you're the bottleneck. Then what we do about it.
@@ -190,7 +191,7 @@ Research, about 6 minutes.
 
 - On screen: the six parts on one track. Research lights up, then the row zooms into it and its question appears.
 - Say: "Part one: understand the current system. The agent looks things up instead of guessing, and says where it found them."
-- Say: "Before anyone writes the export, what does the app do today?"
+- Say: "Before anyone changes the code, how does it work today?"
 -->
 
 ---
@@ -232,7 +233,7 @@ clicks: 1
 About 1 minute.
 
 - On screen, the same layout opens every part: how it goes wrong on the left, what you'd see in the middle, and at the bottom, where you're the bottleneck.
-- Guessing: the agent answers a factual question from its priors. "The list probably hides done tasks." It sounds right, and nothing on screen says it was a guess.
+- Guessing: the agent answers a factual question from its priors. "The guest probably can't rebuild a split reply." That was the suspected cause written into an issue in my repo, and it was wrong. It sounds right, and nothing on screen says it was a guess.
 - Rereading: every phase reads the same 30 files again, and the reading crowds out the work.
 - Where you're the bottleneck: the agent asks you things the code, the logs or the tickets could answer. Or it doesn't ask, and guesses.
 
@@ -250,16 +251,18 @@ clicks: 3
 <ResearchRun :step="$clicks" />
 
 <!--
-About 1.5 minutes. The run is illustrative; the file names are the demo app's real ones.
+About 1.5 minutes. This is how research runs in my OpenCode setup, which builds on HumanLayer's research agents. The run is illustrative; the file names are my repo's real ones.
 
-- On screen: the research prompt. It names the ticket, asks how things work today, and asks for file references. It says "no design yet" on purpose: research describes, it doesn't decide.
+- The bug: any reply over about 12 KB from the app to an agent's code sandbox ended the run with a protocol failure. The issue came with a suspected cause: the guest can't put a reply back together from several pieces.
+- On screen: the research prompt. It isn't the issue. A separate step turns the issue into neutral questions: how does a reply reach the sandbox, where is it split or capped, which tests send large replies. The research agent never reads the issue, so the issue's guess can't steer what it finds. Research describes; it doesn't decide.
 
-[click] The agent searches the codebase for the team id and the shared query. It can open any of these files, but it doesn't read them all: the search points it at four, and it opens those. The app setup, the list route, the session and the shared query. That's the difference from guessing: it found where to look before it answered.
+[click] The research agent hands the reading to subagents. A locator finds where things live, an analyzer reads how they work and keeps file and line references, a pattern finder looks for similar code. They search for stdin and the reply size limit, and that points them at four files. It could open any of them, but it opens only those. That's the difference from guessing: it finds where to look before it answers.
 
-[click] Then it looks outside the code. The ticket and its comments: why do they want this? The database schema: which columns exist? And the web: how does CSV quote a comma? That last one matters later, when a task title with a comma breaks the export.
+[click] Then it looks outside the code. A web subagent reads the platform's docs on exec stream limits. The agent queries the logs for failed runs and their reply sizes; it has read access through the Azure CLI. And it searches notes from earlier research on the sandbox.
 - It doesn't ask me any of these. They're facts, and facts have a place you can look them up.
 
 [click] It writes research.md: four findings, each with a file and line. The next context starts from this, not from 30 files. The next slide opens it.
+- Source: https://docs.humanlayer.com/explanation/workflow-phases
 -->
 
 ---
@@ -275,15 +278,15 @@ clicks: 3
 <!--
 About 1 minute.
 
-- On screen: the research.md from the last slide, opened. On the left, four findings. Each has a heading that states the takeaway, one sentence, and a file and line. On the right, the editor opens the cited lines. Line numbers are the demo app's real source.
-- First finding: the session cookie resolves to a user and their team.
+- On screen: the research.md from the last slide, opened. On the left, four findings. Each has a heading that states the takeaway, one sentence, and a file and line. On the right, the editor opens the cited lines. The code is my repo's, from before the fix.
+- First finding: the host turns each reply into one line of JSON and sends it down the stream to the sandbox.
 
-[click] The list route passes the session's team to findTasks. The client can filter by status, not by team.
+[click] Send cuts that line into 16,384-byte pieces and puts each piece, base64-encoded, into its own WebSocket message. Base64 makes data a third bigger. Keep that in mind.
 
-[click] findTasks adds the team filter only when it's given a team. Scoping lives in the caller. That's the fact design needs.
+[click] The size limits cover a whole reply: up to 8 MiB. Nothing limits one message, and the piece size is just a number in the loop. So whether the platform caps one message is still open. The code can't answer that.
 
-[click] Only session and task routes are registered. There is no export today.
-- Research describes what exists. It doesn't recommend and it doesn't decide the new endpoint's behavior.
+[click] The guest reads whole lines and rebuilds each reply itself. It never sees how many messages carried a line. So the issue's guess was wrong: a fix on the guest side would have changed the part that already works.
+- Research describes what exists. It doesn't recommend and it doesn't decide the fix.
 - The findings are shortened from what the create-research skill writes. The point is the shape: takeaway, sentence, a reference you can open.
 - Sources: https://www.huuhka.net/research-plan-implement/ https://docs.humanlayer.com/explanation/workflow-phases
 -->
@@ -302,13 +305,14 @@ transition: gate | gate-back
 <!--
 About 1 minute.
 
-- On screen: four questions an agent might bring to you about the export. Research is one case of a broader rule: when the agent has a factual question, it shouldn't ask you and it shouldn't guess.
+- On screen: four questions the agent could have brought to me about that bug. Research is one case of a broader rule: when the agent has a factual question, it shouldn't ask you and it shouldn't guess.
 
-[click] It looks in the place that knows: the code, the database, the tickets, its own past sessions. Every answer comes back with something you can open. The first answer is the demo app's real code. The other three are illustrative.
-- Past sessions are underrated. Poteto built a recall skill for exactly this: a new chat on the same problem pulls in what the last few chats learned.
+[click] It looks in the place that knows. The logs: every reply over about 12 KB failed; 9 KB worked, 12.3 KB didn't. The code: the guest already rebuilds lines. The tests: one sends 50 KB, but its fake socket takes any size, and it allows pieces up to 24 KB. So no test could catch this.
+- The last question had no answer in the code or the docs. So the agent measured it: a throwaway sandbox environment, messages of growing size. 16,376 bytes arrived. 16,404 vanished, with no error and no close. Then it deleted the environment.
+- That closes the loop: 16 KiB pieces become about 21,900-byte messages after base64, and the platform drops them silently. The fix was smaller pieces, a test fake that drops oversized messages like the real platform, and tests at 100 KB, 1 MiB and 8 MiB. From issue to merge took a little over an hour.
 
 [click] Poteto's question: "How do I get the agent to answer its own question? Not by hallucinating, not by guessing, but actually real data." What comes back to you are the product choices, which is where the design part starts.
-- What makes this work is access, not a smarter model: read access to the database, a ticket tracker integration, transcripts it can search.
+- What makes this work is access, not a smarter model: read access to the logs, a place to run experiments, notes it can search.
 - Source: https://www.youtube.com/watch?v=MN9dGgmLyso
 -->
 
@@ -339,8 +343,8 @@ clicks: 1
 <!--
 About 1 minute.
 
-- On screen: two ways design goes wrong. The agent can't know what you meant, so it decides. "I assumed the export includes all tasks" is a product decision made by an implementation agent.
-- And the decisions live in one person's chat. "Why does the export skip done tasks?" Nobody else can explain or debug it.
+- On screen: two ways design goes wrong. The agent can't know what you meant, so it decides, and you find out in review. In my repo I once went through a day's merged PRs and made 11 decisions that the code had already made for me. Each one meant a follow-up PR.
+- And the decisions live in one person's chat. "Why did my session stop recording?" Nobody else can explain or debug it.
 - Where you're the bottleneck: the decisions live in your head. Every agent and every colleague has to come back to you.
 
 [click] The fixes: grill the open choices before any code, record them where the team can read them, and review the plan together.
@@ -359,15 +363,15 @@ clicks: 3
 <!--
 About 1.5 minutes.
 
-- On screen: the start of a design session. The request was to download the team's tasks for weekly reporting. I ask the agent to grill me, so we both close the gaps before any code. The implementation agent shouldn't silently choose what the feature means.
+- On screen: the start of a design session in my repo. Researchers describe where a prototype should start each task, and today they type that as free text. I ask the agent to grill me, so we both close the gaps before any code. The implementation agent shouldn't silently choose what the feature means.
 
-[click] This is what grilling really looks like: a batch of numbered questions, each with the agent's recommendation. Real sessions run to dozens. Factual questions it answers from the code itself; these are the product choices.
+[click] This is what grilling really looks like: a batch of numbered questions, each with the agent's recommendation. This session ended with 17 decisions. Factual questions it answers from the code itself; these are the product choices.
 
-[click] You answer by number. Most recommendations are fine. The work is spotting the one to override: here the agent assumed all tasks, and the person wants what the list shows.
+[click] You answer by number. Most recommendations are fine. The work is spotting the one to override. Here the agent recommended what the decision log already said: free text. But in a pilot the free-text fields were left at their placeholders, and nothing checked that the app could reach the state anyway. So the app registers named states, and the researcher picks one.
 
-[click] Grill with docs records the settled answers in CONTEXT.md and a decision record. The durable record is the useful output, not the transcript.
+[click] Grill with docs records the settled answers: the term in CONTEXT.md, including the words to avoid, and the decision in the decision log, replacing the old line. The durable record is the useful output, not the transcript.
 - Grilling is also the cheapest point to understand the feature. I've answered every choice before any code exists, so when I later read the diff I'm checking it against decisions I made, not learning the feature from the code.
-- Only the caller-team answer is fixed for the example. The filter, columns and limits stand in for a real design run.
+- The answers and the CONTEXT.md entry are real; the batch is shortened, and the recommendations are reconstructed.
 - Matt Pocock's grilling skills are the source for the interview pattern. https://github.com/mattpocock/skills
 - GitHub Next identifies the same problem: decisions can disappear in private chat or be silently made by an agent. https://githubnext.com/projects/chopin/
 -->
@@ -408,13 +412,13 @@ transition: gate | gate-back
 <!--
 About 1.5 minutes.
 
-- On screen, left: Honeycomb's Tenant team. Right, soon: our export, three weeks after it shipped. Both are about whether anyone besides the author understands the work.
+- On screen, left: Honeycomb's Tenant team. Right, soon: a decision in my repo, three weeks after it was made. Both are about whether anyone besides the author understands the work.
 - Honeycomb's team first split into producers and reviewers: reviewers didn't produce, producers picked up more tasks. Their words: "knowledge concentration got amplified. We were each rapidly over-specializing in some portions of our stack."
 
 [click] Their fix was to review the plan and the prompt given to the agent, as a team. "It started feeling like everyone was more aware of what was happening." Plans could be borrowed later for caveats. They don't do the strict version for everything now. https://www.honeycomb.io/blog/embracing-code-review-bottleneck
 
-[click] Back to our export, three weeks later. Support asks why done tasks are missing. The person on call didn't build it, but they were in the plan review, and the grill wrote the decision down. So they can answer in a minute, and they know where to start if it's a bug.
-- This is the failure from the start of the part, "Nobody knows", turned around. Illustrative, from the running example.
+[click] Three weeks later, a researcher asks why their session stopped recording the screen halfway. The person on call didn't build it, but they were in the plan review, and the grill wrote the decision down: every session has a capture budget, and at the limit only the screen stops, voice keeps going. So they can answer in a minute, and they know where to start if it's a bug.
+- This is the failure from the start of the part, "Nobody knows", turned around. The decision is real, from my repo's decision log; the conversation is illustrative.
 
 [click] One question before approving a plan: could someone other than the author explain this decision and investigate a failure? If not, the plan isn't done. That's the second half of the slop definition: someone who can explain why it's built that way.
 -->
@@ -445,7 +449,7 @@ clicks: 1
 <!--
 About 1 minute.
 
-- On screen: two opposite mistakes about size. An agent will happily finish every layer before anyone has clicked anything. Day four, 38 files, is when you find out the columns are wrong.
+- On screen: two opposite mistakes about size. An agent will happily finish every layer before anyone has clicked anything. Day four, 38 files, is when you find out the idea is wrong.
 - And the reverse: a four-line migration gets approved in 40 seconds because it's small.
 - Where you're the bottleneck: four days of work arrive at once, and you're the only one who can say it's wrong.
 
@@ -466,7 +470,7 @@ clicks: 2
 About 2 minutes.
 
 - On screen: the same four days, twice. Rows are layers, columns are days. The eye marks a day when a person can see and check something working.
-- The usual split is by layer: data first, then the API, then the UI. Nobody sees anything work until day four. That's when you find out the columns are wrong, or the whole idea is.
+- The usual split is by layer: data first, then the API, then the UI. Nobody sees anything work until day four. That's when you find out a screen is wrong, or the whole idea is.
 
 [click] Tracer bullets go the other way. A narrow path through every layer on day one. The data can be an in-memory fixture behind the same interface. The path is real, so a person can click it.
 
@@ -481,20 +485,20 @@ class: ns
 clicks: 2
 ---
 
-# The export, one tracer bullet at a time
+# Starting states, one tracer bullet at a time
 
 <TracerSlices :step="$clicks" />
 
 <!--
 About 1.5 minutes.
 
-- On screen: our export cut into slices. Every slice runs through UI, API and data, and ends with a check a person can run.
-- Slice one ships with fixture data. The product owner clicks Export on day one and tells you the columns are wrong before anyone writes a query.
+- On screen: the starting states from the grilling slide, cut into slices. Every slice runs through the task form, the API and the SDK inside the app, and ends with a check a person can run on a local instance.
+- Slice one goes first: register a state, pick it in the form, apply it when a task opens. It only has to work in one demo app with four states. Once a person can click through that, the idea is proven, or it isn't.
 
-[click] Each later slice replaces a stub or widens the path. Slice two is where the team boundary lives, so it gets its own check: a user only ever exports their own team's tasks.
+[click] The rest each widen the path, and they don't depend on each other: what happens when the app can't be prepared, guidance and checks for developers, several participants in one prototype at once. In my repo all five slices merged the same day the grilling happened, each with a short video of the check in the PR.
 
 [click] Matt Pocock's rule, from his to-tickets skill: each slice cuts a narrow but complete path through every layer, is demoable or verifiable on its own, and fits in one fresh agent context. https://github.com/mattpocock/skills/blob/main/skills/engineering/to-tickets/SKILL.md
-- A review unit isn't a deployment unit. Keep the export behind a flag until slice two lands.
+- A review unit isn't a deployment unit. Keep a feature like this behind a flag until the slices that make it safe have landed.
 -->
 
 ---
@@ -511,7 +515,7 @@ transition: gate | gate-back
 <!--
 About 1.5 minutes.
 
-- On screen: two changes as minimaps, on the same scale, one row per line. On the left a rename across the codebase, huge. On the right ten lines in an authorization check, a speck.
+- On screen: two changes as minimaps, on the same scale, one row per line. On the left a rename across the codebase, huge. On the right ten lines in an access check, a speck: members, not just owners, can now delete participant sessions.
 
 [click] The rename needs a mechanical check. The ten lines need a person and a boundary test, because they change who can delete what.
 - The rename is the one exception to tracer bullets. Matt Pocock's skill sequences a wide refactor as expand, migrate in batches, contract, so the build stays green throughout.
@@ -546,9 +550,9 @@ clicks: 1
 <!--
 About 1 minute.
 
-- On screen: three failures. The agent takes the shortcut: a browser module reads server storage, because it works.
-- It writes tests that check the code against itself. The example is exaggerated, but tests that only repeat the implementation's assumptions are common.
-- And nobody runs it. Three tests pass and the button downloads an empty file.
+- On screen: three failures, all from my repo. The agent takes the shortcut: a bare database transaction, because it works on SQLite. That's the 500 from the opening slide.
+- It writes tests that check the code against itself. The sandbox test from research allowed 24,000-byte messages, because that's what the code sent. The platform drops anything over 16 KiB. The test's limit came from the code, not from the platform.
+- And nobody runs it. Every test passes, and the session replay never leaves its first screen.
 - Where you're the bottleneck: you're the first to run it, and you paste the errors back to the agent. If the agent can't run the app, that's your job by default.
 
 [click] The fixes: rules that fail locally and say how to repair the problem, expectations taken from the decision, and an agent that runs the app and checks it like a user.
@@ -558,7 +562,7 @@ About 1 minute.
 ---
 part: Verify
 class: ns
-clicks: 2
+clicks: 3
 ---
 
 # Catch repeatable mistakes locally
@@ -566,16 +570,22 @@ clicks: 2
 <LocalChecks :step="$clicks" />
 
 <!--
-About 1 minute.
+About 2 minutes.
 
-- On screen: a terminal after slice two. Types pass, the linter fails: browser code imports the server's query module. Read the message out: what's wrong, how to fix it, why the rule exists, and what not to do.
-- Types, ordinary linters and tests cover different questions. Add repository-specific lints when a rule is clear and repeated.
+- On screen: three of my repo's rules, failing the way an agent meets them, at commit time. On the right, the repo's rules by the day they arrived.
+- Every rule fails in the same four lines: what's wrong and where, the fix, why the rule exists, and what not to do. Read the first one out.
+- Time comes from TimeProvider. The agent reads the wall clock directly in a retention job. Tests can't control that clock, so the rule refuses it and says what to inject instead. The agent fixes it in one turn.
 
-[click] Run these checks in the local loop, after every slice. CI repeats them; a predictable violation should be fixed before anyone reviews the PR.
+[click] Project handlers check access first. A new handler forgets the access check. The message gives the exact first line to add. Non-members get a 404 before any work happens. This one guards security, so it's a test, not a review comment.
 
-[click] The agent reads the fix, edits the import, reruns the check, and everything passes. A failure that says only "bad import" wastes another turn.
-- The "Don't" line matters. Without it, the cheapest fix is an eslint-disable comment or a change to the rule. More on that in two slides.
-- The rule and the message are the demo app's real lint config. OpenAI's harness team describes the same thing: custom lints whose error messages carry remediation instructions into the agent's context.
+[click] Transactions survive SQL Server retries. This one has a story. Editing an invitation returned a 500 in production. The tests run on SQLite and never saw it. The fix shipped with this rule, and the rule's Why names the incident. The next agent that writes the same code gets the reason, not just a red cross.
+- That's the pattern on the right. Day one had three rules. Day four, every failure got a fix line, because a bare "violation" cost the agent another turn. Day five, a rule that MCP can do everything the API can. Day six, this one. You don't need all of this on day one. Add a rule when a mistake repeats or escapes.
+
+[click] Before the PR merges, the full suite runs: the same checks, the architecture tests, 2,400 API tests on a real SQL Server and the web tests. The merge needs a pass for that exact commit, and a PR body that says what was verified.
+- Why on the agent's machine: when you go fast, CI becomes the bottleneck. With agents merging dozens of PRs a day, I was waiting on GitHub's queue more than on the agents, and I'd also run out of Actions minutes. So the agent runs the full suite locally, and GitHub only checks the result for that commit.
+- The "Don't" line matters. Without it, the cheapest fix is a suppression or a change to the rule. More on that in three slides.
+- Rule ids, messages and days are the repo's real ones. The edited files and lines are illustrative, and long Fix lines are shortened. The test counts are from 21 October.
+- OpenAI's harness team describes the same thing: custom lints whose error messages carry remediation instructions into the agent's context. That's the next slide.
 - Mechanical checks can enforce structure. They can't decide what the feature should mean.
 - Source: https://openai.com/index/harness-engineering/
 -->
@@ -599,7 +609,7 @@ About 1 minute.
 
 [click] The reusable idea is an explicit dependency policy that tools can enforce. The six-layer model is OpenAI's choice for their repository, not a universal recommendation.
 - The Service-to-UI import and the lint message are my illustration, not from the article.
-- Vertical slices and dependency layers answer different questions. A slice is one usable behaviour across the layers it needs; the architecture says which imports its code may take. A feature-oriented repo can enforce its own simpler boundaries the same way.
+- Vertical slices and dependency layers answer different questions. A slice is one usable behaviour across the layers it needs; the architecture says which imports its code may take. A feature-oriented repo can enforce its own simpler boundaries the same way. My repo's first rule, from day one, is that features don't import each other.
 - Source: https://openai.com/index/harness-engineering/
 -->
 
@@ -665,13 +675,14 @@ clicks: 2
 About 1 minute.
 
 - On screen: three steps the agent does on its own, left to right: start the app, reproduce the problem, fix it and repeat the same action. Lints and tests check the code. This checks the behaviour, the way a person would, except the agent does it.
-- Start a fresh instance with known data. In the demo app that's npm run reset and npm run dev. The seed data includes awkward titles on purpose: A-102 has a comma, A-103 has double quotes.
+- The bug, from my repo: researchers watch a replay of each participant's session. If the participant moved to another page inside the app, the replay stayed on the first page.
+- Start a fresh instance with known data. In my repo that's two commands: one starts this worktree's own copy of the app, one seeds a recorded session where someone opens an invoice and goes back to the list.
 
-[click] Reproduce it in a browser the agent controls: export, then open the file as a table. A-102 splits into four columns because the comma isn't quoted. The agent's parse check says the same: four fields where three were expected. The bug is illustrative; the data is the demo app's.
-- Remember the web search in research, how CSV quotes a comma? This is the bug it was pointing at.
+[click] Reproduce it in a browser the agent controls. Open the replay two seconds in, after the participant opened the invoice. It still shows the list. The agent also swapped the old player back in, to prove that what it sees is the bug, not its setup.
 
-[click] Fix it, then repeat exactly the same action with the same data. Every row has three columns. Same action before and after is the evidence.
-- Ask the agent to record both runs. The two clips go into the PR, and they show a reviewer the bug and the fix in under a minute. We'll see that again in the review loop.
+[click] Fix it, then repeat exactly the same action with the same data. Two seconds in, the invoice. Four seconds in, the list again, with the approved invoice gone from the inbox. Same action before and after is the evidence.
+- Ask the agent to record or screenshot both runs. They go into the PR, and they show a reviewer the bug and the fix in under a minute. We'll see that again in the review loop.
+- The PR also lists what it didn't check, and why. That's as useful as what it did.
 - Poteto calls this the single most important skill to have: giving the agent "hands and eyes". Every app at their company has its own verification skill, and it was the first skill that let them climb the trust ladder. https://www.youtube.com/watch?v=MN9dGgmLyso
 - OpenAI made their app bootable per git worktree so Codex could launch one instance per change, and wired Chrome DevTools into the agent so it could "reproduce bugs, validate fixes, and reason about UI behavior directly". https://openai.com/index/harness-engineering/
 - What you need: one command to start the app, one command to reset to known data, data that makes a mistake visible, and a browser the agent can drive. Most projects have the first, few have the other three.
@@ -690,14 +701,14 @@ clicks: 2
 <!--
 About 1.5 minutes.
 
-- On screen, left: what the agent checked on the last slide. All of it passes. The export works.
+- On screen, left: what the agent checked on the last slide. All of it passes. The replay works.
 - Be explicit here: the agent running the app doesn't replace you clicking through it.
 
-[click] Right: two minutes of me clicking. The list was filtered to open tasks and the export ignored the filter. Two seconds with no spinner. The file is export (3).csv. The button and the menu disagree on what it's called. None of it fails a check, and all of it feels wrong to a person. The findings are illustrative.
+[click] Right: what a person finds by using it. The first one is real. I opened a session on my phone, and the audio wouldn't play from anywhere but the start. Recordings made in Safari couldn't seek. No agent had tested a Safari recording, because nobody asked it to. That's the PR you'll see at the end of the talk. The other three are illustrative: a blank pause, a timeline that doesn't show page changes, two names for the same thing. None of it fails a check, and all of it feels wrong to a person.
 
 [click] The agent checks what you asked for. You notice what nobody asked for, and those findings are often the most useful.
 - What changes is when you click. You no longer click to find out whether it works at all. The agent did that. You click to find out whether it's right.
-- Each finding is also a candidate check. "The export respects the list filter" can become a test. "It feels slow" mostly can't.
+- Each finding is also a candidate check. "Recordings from every browser seek" can become a test. "It feels slow" mostly can't.
 -->
 
 ---
@@ -716,9 +727,10 @@ About 1 minute.
 
 - On screen: one machine, one copy of the app, one agent checking its work in a browser. Good, and it gets much better when several can do it at once.
 
-[click] Each agent works in its own worktree and starts its own copy of the app: its own ports, its own seeded data, its own browser. Three agents verify three different changes at the same time, and none of them waits for another or breaks another's data. The worktree names and ports are illustrative.
+[click] Each agent works in its own worktree and starts its own copy of the app: its own ports, its own seeded data, its own browser. Three agents verify three different changes at the same time, and none of them waits for another or breaks another's data. These three are the changes from earlier in the talk.
+- In my repo one command does it. It takes the first free block of ports from 5300 up, creates a database and a storage container for that worktree on the shared local servers, runs the migrations and starts the API, the web app and a test prototype. The instance runs with a local sign-in and no cloud credentials. It's torn down after the PR merges.
 
-[click] What usually stops it is small. Fixed ports: our own demo app hard-codes Vite on 5176 and its proxy to 4323, so a second copy collides. One shared database or cache. One browser profile with one login. Each is a short fix: read ports from the environment, keep seed data per worktree, give every agent its own browser.
+[click] What usually stops it is small. Fixed ports: my first version had hand-picked ports, so a second copy collided. One shared database or cache. One browser profile with one login. Each is a short fix: pick free ports per worktree, give each worktree its own data, give every agent its own browser.
 - OpenAI made their app bootable per git worktree for exactly this, with a local logs and metrics stack per worktree that's torn down when the task ends. https://openai.com/index/harness-engineering/
 - This is what makes parallel agents practical. Without it, every extra agent is another thing you have to sequence by hand.
 -->
@@ -792,7 +804,7 @@ clicks: 2
 About 1.5 minutes.
 
 - On screen: one slice, from the instruction to my decision. I don't ask for a review after the work. It's part of the instruction I give the implementer before it starts: after each slice, run the review subagents, fix what matters, rerun the checks, commit, and only then come back to me.
-- The agent builds the slice first.
+- The agent builds the slice first. Here it's slice two of the starting states: what happens when the app can't be prepared.
 
 [click] Then, without me: review subagents with different questions. Functional checks the agreed behaviour, non-functional checks limits and failures, security checks authority and untrusted input. They run in parallel. The agent fixes what it judges worth fixing, reruns the checks and commits the slice. A commit per slice keeps every step easy to review and easy to undo.
 - Before the commit it records a short clip of the feature. It already drives the browser for the checks, so the clip costs almost nothing.
@@ -801,7 +813,7 @@ About 1.5 minutes.
 - I watch the clip before I read the diff. Thirty seconds tells me what the slice does, so I read the code knowing what it's for. If the clip surprises me, that's the first thing to ask about. Then I decide: next slice, or a PR for this one. The clips go into the PR description, so a reviewer sees the feature before the code too.
 - OpenAI's harness team does this end to end: the agent records a video of the bug, fixes it, and records a second video of the fix before opening the PR. https://openai.com/index/harness-engineering/
 - Fresh context helps the reviewer look at the change without the builder's whole conversation. It isn't full independence. Pass the decisions and the diff, not a persuasive explanation of why the implementation is right.
-- The findings in the report are illustrative.
+- The findings in the report are illustrative, in the shape my repo's reviews take.
 - Sources: https://www.huuhka.net/primary-vs-subagents-in-llm-harnesses/ https://www.huuhka.net/building-your-own-pr-reviewer-with-coding-agents/
 -->
 
@@ -837,6 +849,7 @@ About 45 seconds.
 [click] Left: what earns a fix. "Consider handling errors" doesn't. A reproducible finding above the bar does.
 
 [click] Right: what ends the loop. The budget is rounds, minutes or money. The budget and a disagreement end in a person, not another retry. A new commit makes every earlier approval and CI result stale.
+- In my repo the delivery skill allows one re-review. On one PR the second round still found a serious problem: a job could wait three minutes for work while its lease expired after one. The agent fixed it, tested it and wrote it into the PR, and there was no third round. The rule held, and the record says why.
 - Polylane's first prototype took nearly 7 minutes at the median. After a 30-step budget, a fresh review for each new commit and other changes, their review turn's median is 94 seconds. Budgets aren't just about cost. https://polylane.com/blog/how-we-prevent-slop-from-hitting-prod/
 -->
 
@@ -923,7 +936,8 @@ About 1.5 minutes. A candidate to cut after rehearsal.
 [click] Run the reviewer you use today. Count what it caught, what it missed, false alarms, minutes and cost.
 
 [click] Rerun it when the model or the review prompt changes. Uber: "The frontier shifts every few weeks." Switching models improved their F1 and cut cost per PR. Rerunning after a prompt change is my addition.
-- The PRs and results on screen are illustrative. Start with ten bugs your team already fixed. You don't need thousands.
+- The bugs on screen are real ones from my repo: the bare transaction from the opening slide, the big replies from research, the replay from verify, and six more. Each one has the PR that introduced it, so the benchmark is that PR's diff and the question "did the reviewer flag it?". The grades and results are illustrative.
+- Start with ten bugs your team already fixed. You don't need thousands.
 -->
 
 ---
@@ -1076,17 +1090,17 @@ clicks: 3
 <!--
 About 1.5 minutes.
 
-- On screen: three questions to answer before merge, and our export's rollout along the bottom: merge, deploy with the flag off, flag on for one team, a signal fires, flag off, fix, then all teams.
+- On screen: three questions to answer before merge, and a rollout along the bottom. Say my repo ships a new session player: merge, deploy with the flag off, flag on for one study, a signal fires, flag off, fix, then all studies.
 - Something will get through. Plan for it before merge: who watches, what stops it, how far it can spread.
 - Who watches. Intercom: "The engineer who ships a change is expected to watch it go live, monitor its behaviour in production, and be ready to roll back if something isn't right. AI approval doesn't change that." https://www.intercom.com/blog/ai-is-approving-our-pull-requests-heres-how-we-made-it-safe/
 - Spotify: "an automated dependency upgrade passed our checks, but still failed in production, impacting end users." Their response: stronger safeguards, more rollback capacity, and "scheduling automated changes during owning teams' working hours." https://engineering.atspotify.com/2026/9/ai-changed-how-spotify-builds-what-we-learned-and-fixed-about-quality-at-higher-velocity
 
-[click] The signal: for our export, rows from another team in an export, counted per team. Honeycomb's foundation includes "observability that links shipped code back to the PR that created it". The flag turns it off without a deploy.
+[click] The signal: replays that never leave their first screen, counted per study. That's the bug from verify; the player can report it. Honeycomb's foundation includes "observability that links shipped code back to the PR that created it". The flag turns it off without a deploy.
 
-[click] The blast radius. One team behind the flag, not every team. Honeycomb: bulkheads between components, deploy trains, feature flags and least-privilege access made outages "lower-impact, rather than either non-existent or uniformly critical-severity." A rollback isn't always safe, for example after a data migration. https://www.honeycomb.io/blog/30-70-prs-day-how-we-managed-not-wreck-systems
+[click] The blast radius. One study behind the flag, not every study. Honeycomb: bulkheads between components, deploy trains, feature flags and least-privilege access made outages "lower-impact, rather than either non-existent or uniformly critical-severity." A rollback isn't always safe, for example after a data migration. https://www.honeycomb.io/blog/30-70-prs-day-how-we-managed-not-wreck-systems
 
 [click] Honeycomb's goal now: "keeping each failure cheap to contain, not holding the count flat." And: "If you don't have that in place yet, that's the thing to fix before you scale up AI usage, not after."
-- The rollout and the metric are our example, not from their posts.
+- The rollout and the metric are my example, not from their posts.
 -->
 
 ---
@@ -1283,7 +1297,7 @@ clicks: 1
 <!--
 PLACEHOLDER, about 1.5 minutes. The project is new. Refresh every number before the talk, and decide in rehearsal whether this stays. Numbers as of 22 October 2026 (master at e0f2868), from the repo's harness report.
 
-- On screen: my current project, a real product. Agents claim issues, build, verify in the real app, review each other's work and merge. Branch protection requires zero human approvals. I make the decisions; agents own the delivery.
+- On screen: the repo from the start of the talk, the UX research tool, and the numbers I promised. Agents claim issues, build, verify in the real app, review each other's work and merge. Branch protection requires zero human approvals. I make the decisions; agents own the delivery.
 - 288 merged PRs and 1,318 commits in eleven days, from 1,103 agent threads on my MacBook and my home server. That's only possible because the rules that matter are tests, scripts and branch protection, checked by code, not by me.
 
 [click] How it's built, from advice to enforcement. A short AGENTS.md that routes each kind of task to the skill that owns it. Skills that guide a workflow end to end. Gates that refuse the change: a pre-commit hook, architecture tests, a local CI run that has to pass before merge. And the PR body as the record: what was verified, who reviewed, before and after media.
@@ -1332,7 +1346,7 @@ About 3 minutes.
 
 [click] 23:17: Fixed with a failing test first. One re-review, no findings. Then it took the PR to merge itself. The first local CI run passed but didn't count: master had moved on, and the script won't record a pass for a commit that's behind master. So it merged master in, reran, and merged on the green run.
 - That's the babysitter's job from the review section, done by the implementer. No human approval.
-- It also posted that CI result as the required check itself. Anyone with write access could. That's one of the places I still take the agent's word.
+- The pass belongs to one exact commit. That's the stop rule from the review part: a new commit makes old results stale. Make sure only the CI run can record that pass, not the agent that wants to merge.
 -->
 
 ---
@@ -1341,18 +1355,19 @@ class: ns
 clicks: 1
 ---
 
-# Where I still take the agent's word
+# Know where you still take the agent's word
 
 <OwnRepoGaps :step="$clicks" />
 
 <!--
-PLACEHOLDER, about 1 minute. From the harness report's "Where we still rely on trust", 16 October 2026. Refresh before the talk; some of these may be fixed by then.
+About 1 minute.
 
-- On screen, left: the places where my repo takes the agent's word for it. Right: what would turn each one into a check.
-- An agent can edit a rule or a baseline. That's the fullsend story from verify, and my repo has the same hole.
-- Whether to get an independent review is the implementer's call. About a third of PRs record none.
-- "I verified it in the app" and the screenshots are self-reported. The PR check sees that the section isn't empty, not that a UI change carries a picture.
-- "Write the failing test first" is a sentence in a skill. Nothing fails when code changes without a test.
+- On screen, left: places where an agent-run repo still takes the agent's word. Right: what would turn each one into a check. Every repo I've seen has a list like this, mine included.
+- An agent can edit a rule or a baseline. That's the fullsend story from verify. Take the rule files from the main branch in CI.
+- Whether to get an independent review is left to the implementer. Require one by path and by size instead.
+- "I verified it in the app" and the screenshots are self-reported. Require media on UI changes, and check that it's there.
+- "Write the failing test first" is a sentence in a skill. A check can run the new tests against main and expect them to fail.
+- You don't need all of this on day one. Same as the rules on the verify slide: add a check when a gap actually costs you something.
 
 [click] No slop doesn't mean checking everything. It means knowing where you still take the agent's word, and having a plan for each one.
 -->

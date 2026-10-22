@@ -212,9 +212,9 @@ watch(active, (on) => { if (on) setTimeout(measure, 700) })
       <article class="doc pr" :class="{ on: s >= 3 }" :style="prMoves">
         <i class="hole" />
         <h3>Pull request <span>#482</span></h3>
-        <div class="pr-title">Add CSV export</div>
+        <div class="pr-title">Edit invitations</div>
         <div class="frame">
-          <div class="row"><b class="chip">Branch</b><span>agent/export-csv</span></div>
+          <div class="row"><b class="chip">Branch</b><span>agent/edit-invitations</span></div>
           <div class="row"><b class="chip">Diff</b><span>+3,912 −211</span></div>
           <div class="row"><b class="chip">Files</b><span>47</span></div>
           <div class="row"><b class="chip">Tests</b><span>+0</span></div>
@@ -223,7 +223,7 @@ watch(active, (on) => { if (on) setTimeout(measure, 700) })
           <p>"It all works."</p>
         </div>
         <div class="foot"><b class="chip">Evidence</b><span class="evidence" :class="{ inspect: s === 3 }">None</span></div>
-        <div class="pcode">PR&lt;482&lt;AGENT&lt;EXPORT&lt;CSV&lt;&lt;&lt;</div>
+        <div class="pcode">PR&lt;482&lt;AGENT&lt;EDIT&lt;INVITES&lt;&lt;&lt;</div>
         <span
           v-for="(m, i) in marks"
           :key="i"

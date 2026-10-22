@@ -1,16 +1,16 @@
 <!--
   The agent runs the app and checks the behaviour itself: start a fresh
   instance with known data, reproduce the problem in the browser, fix it, and
-  repeat the same action. Commands, ports and seed data are the demo app's
-  (README: npm run reset, npm run dev on 5176). A-102's title has a comma on
-  purpose. The export endpoint is the one being built in the talk; the quoting
-  bug is illustrative.
+  repeat the same action. From my repo's PR #535: the session player stayed
+  on the first screen after an in-app route change (#476). The commands,
+  ports, seeded session and the two moments (?at=2412 and ?at=4145) are the
+  PR's; the screens are redrawn, not screenshots.
   0 start · 1 reproduce · 2 fix and repeat the same action
 -->
 <script setup lang="ts">
 withDefaults(defineProps<{ step?: number }>(), { step: 0 })
 const steps = ['Start a fresh instance', 'Reproduce it', 'Fix', 'Repeat the same action']
-const cols = ['id', 'title', 'status']
+const invoices = ['2024-116', '2024-117', '2024-118', '2024-119']
 </script>
 
 <template>
@@ -22,19 +22,20 @@ const cols = ['id', 'title', 'status']
     </ol>
 
     <section class="term ns-mono">
-      <header>worktree export-csv</header>
-      <p class="cmd">$ npm run reset</p>
-      <p class="dim">Restored the two demo accounts and ten tasks.</p>
-      <p class="cmd">$ npm run dev</p>
-      <p class="dim">API :4323 · UI :5176</p>
+      <header>worktree replay-routes</header>
+      <p class="cmd">$ scripts/dev/instance.sh start</p>
+      <p class="dim">api :5300 · web :5301</p>
+      <p class="cmd">$ scripts/verify seed</p>
+      <p class="dim">session: list → invoice → list</p>
       <div class="swap">
         <div class="log" :class="{ on: step === 1 }">
-          <p class="cmd">GET /api/tasks/export · 200</p>
-          <p class="warn">row A-102: 4 fields, expected 3</p>
+          <p class="cmd">open replay at 0:02</p>
+          <p class="warn">✗ still the list, Inbox 6</p>
         </div>
         <div class="log" :class="{ on: step >= 2 }">
-          <p class="cmd">agent: quote fields in export.ts</p>
-          <p class="ok">5 rows · 3 fields each</p>
+          <p class="cmd">agent fixes ReplayPlayer</p>
+          <p class="ok">✓ 0:02 invoice 2024-118</p>
+          <p class="ok">✓ 0:04 list, Inbox 5</p>
         </div>
       </div>
     </section>
@@ -42,21 +43,40 @@ const cols = ['id', 'title', 'status']
     <section class="browser" :class="{ on: step >= 1 }">
       <header>
         <i /><i /><i />
-        <span class="url ns-mono">localhost:5176 · tasks.csv</span>
-        <em>agent's browser · the export opened as a table</em>
+        <span class="url ns-mono">localhost:5301 · session replay</span>
+        <em>agent's browser · the recorded session, played back</em>
       </header>
-      <div class="grid">
-        <span v-for="c in cols" :key="c" class="hd">{{ c }}</span><span class="hd" />
-        <span class="ns-mono">A-101</span><span>Draft Q4 roadmap</span><span>open</span><span />
-        <span class="ns-mono">A-102</span>
-        <span class="swapcell"><b class="fixed" :class="{ on: step >= 2 }">Fix login, then retest</b><b class="broke" :class="{ on: step < 2 }">Fix login</b></span>
-        <span class="swapcell"><b class="fixed" :class="{ on: step >= 2 }">done</b><b class="broke bad" :class="{ on: step < 2 }">then retest</b></span>
-        <span class="swapcell"><b class="broke bad" :class="{ on: step < 2 }">done</b></span>
-        <span class="dim ns-mono">…</span><span class="dim">A-103 to A-105</span><span /><span />
+      <div class="player">
+        <div class="screen">
+          <div class="view list" :class="{ on: step < 2, bad: step === 1 }">
+            <p class="h">Invoices <span>Inbox 6</span></p>
+            <p v-for="n in invoices" :key="n" class="inv" :class="{ me: n === '2024-118' }">
+              <span class="ns-mono">{{ n }}</span><i /><em>open</em>
+            </p>
+          </div>
+          <div class="view detail" :class="{ on: step >= 2 }">
+            <p class="h">Invoice 2024-118</p>
+            <p class="bar" /><p class="bar short" /><p class="bar" />
+            <p class="btns"><span>Approve</span><span>Reject</span></p>
+          </div>
+        </div>
+        <div class="scrub">
+          <div class="track">
+            <i class="tick" style="left: 0%" />
+            <i class="tick" style="left: 38%" />
+            <i class="tick" style="left: 72%" />
+            <b class="head" style="left: 46%" />
+          </div>
+          <div class="marks ns-mono">
+            <span style="left: 0%">list</span>
+            <span style="left: 38%">→ invoice</span>
+            <span style="left: 72%">→ list</span>
+          </div>
+        </div>
       </div>
       <div class="verdict">
-        <span class="v bad" :class="{ on: step === 1 }">A-102 splits into four columns. The comma isn't quoted.</span>
-        <span class="v ok" :class="{ on: step >= 2 }">Same export, same data. Every row has three columns.</span>
+        <span class="v bad" :class="{ on: step === 1 }">After the route change, the replay stays on the list.</span>
+        <span class="v ok" :class="{ on: step >= 2 }">Same session, same moment. The replay shows the invoice.</span>
       </div>
     </section>
   </div>
@@ -210,61 +230,151 @@ const cols = ['id', 'title', 'status']
   color: var(--ns-teal);
 }
 
-.grid {
+.player {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px 22px 14px;
+  min-height: 0;
+}
+
+.screen {
   flex: 1;
   display: grid;
-  grid-template-columns: 90px 1.6fr 0.9fr 0.7fr;
-  align-content: center;
-  padding: 10px 22px;
+  border: 1px solid var(--ns-line);
+  background: #fafaf8;
+  min-height: 0;
 }
 
-.grid > span {
-  display: flex;
-  align-items: center;
-  min-height: 52px;
-  padding: 0 10px;
-  border-bottom: 1px solid var(--ns-line);
-  font-size: 20px;
-}
-
-.grid .hd {
-  min-height: 38px;
-  font-size: 17px;
-  font-weight: 700;
-  color: var(--z-grey-600);
-  border-bottom: 2px solid var(--z-ink);
-}
-
-.grid .dim {
-  color: var(--z-grey-600);
-}
-
-.swapcell {
-  display: grid !important;
-  align-items: center;
-}
-
-.swapcell b {
+.view {
   grid-area: 1 / 1;
-  font-weight: 400;
-  transition: opacity 500ms var(--ns-ease);
+  padding: 12px 18px;
+  transition: opacity 500ms var(--ns-ease), box-shadow 500ms var(--ns-ease);
 }
 
-.swapcell b:not(.on) {
+.view:not(.on) {
   opacity: 0;
 }
 
-.swapcell b.bad {
-  margin: 0 -10px;
-  padding: 4px 10px;
-  background: #ffe2dc;
-  color: var(--ns-red);
+.view.bad {
+  box-shadow: inset 0 0 0 3px var(--ns-red);
+}
+
+.view p {
+  margin: 0;
+  max-width: none;
+}
+
+.view .h {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  margin-bottom: 6px;
+  font-size: 21px;
+  font-weight: 800;
+}
+
+.view .h span {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--z-grey-600);
+}
+
+.inv {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--ns-line);
+  font-size: 17px;
+}
+
+.inv i {
+  flex: 1;
+  height: 8px;
+  background: #e4e4e0;
+}
+
+.inv em {
+  font-style: normal;
+  font-size: 16px;
+  color: var(--z-grey-600);
+}
+
+.inv.me span {
   font-weight: 700;
 }
 
-.swapcell b.fixed {
-  color: var(--ns-teal);
+.bar {
+  height: 12px;
+  margin: 12px 0 !important;
+  background: #e4e4e0;
+}
+
+.bar.short {
+  width: 55%;
+}
+
+.btns {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px !important;
+}
+
+.btns span {
+  padding: 6px 14px;
+  font-size: 16px;
   font-weight: 700;
+  border: 2px solid var(--z-ink);
+}
+
+.btns span:first-child {
+  background: var(--z-ink);
+  color: #fff;
+}
+
+.scrub {
+  position: relative;
+}
+
+.track {
+  position: relative;
+  height: 6px;
+  margin: 6px 0;
+  background: var(--ns-line);
+}
+
+.tick {
+  position: absolute;
+  top: -5px;
+  width: 3px;
+  height: 16px;
+  background: var(--z-grey-600);
+}
+
+.head {
+  position: absolute;
+  top: -8px;
+  width: 22px;
+  height: 22px;
+  margin-left: -11px;
+  border-radius: 50%;
+  background: var(--ns-teal);
+  box-shadow: 0 0 0 4px #fff;
+}
+
+.marks {
+  position: relative;
+  height: 22px;
+}
+
+.marks span {
+  position: absolute;
+  top: 2px;
+  font-size: 15px;
+  white-space: nowrap;
+  color: var(--z-grey-600);
 }
 
 .verdict {

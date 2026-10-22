@@ -19,21 +19,21 @@ const phases = [
   <div class="tools">
     <div class="top">
       <section class="doc">
-        <header><span class="ns-mono">export-tasks.mdx</span><em>GitHub Next · Chopin</em></header>
+        <header><span class="ns-mono">starting-states.mdx</span><em>GitHub Next · Chopin</em></header>
         <div class="body">
-          <h4>Export tasks as CSV</h4>
-          <p class="ln a1" :class="{ hot: step >= 1 }">Today the list route adds the caller's team to the query.</p>
-          <p class="ln a2 dec" :class="{ hot: step >= 1 }">Decision: export only the caller's team.</p>
+          <h4>Tasks start from states the app registers</h4>
+          <p class="ln a1" :class="{ hot: step >= 1 }">Today a task's starting state is free text the app has to interpret.</p>
+          <p class="ln a2 dec" :class="{ hot: step >= 1 }">Decision: the app registers named states, and a task picks one.</p>
           <div class="ln a3 dia" :class="{ hot: step >= 1 }">
-            <span>Session</span><i /><span>List route</span><i /><span>Shared query</span>
+            <span>Task form</span><i /><span>Run opens</span><i /><span>SDK applies the state</span>
           </div>
         </div>
       </section>
 
       <aside class="threads" :class="{ on: step >= 1 }">
-        <div class="th t1"><b>Research</b><p><em>@agent</em> What does the list filter by?</p><p class="re">session.teamId · routes/tasks.ts</p></div>
-        <div class="th t2"><b>Discuss</b><p><em>Mia</em> Admins export every team?</p><p class="re">Not in the first version.</p></div>
-        <div class="th t3"><b>Explain</b><p><em>@agent</em> Added a diagram of the path.</p></div>
+        <div class="th t1"><b>Research</b><p><em>@agent</em> What reads the text today?</p><p class="re">onTaskStart in the SDK</p></div>
+        <div class="th t2"><b>Discuss</b><p><em>Mia</em> What if a state fails?</p><p class="re">Try again, or skip the task.</p></div>
+        <div class="th t3"><b>Explain</b><p><em>@agent</em> Added a diagram of a run.</p></div>
       </aside>
     </div>
 

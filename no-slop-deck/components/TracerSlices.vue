@@ -1,19 +1,21 @@
 <!--
-  The export feature as tracer bullets. Every slice runs through UI, API and
-  data, and ends with something a person can check. Slice one ships before
-  the real query exists.
-  0 the day-one prototype · 1 the rest · 2 Matt Pocock's rule
+  My repo's starting states (#526) as tracer bullets. Every slice runs
+  through the task form, the API and the SDK in the app, and ends with
+  something a person can check on a local instance. Slice one is #527;
+  the others are #528, #529 and #532. A fifth, removing the old hooks, is
+  left out.
+  0 the first slice · 1 the rest · 2 Matt Pocock's rule
 -->
 <script setup lang="ts">
 withDefaults(defineProps<{ step?: number }>(), { step: 0 })
 
 const slices = [
-  { title: 'Export button, fixture data', check: 'The file opens with the right columns.', stub: true },
-  { title: 'Real query, my team only', check: 'A forged teamId changes nothing.' },
-  { title: 'Awkward data', check: 'Commas, quotes and 10,000 rows still export.' },
-  { title: 'Counted in production', check: 'Exports per team show up on the dashboard.' },
+  { title: 'Register, pick, apply', check: 'A task opens on the state picked in the form.', stub: true },
+  { title: 'When the app can\'t be prepared', check: 'A broken state offers Try again and Skip.' },
+  { title: 'Guidance and checks', check: 'A bad state fails a check that names the fix.' },
+  { title: 'Several participants at once', check: 'Two people in one prototype keep their own data.' },
 ]
-const layers = ['UI', 'API', 'Data']
+const layers = ['Form', 'API', 'SDK']
 </script>
 
 <template>
@@ -25,16 +27,16 @@ const layers = ['UI', 'API', 'Data']
           <b>{{ s.title }}</b>
         </header>
         <div class="bullet">
-          <div v-for="l in layers" :key="l" class="lv" :class="{ stub: s.stub && l === 'Data' }">
+          <div v-for="l in layers" :key="l" class="lv" :class="{ stub: s.stub && l === 'SDK' }">
             <i />
-            <span>{{ l }}<template v-if="s.stub && l === 'Data'">: in-memory</template></span>
+            <span>{{ l }}<template v-if="s.stub && l === 'SDK'">: one demo app</template></span>
           </div>
         </div>
         <div class="check">
           <Icon name="eye" />
           <p>{{ s.check }}</p>
         </div>
-        <div v-if="s.stub" class="badge">Day one. No database yet.</div>
+        <div v-if="s.stub" class="badge">First. The rest wait for it.</div>
       </section>
     </div>
     <div class="rule" :class="{ on: step >= 2 }">

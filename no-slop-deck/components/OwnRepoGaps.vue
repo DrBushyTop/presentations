@@ -1,7 +1,7 @@
 <!--
-  Placeholder: where my own repo still takes the agent's word, from the
-  harness report's "Where we still rely on trust" (16 Oct 2026). Each gap
-  names the change that would close it. Refresh before the talk.
+  The places an agent-run repo typically still takes the agent's word, each
+  with the change that would turn it into a check. Adapted from my repo's
+  harness report ("Where we still rely on trust").
   0 the gaps · 1 the takeaway
 -->
 <script setup lang="ts">

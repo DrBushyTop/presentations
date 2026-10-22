@@ -1,9 +1,11 @@
 <!--
-  What a research document looks like, using the demo app. Each finding has
-  a takeaway heading, one sentence and a file:line citation. The editor on the
-  right opens the cited lines. Line numbers and code are the demo app's real
-  source (no-slop-deck/demo-app/src).
-  0 the session · 1 the list route · 2 the shared query · 3 no export yet
+  What a research document looks like, from my repo's issue #257 (MCP
+  replies over about 12 KB failing). Each finding has a takeaway heading, one
+  sentence and a file:line citation. The editor on the right opens the cited
+  lines. Paths are shortened from src/Discovery.Api/Infrastructure/; line
+  numbers and code are real at commit af31181, with long lines wrapped and a
+  few arguments elided.
+  0 the reply frame · 1 the 16 KiB pieces · 2 the limits · 3 the guest
   Every click keeps the same layout: findings dim or light, and the editor
   crossfades between files in one grid cell.
 -->
@@ -13,72 +15,76 @@ withDefaults(defineProps<{ step?: number }>(), { step: 0 })
 type Line = { n?: number, t: string, hit?: boolean }
 const findings: { h: string, p: string, cite: string, file: string, lines: Line[] }[] = [
   {
-    h: 'The session cookie resolves to a user and their team',
-    p: 'readSession joins sessions, users and teams.',
-    cite: 'src/lib/session.ts:16-27',
-    file: 'src/lib/session.ts',
+    h: 'The host frames each reply as one JSON object',
+    p: 'With a stream open it sends the frame; otherwise it writes a file.',
+    cite: 'McpCode/CodeExecution.cs:137-145',
+    file: 'McpCode/CodeExecution.cs',
     lines: [
-      { n: 16, t: 'export function readSession(db, request) {' },
-      { n: 17, t: '  const token = request.cookies[sessionCookie]' },
-      { n: 18, t: '  if (!token) return null' },
-      { n: 19, t: '  const user = db.prepare(`' },
-      { n: 20, t: '    SELECT users.id, users.name,', hit: true },
-      { n: 21, t: '      users.team_id AS teamId, ...', hit: true },
-      { n: 22, t: '    FROM sessions', hit: true },
-      { n: 23, t: '    JOIN users ON users.id = sessions.user_id', hit: true },
-      { n: 24, t: '    JOIN teams ON teams.id = users.team_id', hit: true },
-      { n: 25, t: '  `).get(token, Date.now())' },
-      { n: 26, t: '  return user ? { user } : null' },
-      { n: 27, t: '}' },
+      { n: 137, t: 'var reply = CodeJson.FrameBytes(new' },
+      { n: 138, t: '{' },
+      { n: 139, t: '    version = 2,' },
+      { n: 140, t: '    runId,' },
+      { n: 141, t: '    sequence,' },
+      { n: 142, t: '    result = safe,' },
+      { n: 143, t: '});' },
+      { n: 144, t: 'if (stream is not null)', hit: true },
+      { t: '    await stream.Send(reply, ct);', hit: true },
+      { n: 145, t: 'else await client.Write(id,', hit: true },
+      { t: '    CallReplyPath(sequence), reply, ct);', hit: true },
     ],
   },
   {
-    h: 'The list route passes the session team to the query',
-    p: 'The client can filter by status, not by team.',
-    cite: 'src/routes/tasks.ts:15-18',
-    file: 'src/routes/tasks.ts',
+    h: 'Send cuts a reply into 16,384-byte pieces',
+    p: 'Each piece goes base64 into its own WebSocket message, then a newline.',
+    cite: 'McpCode/AcaExecStream.cs:55-61',
+    file: 'McpCode/AcaExecStream.cs',
     lines: [
-      { n: 8, t: "app.get('/api/tasks', {" },
-      { t: '  ...' },
-      { n: 15, t: '}, async (request) => {' },
-      { n: 16, t: '  const session = requireSession(db, request)', hit: true },
-      { n: 17, t: '  const tasks = findTasks(db, {', hit: true },
-      { t: '    teamId: session.user.teamId,', hit: true },
-      { t: '    status: request.query.status })', hit: true },
-      { n: 18, t: '  return { tasks }' },
-      { n: 19, t: '})' },
+      { n: 55, t: '// A reply can exceed a platform frame.' },
+      { t: '// Keep its chunks together, …' },
+      { n: 56, t: 'for (var offset = 0; offset < bytes.Length;', hit: true },
+      { t: '     offset += 16384)', hit: true },
+      { n: 57, t: '{' },
+      { n: 58, t: '    var frame = CodeJson.FrameBytes(new {', hit: true },
+      { t: '        type = "stdin",', hit: true },
+      { t: '        data = Convert.ToBase64String(…) });', hit: true },
+      { n: 59, t: '    await socket.SendAsync(frame, …);', hit: true },
+      { n: 60, t: '}' },
+      { n: 61, t: 'await socket.SendAsync("{\\"type\\":\\"stdin\\",' },
+      { t: '    \\"data\\":\\"Cg==\\"}"u8.ToArray(), …);' },
     ],
   },
   {
-    h: 'The shared query filters by team only when given one',
-    p: 'Scoping lives in the caller, not in findTasks.',
-    cite: 'src/lib/tasks.ts:9-15',
-    file: 'src/lib/tasks.ts',
+    h: 'The limits cap whole replies, not one message',
+    p: 'The 16 KiB piece size appears only as a literal.',
+    cite: 'McpCode/CodeJson.cs:17-20',
+    file: 'McpCode/CodeJson.cs',
     lines: [
-      { n: 9, t: 'export function findTasks(db, filter = {}) {' },
-      { n: 10, t: '  const conditions = []' },
-      { n: 11, t: '  const values = []' },
-      { n: 12, t: '  if (filter.teamId !== undefined) {', hit: true },
-      { n: 13, t: "    conditions.push('team_id = ?')", hit: true },
-      { n: 14, t: '    values.push(filter.teamId)', hit: true },
-      { n: 15, t: '  }', hit: true },
-      { n: 16, t: '  if (filter.status !== undefined) {' },
+      { n: 14, t: 'public static class CodeJson' },
+      { n: 15, t: '{' },
+      { n: 16, t: '    public const int SourceBytes = RequestBytes;' },
+      { n: 17, t: '    public const int RequestBytes = 64 * 1024;', hit: true },
+      { n: 18, t: '    public const int ReplyBytes =', hit: true },
+      { t: '        8 * 1024 * 1024;', hit: true },
+      { n: 19, t: '    public const int FinalBytes = 64 * 1024;', hit: true },
+      { n: 20, t: '    public const int ConcurrentCalls = 8;', hit: true },
     ],
   },
   {
-    h: 'Only session and task routes are registered',
-    p: 'There is no export endpoint today.',
-    cite: 'src/app.ts:15-16',
-    file: 'src/app.ts',
+    h: 'The guest rebuilds each reply from whole lines',
+    p: 'It never sees how many messages carried a line.',
+    cite: 'resources/worker-v2.mjs:49-53',
+    file: 'McpCode/resources/worker-v2.mjs',
     lines: [
-      { n: 9, t: 'export async function createApp(db, options) {' },
-      { n: 10, t: '  const app = Fastify({ ... })' },
-      { n: 14, t: '  await app.register(cookie)' },
-      { n: 15, t: '  await sessionRoutes(app, db)', hit: true },
-      { n: 16, t: '  await taskRoutes(app, db)', hit: true },
-      { n: 18, t: '  if (options.serveClient) { ... }' },
-      { n: 21, t: '  return app' },
-      { n: 22, t: '}' },
+      { n: 47, t: 'if (streaming) void (async () => {' },
+      { n: 48, t: '  try {' },
+      { n: 49, t: '    for await (const line of incoming) {', hit: true },
+      { n: 50, t: '      if (Buffer.byteLength(line) > 8388608)' },
+      { t: '        throw new Error(\'byte_limit\');' },
+      { n: 51, t: '      const reply = JSON.parse(line);', hit: true },
+      { n: 52, t: '      if (reply.version !== 2 || …)' },
+      { t: '        throw new Error(\'invalid_reply\');' },
+      { n: 53, t: '      replies.get(reply.sequence)', hit: true },
+      { t: '        .resolve(reply.result);', hit: true },
     ],
   },
 ]
@@ -100,7 +106,7 @@ const findings: { h: string, p: string, cite: string, file: string, lines: Line[
 
     <section class="editor ns-mono">
       <div v-for="(f, i) in findings" :key="f.file" class="file" :class="{ on: i === Math.min(step, 3) }">
-        <header><span class="tab">{{ f.file }}</span><em>opened from {{ f.cite }}</em></header>
+        <header><span class="tab">{{ f.file }}</span><em>opened at lines {{ f.cite.split(':')[1] }}</em></header>
         <div class="code">
           <div v-for="(l, k) in f.lines" :key="k" class="ln" :class="{ hit: l.hit }">
             <i>{{ l.n ?? '' }}</i><span>{{ l.t }}</span>

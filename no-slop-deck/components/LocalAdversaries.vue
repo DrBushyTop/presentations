@@ -11,8 +11,8 @@
 withDefaults(defineProps<{ step?: number }>(), { step: 0 })
 const lenses = ['Functional', 'Non-functional', 'Security']
 const report = [
-  { ok: true, t: 'Fixed: = in a title ran as a formula' },
-  { ok: false, t: 'Skipped: rename toRow, style only' },
+  { ok: true, t: 'Fixed: a reload applied it twice' },
+  { ok: false, t: 'Skipped: a rename, style only' },
 ]
 </script>
 
@@ -47,7 +47,7 @@ const report = [
         <b>Slice 2 done and committed. Checks green.</b>
         <div class="clip">
           <span class="play"><Icon name="play" /></span>
-          <span><b>Clip, 0:24</b>Alex exports Team A's tasks</span>
+          <span><b>Clip, 0:24</b>A broken state offers Try again</span>
         </div>
         <p v-for="r in report" :key="r.t" :class="{ skip: !r.ok }">
           <Icon :name="r.ok ? 'check' : 'dot'" /> {{ r.t }}
