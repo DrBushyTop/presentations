@@ -161,8 +161,7 @@ About 1.5 minutes.
 ---
 part: Agents that merge
 class: ns
-clicks: 1
-transition: gate | gate-back
+clicks: 2
 ---
 
 # One repo, six places it can go wrong
@@ -173,11 +172,38 @@ transition: gate | gate-back
 About 1 minute. This is the agenda. Keep it quick.
 
 - On screen: where the examples come from. My current project: a UX research tool. Researchers invite people to try prototype apps, and it records what happens: the screen, the audio, a transcript. Researchers write findings from it, and coding agents use the same data through MCP.
-- Agents build it, review it and merge it. The opening animation was a change in this repo, and so was the PR the inspector stamped. I'll show the numbers at the end.
+- Agents build it, review it and merge it. The opening animation was a change in this repo, and so was the PR the inspector stamped. The numbers are on the next slide.
 - Each part uses something that really happened in this repo, plus a few outside examples from teams further along.
 
-[click] Six parts, each with the question it answers. Three before any code: research, design, slice. Two for every slice: verify and review. One after merge: production.
+[click] Six parts, each with the question it answers. Three before any code: research, design, slice.
+
+[click] Two for every slice: verify and review, in a loop until the feature is done. One after merge: production.
 - Each part opens with how agent work goes wrong at that point, and where you're the bottleneck. Then what we do about it.
+-->
+
+---
+part: Agents that merge
+class: ns
+clicks: 1
+transition: gate | gate-back
+---
+
+# In my repo, agents merge
+
+<OwnRepo :step="$clicks" />
+
+<!--
+PLACEHOLDER, about 1.5 minutes. The project is new. Refresh every number before the talk, and decide in rehearsal whether this stays. Numbers as of 22 October 2026 (master at e0f2868), from the repo's harness report.
+
+- On screen: the numbers behind the repo from the last slide, so the rest of the talk has something real to stand on. Agents claim issues, build, verify in the real app, review each other's work and merge. Branch protection requires zero human approvals. I make the decisions; agents own the delivery.
+- 288 merged PRs and 1,318 commits in eleven days, from 1,103 agent threads on my MacBook and my home server. That's only possible because the rules that matter are tests, scripts and branch protection, checked by code, not by me.
+
+[click] How it's built, from advice to enforcement. A short AGENTS.md that routes each kind of task to the skill that owns it. Skills that guide a workflow end to end. Gates that refuse the change: a pre-commit hook, architecture tests, a local CI run that has to pass before merge. And the PR body as the record: what was verified, who reviewed, before and after media.
+- In the first five days, rules moved down that line: out of a 13.7 KB AGENTS.md, into skills, then into checks. None of it was designed up front. Each rule arrived when a problem showed up: parallel agents sharing an instance, merged migration snapshots, green tests on features that didn't work.
+- After 16 October the checks barely changed. The work moved to how tickets are written and how deep reviews go.
+- I still use the app myself before anyone else does. My involvement is decisions and clicking through it, not approving PRs.
+- OpenAI's harness team, who come up in verify and review, keep blocking merge gates minimal. I block harder, because some data in this product is a one-way door.
+- Then into the six parts, starting with research.
 -->
 
 ---
@@ -1282,29 +1308,6 @@ Thirty seconds, keep it moving. Same company as the case study.
 [click] After: P90 latency from 4,752 to 508 milliseconds. Cost per thousand calls down 39%.
 - Their workload, their numbers, from about a week of use. Wherever their agents pick from a fixed set of answers, Jev is the default. Ranking resources by priority is their highest-volume use and drives most of the savings.
 - https://polylane.com/blog/we-swapped-our-llms-for-jev/
--->
-
----
-part: Close
-class: ns
-clicks: 1
----
-
-# In my repo, agents merge
-
-<OwnRepo :step="$clicks" />
-
-<!--
-PLACEHOLDER, about 1.5 minutes. The project is new. Refresh every number before the talk, and decide in rehearsal whether this stays. Numbers as of 22 October 2026 (master at e0f2868), from the repo's harness report.
-
-- On screen: the repo from the start of the talk, the UX research tool, and the numbers I promised. Agents claim issues, build, verify in the real app, review each other's work and merge. Branch protection requires zero human approvals. I make the decisions; agents own the delivery.
-- 288 merged PRs and 1,318 commits in eleven days, from 1,103 agent threads on my MacBook and my home server. That's only possible because the rules that matter are tests, scripts and branch protection, checked by code, not by me.
-
-[click] How it's built, from advice to enforcement. A short AGENTS.md that routes each kind of task to the skill that owns it. Skills that guide a workflow end to end. Gates that refuse the change: a pre-commit hook, architecture tests, a local CI run that has to pass before merge. And the PR body as the record: what was verified, who reviewed, before and after media.
-- In the first five days, rules moved down that line: out of a 13.7 KB AGENTS.md, into skills, then into checks. None of it was designed up front. Each rule arrived when a problem showed up: parallel agents sharing an instance, merged migration snapshots, green tests on features that didn't work.
-- After 16 October the checks barely changed. The work moved to how tickets are written and how deep reviews go.
-- I still use the app myself before anyone else does. My involvement is decisions and clicking through it, not approving PRs.
-- One honest difference from OpenAI: I block harder, because some data in this product is a one-way door.
 -->
 
 ---

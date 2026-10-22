@@ -1,18 +1,20 @@
 <!--
   The agenda: six parts, with examples from one repo. The box introduces the
-  repo briefly; the numbers come at the end. Same grouping as the part
+  repo briefly; the numbers follow on the next slide. Same grouping as the part
   dividers: before code, for each slice, after merge.
-  0 the repo · 1 the six parts
+  0 the repo · 1 before code · 2 for each slice and after merge
 -->
 <script setup lang="ts">
 import { gates } from '../lib/gates'
 
 withDefaults(defineProps<{ step?: number }>(), { step: 99 })
 
+// `at` is the click that reveals the group; `first` numbers the cards within
+// that reveal so they rise one after another.
 const groups = [
-  { label: 'Before code', parts: [0, 1, 2] },
-  { label: 'For each slice', parts: [3, 4], loop: true },
-  { label: 'After merge', parts: [5] },
+  { label: 'Before code', parts: [0, 1, 2], at: 1, first: 0 },
+  { label: 'For each slice', parts: [3, 4], loop: true, at: 2, first: 3 },
+  { label: 'After merge', parts: [5], at: 2, first: 3 },
 ]
 </script>
 
@@ -26,14 +28,14 @@ const groups = [
       </div>
     </section>
 
-    <div class="groups" :class="{ on: step >= 1 }">
-      <section v-for="g in groups" :key="g.label" class="group" :class="{ loop: g.loop }" :style="{ '--n': g.parts.length }">
+    <div class="groups">
+      <section v-for="g in groups" :key="g.label" class="group" :class="{ loop: g.loop, on: step >= g.at }" :style="{ '--n': g.parts.length }">
         <header>
           <svg v-if="g.loop" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 0 1 13.7-5.6M20 12a8 8 0 0 1-13.7 5.6" /><path d="M18 2.5v4h-4M6 21.5v-4h4" /></svg>
           {{ g.label }}
         </header>
         <div class="parts">
-          <div v-for="i in g.parts" :key="i" class="part" :style="{ '--i': i }">
+          <div v-for="i in g.parts" :key="i" class="part" :style="{ '--i': i - g.first }">
             <span class="n">{{ i + 1 }}</span>
             <b>{{ gates[i].name }}</b>
             <p>{{ gates[i].q }}</p>
@@ -163,9 +165,22 @@ header svg {
   transition-delay: calc(var(--i) * 90ms);
 }
 
-.groups:not(.on) .part {
+.group:not(.on) .part {
   opacity: 0.12;
   transform: translateY(8px);
+}
+
+header,
+.loop .parts {
+  transition: opacity 600ms var(--ns-ease), border-color 600ms var(--ns-ease);
+}
+
+.group:not(.on) header {
+  opacity: 0.35;
+}
+
+.loop:not(.on) .parts {
+  border-color: rgba(3, 127, 145, 0.25);
 }
 
 .n {
