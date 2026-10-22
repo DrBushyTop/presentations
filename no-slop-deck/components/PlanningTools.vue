@@ -5,7 +5,8 @@
   answer and open bug are real, shortened. It didn't happen in Chopin, and
   the colleagues' lines are made up.
   The document scrolls to what each click adds; the conversation grows from
-  the bottom. One change per click.
+  the bottom. One change per click: the conversation first, then what it
+  does to the document.
   0 the rough notes · 1 a decision as a question · 2 the answer, written back
   · 3 research in the plan · 4 what's open · 5 a comment · 6 the agent
   applies it
@@ -31,15 +32,20 @@ const options = [
 const chat = [
   { at: 0, who: 'Roosa Melkko', av: 'RM', t: 'In the pilot nobody filled in "Preparing the app". Could it be a pick list?' },
   { at: 0, who: 'Pasi Huuhka', av: 'PH', t: '@chopin Read our notes and turn this into a plan. Anything you\'re not sure about, turn into decisions.' },
-  { at: 1, who: 'Planner', bot: true, t: 'I\'ll read the plan and the repo first.', tool: 'Questions · 4 open', t2: 'Now the open choices as questions in the plan.' },
-  { at: 2, who: 'Planner', bot: true, t: 'Answers are in. Writing them into the prose.' },
-  { at: 3, who: 'Antti Sartjärvi', av: 'AS', t: '@chopin What reads the starting state today?' },
-  { at: 3, who: 'Planner', bot: true, t: 'Researching it in the plan.', tool: 'Search repository' },
-  { at: 4, who: 'Roosa Melkko', av: 'RM', t: '@chopin Can you call out what this puts at risk?' },
-  { at: 4, who: 'Planner', bot: true, t: 'Added one under Open.' },
-  { at: 6, sys: true, t: 'Antti Sartjärvi applied a comment' },
-  { at: 6, who: 'Planner', bot: true, t: 'Answering Antti\'s question in the prose: apply routes inside the app, and a page load during it is a failure.' },
+  { at: 1, d: 200, who: 'Planner', bot: true, t: 'I\'ll read the plan and the repo first.', tool: 'Questions · 4 open', t2: 'Now the open choices as questions in the plan.' },
+  { at: 2, d: 600, who: 'Planner', bot: true, t: 'Answers are in. Writing them into the prose.' },
+  { at: 3, d: 200, who: 'Antti Sartjärvi', av: 'AS', t: '@chopin What reads the starting state today?' },
+  { at: 3, d: 900, who: 'Planner', bot: true, t: 'Researching it in the plan.', tool: 'Search repository' },
+  { at: 4, d: 200, who: 'Roosa Melkko', av: 'RM', t: '@chopin Can you call out what this puts at risk?' },
+  { at: 4, d: 900, who: 'Planner', bot: true, t: 'Added one under Open.' },
+  { at: 6, d: 100, sys: true, t: 'Antti Sartjärvi applied a comment' },
+  { at: 6, d: 800, who: 'Planner', bot: true, t: 'Answering Antti\'s question in the prose: apply routes inside the app, and a page load during it is a failure.' },
 ]
+
+// When each click's change reaches the document, after the conversation
+// that asks for it. Click 2's pick and click 5's comment are people acting
+// in the document, so they show at once; what follows them waits.
+const docDelay = [0, 1000, 1400, 1700, 1700, 0, 1600]
 
 // Scroll the document so what this click adds is in view, keeping as much
 // of what came before as fits. `marks[i]` is what click i adds.
@@ -47,6 +53,28 @@ const view = ref<HTMLElement>()
 const marks = ref<HTMLElement[]>([])
 const shift = ref(0)
 const mark = (i: number) => (el: unknown) => { marks.value[i] = el as HTMLElement }
+
+// Going back shows the earlier state at once, with no delays or entrances.
+const forward = ref(false)
+const delay = ref(0)
+
+// Messages arrive one at a time, each after its own delay, so the
+// conversation only makes room for a message when it appears.
+const count = ref(chat.filter(m => m.at <= props.step).length)
+let timers: ReturnType<typeof setTimeout>[] = []
+
+function deliver(now: number, ahead: boolean) {
+  timers.forEach(clearTimeout)
+  timers = []
+  if (!ahead) {
+    count.value = chat.filter(m => m.at <= now).length
+    return
+  }
+  count.value = chat.filter(m => m.at < now).length
+  chat.forEach((m, i) => {
+    if (m.at === now) timers.push(setTimeout(() => { count.value = Math.max(count.value, i + 1) }, m.d ?? 0))
+  })
+}
 
 function measure() {
   const v = view.value
@@ -65,12 +93,20 @@ onMounted(() => {
     ro.observe(view.value)
   }
 })
-onBeforeUnmount(() => ro?.disconnect())
-watch(() => props.step, measure)
+onBeforeUnmount(() => {
+  ro?.disconnect()
+  timers.forEach(clearTimeout)
+})
+watch(() => props.step, (now, before) => {
+  forward.value = now > before
+  delay.value = forward.value ? docDelay[Math.min(now, 6)] : 0
+  deliver(now, forward.value)
+  measure()
+})
 </script>
 
 <template>
-  <div class="chopin">
+  <div class="chopin" :style="{ '--dd': delay + 'ms' }">
     <div class="bar">
       <span class="doc-name">Discovery <i>/</i> Starting states</span>
       <span class="people" aria-hidden="true"><i>PH</i><i>RM</i><i>AS</i></span>
@@ -149,9 +185,9 @@ watch(() => props.step, measure)
 
       <div class="talk">
         <div class="tabs"><span class="ptab">Conversation</span></div>
-        <div class="msgs">
-          <template v-for="(m, i) in chat" :key="i">
-            <div v-if="step >= m.at" class="msg" :class="{ sys: m.sys, fresh: m.at === step }">
+        <TransitionGroup tag="div" name="msg" class="msgs">
+          <template v-for="(m, i) in chat.slice(0, count)" :key="i">
+            <div class="msg" :class="{ sys: m.sys }">
               <template v-if="m.sys">{{ m.t }}</template>
               <template v-else>
                 <i class="av" :class="{ bot: m.bot }">{{ m.bot ? '' : m.av }}</i>
@@ -164,7 +200,7 @@ watch(() => props.step, measure)
               </template>
             </div>
           </template>
-        </div>
+        </TransitionGroup>
         <div class="input">Use @chopin to ask Chopin</div>
       </div>
     </div>
@@ -311,7 +347,7 @@ code {
   flex-direction: column;
   gap: 26px;
   padding: 16px 30px 30px;
-  transition: transform 900ms var(--ns-ease);
+  transition: transform 900ms var(--ns-ease) var(--dd);
 }
 
 /* Not positioned, so the marks' offsetTop is measured from .col. */
@@ -349,7 +385,11 @@ code {
 }
 
 .reveal {
-  transition: opacity 600ms var(--ns-ease) 250ms, transform 700ms var(--ns-ease) 250ms;
+  transition: opacity 600ms var(--ns-ease), transform 700ms var(--ns-ease);
+}
+
+.reveal.on {
+  transition-delay: var(--dd);
 }
 
 .reveal:not(.on) {
@@ -562,17 +602,19 @@ code {
   gap: 10px;
 }
 
-.msg.fresh {
-  animation: msg 600ms var(--ns-ease) both;
-  animation-delay: 600ms;
+/* A new message fades up; the ones above it slide up to make room. Going
+   back removes messages at once. */
+.msg-enter-active {
+  transition: opacity 500ms var(--ns-ease), transform 600ms var(--ns-ease);
 }
 
-.msg.fresh + .msg.fresh {
-  animation-delay: 1100ms;
+.msg-enter-from {
+  opacity: 0;
+  transform: translateY(10px);
 }
 
-@keyframes msg {
-  from { opacity: 0; transform: translateY(10px); }
+.msg-move {
+  transition: transform 500ms var(--ns-ease);
 }
 
 .av.bot {
