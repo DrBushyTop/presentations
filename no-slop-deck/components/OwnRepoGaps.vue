@@ -2,13 +2,15 @@
   The places an agent-run repo typically still takes the agent's word, each
   with the change that would turn it into a check. Adapted from my repo's
   harness report ("Where we still rely on trust").
-  0 the gaps · 1 the takeaway
+  One gap per click, the first on screen from the start, then the takeaway.
+  0 file size · 1 own review choice · 2 verified in the app · 3 failing test first ·
+  4 the takeaway
 -->
 <script setup lang="ts">
 withDefaults(defineProps<{ step?: number }>(), { step: 0 })
 
 const gaps = [
-  { gap: 'An agent can edit a rule or a baseline', next: 'CI takes rule files from master' },
+  { gap: '"Keep files small" is a line in AGENTS.md', next: 'A lint caps file size' },
   { gap: 'The implementer decides whether to get a review', next: 'Review required by path and size' },
   { gap: '"Verified in the app" is the agent\'s own account', next: 'A UI change must carry media' },
   { gap: '"Write the failing test first" is prose', next: 'New tests must fail on master' },
@@ -21,11 +23,11 @@ const gaps = [
       <span>Self-reported, or only written down</span>
       <span class="nx">What would make it a check</span>
     </div>
-    <div v-for="g in gaps" :key="g.gap" class="row">
+    <div v-for="(g, i) in gaps" :key="g.gap" class="row" :class="{ on: step >= i }">
       <p class="gap"><Icon name="alert" />{{ g.gap }}</p>
       <p class="next"><Icon name="arrow" />{{ g.next }}</p>
     </div>
-    <p class="take" :class="{ on: step >= 1 }">No slop doesn't mean checking everything. It means knowing where you still take the agent's word.</p>
+    <p class="take" :class="{ on: step >= gaps.length }">No slop doesn't mean checking everything. It means knowing where you still take the agent's word.</p>
   </div>
 </template>
 
@@ -59,6 +61,12 @@ const gaps = [
 
 .row {
   flex: 1;
+  transition: opacity 500ms var(--ns-ease), transform 600ms var(--ns-ease);
+}
+
+.row:not(.on) {
+  opacity: 0;
+  transform: translateY(10px);
 }
 
 .row p {

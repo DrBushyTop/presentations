@@ -1,7 +1,8 @@
 <!--
-  Polylane's context graph, redrawn: follow the edges from the repository in
-  the PR to the cloud resources it can affect, then let a small model drop
-  the ones that don't matter before the agent starts.
+  Polylane's context graph, applied to my repo: follow the edges from the
+  repository in the PR to the Azure resources it can affect, then let a small
+  model drop the ones that don't matter before the agent starts. Resource
+  names are from infra/azure/main.bicep.
   0 the graph · 1 follow the edges · 2 filter, then hand to the agent
 -->
 <script setup lang="ts">
@@ -9,19 +10,19 @@ withDefaults(defineProps<{ step?: number }>(), { step: 0 })
 
 type N = { id: string, x: number, y: number, w: number, h: number, kind: string, name: string, drop?: boolean }
 const nodes: N[] = [
-  { id: 'repo', x: 0, y: 190, w: 230, h: 96, kind: 'Repository', name: 'checkout-edge' },
-  { id: 'api', x: 400, y: 150, w: 240, h: 96, kind: 'Lambda function', name: 'checkout-api' },
-  { id: 'report', x: 400, y: 280, w: 240, h: 96, kind: 'Cron job', name: 'nightly-report', drop: true },
-  { id: 'mail', x: 400, y: 404, w: 240, h: 96, kind: 'Worker', name: 'email-sender', drop: true },
-  { id: 'queue', x: 880, y: 0, w: 256, h: 96, kind: 'SQS queue', name: 'orders-events' },
-  { id: 'db', x: 880, y: 150, w: 256, h: 96, kind: 'RDS instance', name: 'orders-db' },
+  { id: 'repo', x: 0, y: 190, w: 230, h: 96, kind: 'Repository', name: 'testing-harness' },
+  { id: 'api', x: 400, y: 150, w: 240, h: 96, kind: 'Container app', name: 'ca-discovery-api' },
+  { id: 'report', x: 400, y: 280, w: 240, h: 96, kind: 'Sandbox group', name: 'mcp-code', drop: true },
+  { id: 'mail', x: 400, y: 404, w: 240, h: 96, kind: 'Storage container', name: 'captures', drop: true },
+  { id: 'queue', x: 880, y: 0, w: 256, h: 96, kind: 'In customer apps', name: '@zure/capture-sdk' },
+  { id: 'db', x: 880, y: 150, w: 256, h: 96, kind: 'Azure SQL database', name: 'Discovery' },
 ]
 
 const edges = [
   { d: 'M230,238 C315,238 315,198 400,198', label: 'deploys_to', lx: 250, ly: 186 },
   { d: 'M230,238 C315,238 315,328 400,328', label: '', lx: 0, ly: 0, drop: true },
   { d: 'M230,238 C315,238 315,452 400,452', label: '', lx: 0, ly: 0, drop: true },
-  { d: 'M880,48 C760,48 760,198 640,198', label: 'triggers', lx: 690, ly: 92 },
+  { d: 'M880,48 C760,48 760,198 640,198', label: 'calls', lx: 700, ly: 92 },
   { d: 'M640,198 L880,198', label: 'connects_to', lx: 745, ly: 186 },
 ]
 </script>
@@ -46,7 +47,7 @@ const edges = [
       <Icon v-if="n.drop" name="x" class="gone" />
     </div>
 
-    <div class="pr"><span class="ns-mono">PR #1207</span> adds a migration</div>
+    <div class="pr"><span class="ns-mono">PR</span> renames Sessions to Recordings</div>
     <div class="small-model">A small model drops the rest</div>
 
     <div class="agent">
@@ -126,7 +127,7 @@ const edges = [
   flex-direction: column;
   justify-content: center;
   gap: 4px;
-  padding: 0 18px;
+  padding: 0 14px;
   background: #fff;
   border: 2px solid var(--z-ink);
   transition: opacity 500ms var(--ns-ease), border-color 500ms var(--ns-ease), background 500ms var(--ns-ease);
@@ -139,7 +140,8 @@ const edges = [
 }
 
 .node b {
-  font-size: 21px;
+  font-size: 20px;
+  white-space: nowrap;
 }
 
 .node.repo {

@@ -1,7 +1,8 @@
 <!--
-  A no-go comment, redrawn from Polylane's post: the mechanism first, then
-  the evidence from production, then what would make the change safe.
-  The chart is synthetic, shaped like theirs (~38 writes/s on orders).
+  A no-go comment in the shape of Polylane's: the mechanism first, then the
+  evidence from production, then what would make the change safe. Applied to
+  my repo's planned rename; the deploy order is from docs/azure-deployment.md.
+  The chart is synthetic.
   0 the verdict and mechanism · 1 the evidence · 2 the fix
 -->
 <script setup lang="ts">
@@ -21,17 +22,17 @@ const area = `${line} L${x(N - 1)},${y(0)} L${x(0)},${y(0)} Z`
 
 <template>
   <div class="nogo">
-    <div class="who"><span class="av"><Icon name="bot" /></span><b>polylane</b> bot commented on PR #1207</div>
+    <div class="who"><span class="av"><Icon name="bot" /></span><b>impact-check</b> bot commented on the PR</div>
     <div class="caution"><Icon name="alert" /> Merging this pull request may degrade production (high impact).</div>
-    <p class="mech">Merging this blocks every write to <code>orders</code> while the index builds.</p>
+    <p class="mech">Every recording request fails until the new revision is up.</p>
 
     <div class="evidence" :class="{ on: step >= 1 }">
       <div class="facts">
-        <p><code>0114_order_search_trgm.sql:3</code> creates an index without <code>CONCURRENTLY</code>, which locks the table for the whole build.</p>
-        <p>Checkout sustains <b>about 38 writes a second</b> on that table. Every one waits while the index builds.</p>
+        <p><code>RenameSessionsToRecordings.cs:3</code> renames the table. <code>migrate-sql.py</code> runs it before the new revision starts, and the old one keeps serving, still querying <code>Sessions</code>.</p>
+        <p>Customer apps send <b>25 to 45 recording requests a minute</b>, day and night. Every one fails in that window.</p>
       </div>
       <figure class="chart">
-        <figcaption><span class="ns-mono">orders-db</span> writes per second, last 48 h</figcaption>
+        <figcaption><span class="ns-mono">ca-discovery-api</span> recording requests per minute, last 48 h</figcaption>
         <svg :viewBox="`0 0 ${CW} ${CH}`" aria-hidden="true">
           <line v-for="t in [0, 20, 40]" :key="t" :x1="40" :x2="CW - 10" :y1="y(t)" :y2="y(t)" class="gl" />
           <text v-for="t in [0, 20, 40]" :key="'t' + t" :x="32" :y="y(t) + 6" text-anchor="end">{{ t }}</text>
@@ -45,7 +46,7 @@ const area = `${line} L${x(N - 1)},${y(0)} L${x(0)},${y(0)} Z`
 
     <div class="fix" :class="{ on: step >= 2 }">
       <Icon name="check" />
-      <span>To make this safe: <code>CREATE INDEX CONCURRENTLY</code>, outside the transactional migration.</span>
+      <span>To make this safe: add <code>Recordings</code> now, move the code over, and drop <code>Sessions</code> in a later build.</span>
     </div>
   </div>
 </template>

@@ -1,33 +1,33 @@
 <!--
   Polylane runs cheap, deterministic rules over the diff before the agent
-  starts, to point its attention at known deployment risks. The migration is
-  the example from their post.
+  starts, to point its attention at known deployment risks. The rules are
+  theirs, adapted to SQL Server; the migration is my repo's planned rename.
   0 the diff and the rules · 1 a rule matches · 2 a hint, not a verdict
 -->
 <script setup lang="ts">
 withDefaults(defineProps<{ step?: number }>(), { step: 0 })
 
 const rules = [
-  { t: 'A migration that must run by hand, or in a set order', hit: false },
-  { t: 'A table lock: CREATE INDEX without CONCURRENTLY, or a NOT NULL column with no default', hit: true },
-  { t: 'An endpoint removed while the deployed version still calls it', hit: false },
-  { t: 'A new env var or secret that nothing provisions', hit: false },
+  { t: 'A rename or drop that the running build still reads', hit: true },
+  { t: 'A table lock: an index built without ONLINE = ON', hit: false },
+  { t: 'An endpoint removed while released SDKs still call it', hit: false },
+  { t: 'A new setting that nothing in infra/azure/env provides', hit: false },
 ]
 </script>
 
 <template>
   <div class="heur" :class="{ scan: step >= 1, hint: step >= 2 }">
     <section class="diff ns-mono">
-      <header>migrations/0114_order_search_trgm.sql</header>
+      <header>Migrations/20261024_RenameSessionsToRecordings.cs</header>
       <div class="code">
-        <div class="ln"><i>1</i>BEGIN;</div>
-        <div class="ln"><i>2</i>ALTER TABLE orders ADD COLUMN search_text text;</div>
-        <div class="ln hit"><i>3</i>CREATE INDEX orders_search_trgm</div>
-        <div class="ln hit"><i>4</i>{{ '  ' }}ON orders USING gin (search_text gin_trgm_ops);</div>
-        <div class="ln"><i>5</i>COMMIT;</div>
+        <div class="ln"><i>1</i>protected override void Up(MigrationBuilder mb)</div>
+        <div class="ln"><i>2</i>{</div>
+        <div class="ln hit"><i>3</i>{{ '    ' }}mb.RenameTable(name: "Sessions",</div>
+        <div class="ln hit"><i>4</i>{{ '        ' }}newName: "Recordings");</div>
+        <div class="ln"><i>5</i>}</div>
         <div class="beam" />
       </div>
-      <div class="tag"><Icon name="alert" /><span>Hint to the agent: this locks writes to <b>orders</b></span></div>
+      <div class="tag"><Icon name="alert" /><span>Hint to the agent: the running build still reads <b>Sessions</b></span></div>
     </section>
 
     <section class="rules">

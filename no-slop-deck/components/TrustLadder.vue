@@ -16,10 +16,10 @@ function on(i: number, g: number) {
 
 const rungs = [
   { t: 'You relay everything', you: 'Copy and paste', g: 0 },
-  { t: 'It runs and checks its work', you: 'Read every line', g: 1 },
-  { t: 'It reviews each slice', you: 'Read the risky slices', g: 1 },
-  { t: 'It finds its own context', you: 'Answer product choices', g: 2 },
-  { t: 'It merges its own PRs', you: 'Fix the environment', g: 2 },
+  { t: 'The agent runs and checks its work', you: 'Read every line', g: 1 },
+  { t: 'The agent reviews each slice', you: 'Read the risky slices', g: 1 },
+  { t: 'The agent finds its own context', you: 'Answer product choices', g: 2 },
+  { t: 'The agent merges its own PRs', you: 'Fix the environment', g: 2 },
 ]
 </script>
 

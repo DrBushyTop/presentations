@@ -50,9 +50,16 @@ if (args.includes('--staged')) {
   const ignored = (f) => f.includes('/demo-app/')
   const sharedPresentationChanged = files.some((f) => f.startsWith('themes/') || f.startsWith('addons/'))
   decks = sharedPresentationChanged ? allDecks : allDecks.filter((d) => files.some((f) => f.startsWith(`${deckDir(d)}/`) && !ignored(f)))
-  if (!decks.length) process.exit(0)
+  if (!decks.length) {
+    console.log('Slide layout check: no staged deck changes, skipping')
+    process.exit(0)
+  }
+  const why = sharedPresentationChanged ? 'the theme or an addon changed' : 'staged changes'
+  console.log(`Slide layout check: ${decks.join(', ')} (${why}). Starting dev servers…`)
+} else {
+  if (!decks.length) decks = allDecks
+  console.log(`Slide layout check: ${decks.join(', ')}. Starting dev servers…`)
 }
-if (!decks.length) decks = allDecks
 
 // Thresholds, in canvas pixels. The canvas is 1280 x 720.
 const RULES = {
@@ -76,19 +83,50 @@ function freePort() {
   })
 }
 
+const servers = []
+
+const slidevBin = join(root, 'node_modules/@slidev/cli/bin/slidev.mjs')
+
+// Starts Slidev with node directly, so killing the child stops the server
+// (npx would leave its slidev process behind). It's tracked from spawn, so a
+// server that never becomes ready is still stopped. Resolves to the port the
+// server reports, in case another process took the requested one.
 async function startServer(deck, port) {
-  const child = spawn('npx', ['slidev', deckEntry(deck), '--port', String(port)], {
+  const child = spawn(process.execPath, [slidevBin, deckEntry(deck), '--port', String(port)], {
     cwd: join(root, deckDir(deck)),
     stdio: ['ignore', 'pipe', 'pipe'],
   })
-  await new Promise((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error(`${deck}: dev server timeout`)), 60000)
-    child.stdout.on('data', (d) => {
-      if (String(d).includes(`localhost:${port}`)) { clearTimeout(timer); resolve() }
-    })
-    child.on('exit', (code) => reject(new Error(`${deck}: dev server exited ${code}`)))
+  servers.push(child)
+  let output = ''
+  return new Promise((resolve, reject) => {
+    const fail = (why) => {
+      const tail = output.trim().split('\n').slice(-15).join('\n')
+      reject(new Error(`${deck}: dev server ${why}${tail ? `. Its output:\n${tail}` : ', with no output'}`))
+    }
+    const timer = setTimeout(() => fail('did not start in 60 s'), 60000)
+    const read = (d) => {
+      // With colors on, the port is wrapped in escape codes.
+      output += String(d).replace(/\x1b\[[0-9;]*m/g, '')
+      const ready = output.match(/localhost:(\d+)/)
+      if (ready) { clearTimeout(timer); resolve(Number(ready[1])) }
+    }
+    child.stdout.on('data', read)
+    child.stderr.on('data', read)
+    child.on('exit', (code) => { clearTimeout(timer); fail(`exited with code ${code}`) })
   })
-  return child
+}
+
+function stopServers() {
+  for (const server of servers) server.kill()
+}
+
+// Ctrl+C, a closed terminal or a kill would otherwise skip the finally block
+// and leave dev servers running.
+for (const signal of ['SIGINT', 'SIGTERM', 'SIGHUP']) {
+  process.on(signal, () => {
+    stopServers()
+    process.exit(130)
+  })
 }
 
 // Runs inside the page. Returns a list of { rule, detail }.
@@ -218,13 +256,11 @@ const baseline = existsSync(baselinePath) ? JSON.parse(readFileSync(baselinePath
 const TABS = Number(process.env.CHECK_SLIDES_TABS) || 6
 const started = Date.now()
 const browser = await chromium.launch()
-const servers = []
 const results = {} // deck -> slide -> problems
 
 try {
   // Start every dev server at once, then count each deck's slides.
-  const ports = await Promise.all(decks.map(() => freePort()))
-  await Promise.all(decks.map(async (deck, i) => { servers.push(await startServer(deck, ports[i])) }))
+  const ports = await Promise.all(decks.map(async (deck) => startServer(deck, await freePort())))
   const jobs = []
   for (const [i, deck] of decks.entries()) {
     const page = await browser.newPage({ viewport: { width: 1280, height: 720 } })
@@ -272,7 +308,7 @@ try {
   }
   await Promise.all(Array.from({ length: TABS }, worker))
 } finally {
-  for (const server of servers) server.kill()
+  stopServers()
   await browser.close()
 }
 

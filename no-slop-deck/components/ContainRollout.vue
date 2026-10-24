@@ -1,7 +1,7 @@
 <!--
   After merge: something will get through, so plan who watches, what signal
   stops it and how far it can spread. The rollout and the metric are an
-  example in my repo's terms (a new session player), not data from a source.
+  example in my repo's terms (a new recording player), not data from a source.
   0 who watches · 1 the signal and the flag · 2 the blast radius · 3 Honeycomb's goal
 -->
 <script setup lang="ts">
@@ -10,14 +10,14 @@ withDefaults(defineProps<{ step?: number }>(), { step: 0 })
 const stops = [
   { x: 40, t: 'Merge' },
   { x: 250, t: 'Deploy, flag off' },
-  { x: 500, t: 'Flag on for one study' },
+  { x: 500, t: 'Flag on for one team' },
   { x: 745, t: 'Signal fires, flag off' },
-  { x: 1000, t: 'Fix, then all studies' },
+  { x: 1000, t: 'Fix, then all teams' },
 ]
 const cards = [
   { q: 'Who watches it go live?', a: 'The author, in working hours, ready to roll back.', src: 'Intercom · Spotify' },
   { q: 'What signal stops it?', a: 'A metric tied to this PR, and a flag to turn it off.', src: 'Honeycomb' },
-  { q: 'How far can it spread?', a: 'One study behind the flag. Least privilege. A rollback you have tried.', src: 'Honeycomb · Spotify' },
+  { q: 'How far can it spread?', a: 'One team behind the flag. Least privilege. A rollback you have tried.', src: 'Honeycomb · Spotify' },
 ]
 </script>
 
@@ -30,9 +30,9 @@ const cards = [
       </g>
 
       <rect class="ghost" x="752" y="40" width="360" height="110" />
-      <text class="ghost-t" x="932" y="98" text-anchor="middle">Without the flag: every study</text>
+      <text class="ghost-t" x="932" y="98" text-anchor="middle">Without the flag: every team</text>
       <rect class="radius" x="500" y="40" width="248" height="110" />
-      <text class="radius-t" x="512" y="64">One study affected</text>
+      <text class="radius-t" x="512" y="64">One team affected</text>
 
       <line x1="0" x2="1136" y1="150" y2="150" class="base" />
       <path class="metric flat" d="M40,150 L1100,150" />

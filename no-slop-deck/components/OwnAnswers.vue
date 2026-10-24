@@ -4,17 +4,20 @@
   From my repo's issue #257: the telemetry, code and tests are real; the last
   question had no answer in code or docs, so the agent measured it in a
   throwaway environment. The numbers are that probe's.
-  0 the questions · 1 sources and answers · 2 what still comes to you
+  0 the questions · 1 telemetry · 2 code and tests · 3 the live run · 4 Poteto
 -->
 <script setup lang="ts">
 withDefaults(defineProps<{ step?: number }>(), { step: 0 })
 
 const rows = [
-  { q: 'Which replies fail?', src: 'Telemetry', a: 'Every one over about 12 KB', ref: 'sandbox_protocol_failure, by size' },
-  { q: 'Does the guest rebuild split replies?', src: 'Code', a: 'Yes. It reads whole lines.', ref: 'worker-v2.mjs:49' },
-  { q: 'Does a test send big replies?', src: 'Tests', a: 'One sends 50 KB, in pieces up to 24 KB.', ref: 'ExecStreamTests.cs:60' },
-  { q: 'Does the platform cap one message?', src: 'A live test', a: '16,376 bytes arrive. 16,404 vanish.', ref: 'throwaway environment, then deleted' },
+  { q: 'Which replies fail?', src: 'Telemetry', at: 1, a: 'Every one over about 12 KB', ref: 'sandbox_protocol_failure, by size' },
+  { q: 'Does the guest rebuild split replies?', src: 'Code', at: 2, a: 'Yes. It reads whole lines.', ref: 'worker-v2.mjs:49' },
+  { q: 'Does a test send big replies?', src: 'Tests', at: 2, a: 'One sends 50 KB, in pieces up to 24 KB.', ref: 'ExecStreamTests.cs:60' },
+  { q: 'Does the platform cap one message?', src: 'A live run', at: 3, a: '16,376 bytes arrive. 16,404 vanish.', ref: 'throwaway environment, then deleted' },
 ]
+
+// Rows revealed on the same click come in one after another.
+const delay = (i: number) => i - rows.findIndex(r => r.at === rows[i].at)
 </script>
 
 <template>
@@ -24,15 +27,15 @@ const rows = [
       <span :class="{ on: step >= 1 }">It looks in</span>
       <span :class="{ on: step >= 1 }">And answers, with a reference</span>
     </div>
-    <div v-for="(r, i) in rows" :key="r.q" class="row" :style="{ '--i': i }">
+    <div v-for="(r, i) in rows" :key="r.q" class="row" :style="{ '--i': delay(i) }">
       <p class="q"><Icon name="bot" />{{ r.q }}</p>
-      <p class="src" :class="{ on: step >= 1 }">{{ r.src }}</p>
-      <div class="a" :class="{ on: step >= 1 }">
+      <p class="src" :class="{ on: step >= r.at }">{{ r.src }}</p>
+      <div class="a" :class="{ on: step >= r.at }">
         <b>{{ r.a }}</b>
         <span class="ns-mono">{{ r.ref }}</span>
       </div>
     </div>
-    <div class="foot" :class="{ on: step >= 2 }">
+    <div class="foot" :class="{ on: step >= 4 }">
       <p>"Not by hallucinating, not by guessing, but actually real data."</p>
       <span>Poteto</span>
     </div>

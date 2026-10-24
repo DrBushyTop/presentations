@@ -13,7 +13,7 @@ const lanes: { name: string, f: F[] }[] = [
   { name: 'A provider\'s review bot', f: [{ y: 0.2, kind: 'nit' }, { y: 0.34, kind: 'real' }, { y: 0.5, kind: 'real' }, { y: 0.9, kind: 'nit' }, { y: 0.95, kind: 'nit' }] },
 ]
 
-const loop = ['Watch the PR', 'Read comments and CI', 'Make one bounded fix', 'Push and wait']
+const loop = ['Watch the PR', 'Read comments and CI', 'Reproduce it, or reply why not', 'Fix what\'s real', 'Push and wait']
 const risks = ['Reviewers undo each other', 'CI result from an older commit', 'Commits after approval', 'Instructions hidden in a comment']
 </script>
 

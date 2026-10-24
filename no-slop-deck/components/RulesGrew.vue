@@ -2,8 +2,8 @@
   How my repo's rules grew: commits per day for its first twelve days, from
   the repo's harness report (22 Oct 2026). The checks arrived in a burst on
   14 to 16 October; after that, the work moved to tickets and review depth.
-  0 the chart and the first days · 1 the checks arrive · 2 tickets and review,
-  then nothing new in the checks
+  0 the chart and the first days · 1 the checks arrive · 2 tickets and review ·
+  3 regularly: improve the checks and skills from real sessions
 -->
 <script setup lang="ts">
 withDefaults(defineProps<{ step?: number }>(), { step: 99 })
@@ -47,9 +47,10 @@ const notes = [
         <b>{{ c.h }}</b>
         <p>{{ c.p }}</p>
       </div>
-      <div class="take" :class="{ on: step >= 2 }">
-        <b>After 16 Oct, the checks barely changed.</b>
-        <p>The work moved to tickets and review.</p>
+      <div class="take" :class="{ on: step >= 3 }">
+        <span class="when ns-mono">Regularly</span>
+        <b>Improve from real data</b>
+        <p>Agents read past sessions and propose new checks and skill fixes.</p>
       </div>
     </div>
   </div>
@@ -176,6 +177,8 @@ const notes = [
   color: #fff;
   transition: opacity 600ms var(--ns-ease) 300ms, transform 700ms var(--ns-ease) 300ms;
 }
+
+.take .when { color: var(--ns-frozen); }
 
 .take b {
   font-size: 21px;

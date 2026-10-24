@@ -1,106 +1,112 @@
-// How agent work goes wrong, grouped by the gate that catches it cheapest.
-// The overview slide lists the names; each part opens with its own entries.
-// `seen` is what the failure looks like when it happens. `fix` names the
-// practice the part goes on to show.
-export interface Failure {
+// Where you're the bottleneck at each gate, and what goes wrong if you step
+// out with nothing in your place. The part's own slides are the fix, so the
+// opener doesn't name it. The slide title is the bottleneck.
+// `from` and `ask` are what reaches you (`fromIcon` defaults to the bot), and
+// `you` is what you do with it. `name` is the failure once you stop, and
+// `source`, `evidence` and `note` are the artifact that shows it. Verify has
+// two rows: the structure half and the run-it half.
+export interface Relay {
+  from: string
+  fromIcon?: string
+  ask: string
+  you: string
   name: string
-  seen: string
-  fix: string
+  icon: string
+  source: string
+  evidence: string
+  code?: boolean
+  note?: string
 }
 
-export const failures: Failure[][] = [
+export const relays: Relay[][] = [
   // Research
   [
     {
-      name: 'The agent guesses instead of looking',
-      seen: 'agent: "The guest probably can\'t rebuild a split reply."',
-      fix: 'Answer from the code, telemetry and tickets, with a reference',
-    },
-    {
-      name: 'The agent rereads the system every time',
-      seen: '30 files read inside the implementation context',
-      fix: 'Research once, hand on a short map',
+      from: 'Issue',
+      fromIcon: 'ticket',
+      ask: 'Large replies end the run.',
+      you: 'You pull the failing runs from telemetry and paste them in',
+      name: 'It stops where the code stops',
+      icon: 'file',
+      source: 'research.md, testing-harness',
+      evidence: 'The limits cap whole replies, not one message.',
+      note: 'Is one message capped? The code can\'t say.',
     },
   ],
   // Design
   [
     {
-      name: 'The agent picks what the feature means',
-      seen: '11 decisions made in PR review, after the code existed',
-      fix: 'Grill the open choices, record them in CONTEXT.md',
-    },
-    {
-      name: 'Only the author understands it',
-      seen: '"Why did my session stop recording?" Nobody knows.',
-      fix: 'Review the plan as a team, before the code',
+      from: 'Agent',
+      ask: 'Free text, or named states?',
+      you: 'You answer in a chat nobody else reads',
+      name: 'The agent decides for you',
+      icon: 'branch',
+      source: 'PR #364, testing-harness',
+      evidence: '"Owner decision (October 16 PR review, Q9)…"',
+      note: '11 decisions made after the code existed',
     },
   ],
   // Slice
   [
     {
-      name: 'Everything is built before anyone looks',
-      seen: 'Day 4, 38 files: the first time anyone clicks it',
-      fix: 'A thin working path on day one',
-    },
-    {
-      name: 'Small changes get waved through',
-      seen: '+4 −0 · migration · approved in 40 seconds',
-      fix: 'Review by blast radius, not line count',
+      from: 'Agent',
+      ask: 'Feature implemented.',
+      you: 'You click it for the first time',
+      name: 'Nothing to click until the end',
+      icon: 'ticket',
+      source: 'The agent\'s plan',
+      evidence: '1. Database\n2. API\n3. UI',
+      code: true,
+      note: 'The first click comes after the last layer',
     },
   ],
   // Verify
   [
     {
-      name: 'The agent takes the shortcut',
-      seen: 'await db.Database\n  .BeginTransactionAsync(ct);',
-      fix: 'Rules that fail locally and say how to fix it',
+      from: 'Agent',
+      ask: 'Added it to the main file.',
+      you: 'You point it to the folder structure you want, again',
+      name: 'Every agent piles onto one file',
+      icon: 'file',
+      source: 'Poteto\'s app at SpaceX AI, early on',
+      evidence: '8 god files, each over 10,000 lines',
+      note: 'Every agent appended, because it was the easy thing',
     },
     {
-      name: 'The tests only confirm the code',
-      seen: 'Assert.True(\n  frame.Length < 24000);\n// the platform drops > 16 KiB',
-      fix: 'Expectations from the decision, and a negative control',
-    },
-    {
-      name: 'Nobody ran it',
-      seen: '✓ 2,404 tests passed. The replay never leaves its first screen.',
-      fix: 'The agent runs the app and checks it like a user',
+      from: 'Agent',
+      ask: 'Done, 2,404 tests pass.',
+      you: 'You open the app and paste the error back',
+      name: 'Nobody runs it',
+      icon: 'check',
+      source: 'The test run',
+      evidence: '✓ 2,404 tests passed',
+      code: true,
+      note: 'The app doesn\'t even start',
     },
   ],
   // Review
   [
     {
-      name: 'The review is a rubber stamp',
-      seen: '1,940 lines · "LGTM" · approved in 2 minutes',
-      fix: 'Agents review each slice first. You watch the clip.',
-    },
-    {
-      name: 'The review loop never ends',
-      seen: 'Round 6: two bots undo each other\'s fixes',
-      fix: 'A written stop rule and a budget',
+      from: 'CodeRabbit',
+      ask: 'Potential issue, Major',
+      you: 'You copy it to the agent, and judge if it\'s real',
+      name: 'The agent obeys every bot',
+      icon: 'bot',
+      source: 'CodeRabbit on T3 Code #11354',
+      evidence: '"Selection won\'t move in inputs."',
+      note: 'It does move. A blind fix changes code that worked.',
     },
   ],
   // Production
   [
     {
-      name: 'The change passes CI and breaks under real traffic',
-      seen: 'CREATE INDEX locks writes to orders at 38 a second',
-      fix: 'Checks that know production, and a small blast radius',
-    },
-    {
-      name: 'The same mistake comes back next week',
-      seen: 'Third correction this month: "use TimeProvider"',
-      fix: 'Turn the correction into a check',
+      from: 'Agent',
+      ask: 'PR ready, +312 −40.',
+      you: 'You read every line and picture production',
+      name: 'It breaks under real traffic',
+      icon: 'globe',
+      source: 'Spotify Engineering, September 2026',
+      evidence: '"An automated dependency upgrade passed our checks, but still failed in production, impacting end users."',
     },
   ],
-]
-
-// Where you're the bottleneck at each gate: the job the part hands to the
-// agent or the environment.
-export const bottlenecks: string[] = [
-  'You answer the questions the code could answer',
-  'Only you know what was decided',
-  'You review four days of work in one sitting',
-  'You run it first, and paste the errors back to the agent',
-  'You relay the bot comments and decide when to stop',
-  'You repeat last month\'s correction',
 ]

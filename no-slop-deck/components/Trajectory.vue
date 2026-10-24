@@ -1,21 +1,21 @@
 <!--
   Polylane's failure trajectories: causal chains from the diff to a metric,
   each confirmed, plausible or refuted against production. The rows follow
-  the index migration example; the verdict rule is from their post.
+  my repo's Sessions-to-Recordings rename; the verdict rule is from their post.
   0 the chain · 1 trajectories · 2 verdicts · 3 the policy question
 -->
 <script setup lang="ts">
 withDefaults(defineProps<{ step?: number }>(), { step: 0 })
 
 const chain = [
-  { k: 'Diff', v: 'PR #1207, a migration' },
-  { k: 'Affected resources', v: 'checkout-api · orders-db' },
-  { k: 'Telemetry', v: 'Writes/s, latency, errors, forecast' },
+  { k: 'Diff', v: 'A rename migration' },
+  { k: 'Affected resources', v: 'ca-discovery-api · Discovery' },
+  { k: 'Telemetry', v: 'Requests, errors, deploy times' },
 ]
 const rows = [
-  { t: 'The index build locks the writes checkout needs', s: 'confirmed', verdict: 'Fails the check' },
-  { t: 'Search reads the column before the backfill ends', s: 'plausible', verdict: 'Passes. Nobody proved it either way.' },
-  { t: 'The new column breaks the nightly report', s: 'refuted', verdict: 'Dropped, with evidence' },
+  { t: 'The old revision still queries Sessions during the deploy', s: 'confirmed', verdict: 'Fails the check' },
+  { t: 'An SDK released before the rename still calls /sessions', s: 'plausible', verdict: 'Passes. Nobody proved it either way.' },
+  { t: 'Replay clips in storage lose their recording', s: 'refuted', verdict: 'Dropped, with evidence' },
 ]
 </script>
 
