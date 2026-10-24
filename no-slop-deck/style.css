@@ -185,6 +185,28 @@
   text-wrap: balance;
 }
 
+/* Bottleneck openers: the title says where you're the bottleneck, and the
+   tag names it, in the same red chip the bottleneck map on slide 5 uses. */
+.slidev-layout.ns.bottleneck h1 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  max-width: none;
+}
+
+.slidev-layout.ns.bottleneck h1::after {
+  content: "You're the bottleneck";
+  flex: none;
+  padding: 8px 16px 8px 44px;
+  background: #fff1ee url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23de1e05' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='8' r='3.6'/%3E%3Cpath d='M5 20c1-4 4-6 7-6s6 2 7 6'/%3E%3C/svg%3E") no-repeat 14px center / 22px;
+  border: 3px solid var(--ns-red);
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 0;
+  color: var(--ns-red);
+}
+
 .ns-mono {
   font-family: var(--ns-mono);
   font-feature-settings: 'calt' 0;

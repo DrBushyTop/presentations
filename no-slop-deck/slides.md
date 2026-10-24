@@ -237,7 +237,7 @@ About 1 minute. This is my current workflow, not a mandatory process.
 
 ---
 part: Research
-class: ns
+class: ns bottleneck
 clicks: 1
 ---
 
@@ -343,7 +343,7 @@ Design, about 6 minutes.
 
 ---
 part: Design
-class: ns
+class: ns bottleneck
 clicks: 1
 ---
 
@@ -462,7 +462,7 @@ Slice, about 6 minutes.
 
 ---
 part: Slice
-class: ns
+class: ns bottleneck
 clicks: 1
 ---
 
@@ -563,7 +563,7 @@ Verify, about 10 minutes.
 
 ---
 part: Verify
-class: ns
+class: ns bottleneck
 clicks: 1
 ---
 
@@ -791,7 +791,7 @@ Review, about 14 minutes including a 3-minute walkthrough.
 
 ---
 part: Review
-class: ns
+class: ns bottleneck
 clicks: 1
 ---
 
@@ -1109,7 +1109,7 @@ Production, about 15 minutes as drafted, the longest part. Rehearsal decides the
 
 ---
 part: Production
-class: ns
+class: ns bottleneck
 clicks: 1
 ---
 
