@@ -47,7 +47,6 @@ About 30 seconds.
 - Let the stream run for a moment before speaking.
 - This talk is about how code I didn't type earns my trust: evidence of how it behaves, someone who can explain why it's built that way, and somewhere to look when it breaks. The trust has to be earned. It isn't a setting you turn on.
 - The introduction of me is the next slide. Don't repeat it here.
-- Timings in the notes are estimates per slide, not rehearsed. Rehearse before deciding what to cut.
 -->
 
 ---
@@ -73,16 +72,8 @@ About 1 minute. A nod to Papers, Please, the border inspector game. The inspecto
 - "In the game, nothing gets through without the inspector checking the papers. That's the job now. Papers, please, for every PR."
 
 Sources:
-- AI architect at Zure, Azure since 2014, AI in every project, MVP categories: Pasi.
 - 150+ customers: https://sessionize.com/pasi-huuhka/
 - MVP since June 2020: https://www.huuhka.net/ive-been-awarded-the-microsoft-azure-mvp-title/
-- Both portraits were generated from my own recent photo, using the game's official screenshots as a style reference. The booth portrait is 72x72 pixels with its background removed; the passport photo is 48x48 with 5 colours and shows me straight on. Both use flat shading and nearest-neighbour scaling. Papers, Please is by Lucas Pope (3909 LLC); the fonts are Silkscreen and VT323.
-- Visual reference: https://www.papersplea.se/presskit/
-- The booth sprite's head and neck are the original portrait. The body below was redrawn with an image model, using a photo for the build, then snapped to the sprite's pixel grid. The head sits at about 1.75 on the height chart.
-- The layout follows the game: the height chart behind the entrant, speech bubbles over the face, the counter, the date and weight panel, and the stamp drawer that pulls out from the right edge. The panel shows the first day of ESPC 2026 (30 Nov to 3 Dec) in the game's date format and the talk length in place of the weight.
-- The documents follow the game's: the passport is issued by a Republic of Zure in Zure's brand colours (zure.com and the deck theme), with chip labels, the Zure wordmark rasterised to a 61x17 pixel grid where the game prints the country name, an entry visa block with the conference dates and an empty stamp box, and the machine-readable zone; the work record is an identity supplement tag; and the MVP permit is a scalloped entry permit in the MVP logo's blue and white, with a red seal. They lie straight, as in the game, so the pixel type stays crisp; only the stamp marks are tilted. The marks copy the game's ENTRY DENIED stamp, solid ink with the paper showing through, reading MERGE DENIED with the conference date. The stamp drawer is drawn after the game's: cylinder knobs, stamps with a rounded top face and an engraved label, hex studs and guide rods either side, a light, and the alignment strip lying over the stamps.
-- The passport number, issue and expiry years are props.
-- The PR is a prop. Its branch, agent/edit-invitations, is the one the agent works on in the cover stream.
 -->
 
 ---
@@ -175,7 +166,6 @@ About 1.5 minutes. The project is new: refresh every number before the talk. Num
 
 - Say: "This is what it looks like when the wires go to the agent."
 - On screen: where the examples come from, my current project. A UX research tool. A researcher sets up a study with tasks. A participant tries a prototype app, and the session records the screen, their voice and a transcript. Researchers write findings from the replay, and coding agents use the same data through MCP.
-- Those are the words the examples use: study, task, prototype, session, replay, finding.
 - The bug in the opening animation happened in this repo. The inspector's PR is a prop built on the same change.
 
 [click] Agents build it, review it and merge it. Eleven days old: 288 merged PRs and 1,318 commits, from 1,103 agent threads on my MacBook and my home server. Branch protection requires zero human approvals.
@@ -197,7 +187,6 @@ transition: gate | gate-back
 <!--
 About 1 minute. This is the agenda. Keep it quick.
 
-- It's the same track the part dividers use, so the room will recognise it each time.
 
 [click] Three before any code: research, design, slice. Each part answers one question.
 
@@ -342,7 +331,7 @@ About 1 minute.
 
 [click] Poteto's question: "How do I get the agent to answer its own question? Not by hallucinating, not by guessing, but actually real data." What comes back to you are the product choices, which is where the design part starts.
 - What makes this work is access, not a smarter model: read access to telemetry, a place to run experiments, notes it can search.
-- Say telemetry, not logs. With OpenTelemetry, failures arrive as structured events with attributes like the reply size, so the agent can query them instead of grepping text.
+- Telemetry, not logs: with OpenTelemetry, failures arrive as structured events with attributes like the reply size, so the agent can query them instead of grepping text.
 - Source: https://www.youtube.com/watch?v=MN9dGgmLyso
 -->
 
@@ -1422,7 +1411,7 @@ clicks: 11
 <!--
 About 3 minutes.
 
-- On screen: the real T3 thread for PR #540, recorded from the T3 web UI. Production URLs and resource names are blacked out, and the cursor is drawn in. Each click plays on to the next moment and zooms in.
+- On screen: the real T3 thread for PR #540. Production URLs and resource names are blacked out. Each click plays on to the next moment and zooms in.
 - The PR, if I want to show it: [PR #540](https://github.com/DrBushyTop/testing-harness/pull/540). The repo is private, so only open it from my signed-in browser. The before and after screenshots and both review rounds are in its body.
 - 22:35, on my phone: a production session's audio keeps stopping. "Can you test it?"
 

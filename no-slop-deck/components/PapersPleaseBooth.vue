@@ -8,6 +8,38 @@
   the names match · 3 the agent's PR, evidence missing · 4 DENIED, shutter
   The booth sprite is the 72x72 portrait with its background cut away.
   Overview and print show the final, denied state without motion.
+
+  How the art was made:
+  - Both portraits were generated from my own recent photo, using the game's
+    official screenshots as a style reference. The booth portrait is 72x72
+    pixels with its background removed; the passport photo is 48x48 with 5
+    colours and shows me straight on. Both use flat shading and nearest-
+    neighbour scaling. Papers, Please is by Lucas Pope (3909 LLC); the fonts
+    are Silkscreen and VT323.
+  - Visual reference: https://www.papersplea.se/presskit/
+  - The booth sprite's head and neck are the original portrait. The body below
+    was redrawn with an image model, using a photo for the build, then snapped
+    to the sprite's pixel grid. The head sits at about 1.75 on the height
+    chart.
+  - The layout follows the game: the height chart behind the entrant, speech
+    bubbles over the face, the counter, the date and weight panel, and the
+    stamp drawer that pulls out from the right edge. The panel shows the first
+    day of ESPC 2026 (30 Nov to 3 Dec) in the game's date format and the talk
+    length in place of the weight.
+  - The documents follow the game's: the passport is issued by a Republic of
+    Zure in Zure's brand colours (zure.com and the deck theme), with chip
+    labels, the Zure wordmark rasterised to a 61x17 pixel grid where the game
+    prints the country name, an entry visa block with the conference dates and
+    an empty stamp box, and the machine-readable zone; the work record is an
+    identity supplement tag; and the MVP permit is a scalloped entry permit in
+    the MVP logo's blue and white, with a red seal. They lie straight, as in
+    the game, so the pixel type stays crisp; only the stamp marks are tilted.
+    The marks copy the game's ENTRY DENIED stamp, solid ink with the paper
+    showing through, reading MERGE DENIED with the conference date. The stamp
+    drawer is drawn after the game's: cylinder knobs, stamps with a rounded
+    top face and an engraved label, hex studs and guide rods either side, a
+    light, and the alignment strip lying over the stamps.
+  - The passport number, issue and expiry years are props.
 -->
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
