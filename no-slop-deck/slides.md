@@ -99,7 +99,7 @@ clicks: 2
 <!--
 About 1 minute.
 
-- On screen: my working definition for the talk, not a dictionary one.
+- This is my working definition for the talk, not a dictionary one.
 - Slop isn't "AI code". It's a change accepted on vibes: green checks, a confident summary, a reviewer who skimmed.
 
 [click] Two reasons to trust a change, and the talk covers both. Evidence: did anyone check how it behaves? Explanation: could anyone say why it's built this way, and where to look when it breaks? A change can pass every test and still be slop if nobody understands it.
@@ -176,7 +176,7 @@ About 1.5 minutes. The project is new: refresh every number before the talk. Num
 - Say: "This is what it looks like when the wires go to the agent."
 - On screen: where the examples come from, my current project. A UX research tool. A researcher sets up a study with tasks. A participant tries a prototype app, and the session records the screen, their voice and a transcript. Researchers write findings from the replay, and coding agents use the same data through MCP.
 - Those are the words the examples use: study, task, prototype, session, replay, finding.
-- The opening animation was a change in this repo, and so was the PR the inspector stamped.
+- The bug in the opening animation happened in this repo. The inspector's PR is a prop built on the same change.
 
 [click] Agents build it, review it and merge it. Eleven days old: 288 merged PRs and 1,318 commits, from 1,103 agent threads on my MacBook and my home server. Branch protection requires zero human approvals.
 
@@ -197,7 +197,7 @@ transition: gate | gate-back
 <!--
 About 1 minute. This is the agenda. Keep it quick.
 
-- On screen: the six parts on one track. It's the same track the part dividers use, so the room will recognise it each time.
+- It's the same track the part dividers use, so the room will recognise it each time.
 
 [click] Three before any code: research, design, slice. Each part answers one question.
 
@@ -219,7 +219,6 @@ layout: none
 <!--
 Research, about 6 minutes.
 
-- On screen: the six parts on one track. Research lights up, then the row zooms into it and its question appears.
 - Say: "Part one: understand the current system. The agent looks things up instead of guessing, and says where it found them."
 - Say: "Before anyone changes the code, how does it work today?"
 -->
@@ -335,7 +334,7 @@ transition: gate | gate-back
 <!--
 About 1 minute.
 
-- On screen: four questions the agent could have brought to me about that bug. Research is one case of a broader rule: when the agent has a factual question, it shouldn't ask you and it shouldn't guess.
+- Four questions the agent could have brought to me about that bug. Research is one case of a broader rule: when the agent has a factual question, it shouldn't ask you and it shouldn't guess.
 
 [click] It looks in the place that knows. The telemetry: every reply over about 12 KB failed; 9 KB worked, 12.3 KB didn't. The code: the guest already rebuilds lines. The tests: one sends 50 KB, but its fake socket takes any size, and it allows pieces up to 24 KB. So no test could catch this.
 - The last question had no answer in the code or the docs. So the agent measured it: a throwaway sandbox environment, messages of growing size. 16,376 bytes arrived. 16,404 vanished, with no error and no close. Then it deleted the environment.
@@ -354,9 +353,8 @@ layout: none
 <SectionGate :current="1" />
 
 <!--
-Design, about 5 minutes.
+Design, about 6 minutes.
 
-- On screen: research ticks to done, the track fills to design, then the row zooms into design.
 - Say: "Grill the decisions, keep the answers. Settle what the feature means before any code, and write it down."
 - Grilling is useful as soon as implementing directly would need guesses. It can be a short conversation or part of a larger design phase. A separate detailed plan isn't required.
 -->
@@ -374,7 +372,7 @@ clicks: 1
 <!--
 About 1 minute.
 
-- On screen: two ways design goes wrong. The agent can't know what you meant, so it decides, and you find out in review. In my repo I once went through a day's merged PRs and made 11 decisions that the code had already made for me. Each one meant a follow-up PR.
+- Two ways design goes wrong. The agent can't know what you meant, so it decides, and you find out in review. In my repo I once went through a day's merged PRs and made 11 decisions that the code had already made for me. Each one meant a follow-up PR.
 - And the decisions live in one person's chat. "Why did my session stop recording?" Nobody else can explain or debug it.
 - Where you're the bottleneck: the decisions live in your head. Every agent and every colleague has to come back to you.
 
@@ -418,7 +416,7 @@ clicks: 6
 <PlanningTools :step="$clicks" />
 
 <!--
-About 2 minutes. Add material now; decide timing in rehearsal.
+About 2 minutes. Decide timing in rehearsal.
 
 - On screen: my starting-states plan from the last slide, as it would look in a shared planning tool. The interface is redrawn after GitHub Next's Chopin, a research prototype for planning with people and agents; it's not a screenshot. The plan is my repo's issue: the notes, the decision, the research answer and the open bug are real, shortened. It didn't happen in Chopin, and Roosa and Antti, two colleagues from Zure, didn't take part. Their lines are made up to show what the tool is for.
 - GitHub Next's argument: "The important work is now everything that happens before and after code gets written: planning and review." And "all the tools on the market are designed as single-player experiences." My grilling session was one: me, one agent, and a decision log only I write to.
@@ -476,9 +474,8 @@ layout: none
 <SectionGate :current="2" />
 
 <!--
-Slice, about 5 minutes. No demo.
+Slice, about 6 minutes.
 
-- On screen: research and design are done, the track fills to slice, then the row zooms into it.
 - Say: "Put something working in front of a person. Build one thin path a person can click through, then the next one."
 -->
 
@@ -495,7 +492,7 @@ clicks: 1
 <!--
 About 1 minute.
 
-- On screen: two opposite mistakes about size. An agent will happily finish every layer before anyone has clicked anything. Day four, 38 files, is when you find out the idea is wrong.
+- Two opposite mistakes about size. An agent will happily finish every layer before anyone has clicked anything. Day four, 38 files, is when you find out the idea is wrong.
 - And the reverse: a four-line migration gets approved in 40 seconds because it's small.
 - Where you're the bottleneck: four days of work arrive at once, and you're the only one who can say it's wrong.
 
@@ -577,9 +574,8 @@ layout: none
 <SectionGate :current="3" />
 
 <!--
-Verify, about 8 minutes. No demo.
+Verify, about 10 minutes.
 
-- On screen: slice ticks to done, the track fills to verify, then the row zooms into it. The arc under the track runs from review back to verify: every slice gets verified and reviewed, then the next slice goes round again.
 - Say: "Green is a starting point. The agent proves each claim before you look at the change."
 -->
 
@@ -596,7 +592,7 @@ clicks: 1
 <!--
 About 1 minute.
 
-- On screen: three failures, all from my repo. The agent takes the shortcut: a bare database transaction, because it works on SQLite. That's the 500 from the opening slide.
+- Three failures, all from my repo. The agent takes the shortcut: a bare database transaction, because it works on SQLite. That's the 500 from the opening slide.
 - It writes tests that check the code against itself. The sandbox test from research allowed 24,000-byte messages, because that's what the code sent. The platform drops anything over 16 KiB. The test's limit came from the code, not from the platform.
 - And nobody runs it. Every test passes, and the session replay never leaves its first screen.
 - Where you're the bottleneck: you're the first to run it, and you paste the errors back to the agent. If the agent can't run the app, that's your job by default.
@@ -777,7 +773,7 @@ About 1 minute.
 - In my repo one command does it. It takes the first free block of ports from 5300 up, creates a database and a storage container for that worktree on the shared local servers, runs the migrations and starts the API, the web app and a test prototype. The instance runs with a local sign-in and no cloud credentials. It's torn down after the PR merges.
 
 [click] What usually stops it is small. Fixed ports: my first version had hand-picked ports, so a second copy collided. One shared database or cache. One browser profile with one login. Each is a short fix: pick free ports per worktree, give each worktree its own data, give every agent its own browser.
-- OpenAI made their app bootable per git worktree for exactly this, with a local logs and metrics stack per worktree that's torn down when the task ends. https://openai.com/index/harness-engineering/
+- OpenAI made their app bootable per git worktree for exactly this, with a local observability stack per worktree that's torn down when the task ends. https://openai.com/index/harness-engineering/
 - This is what makes parallel agents practical. Without it, every extra agent is another thing you have to sequence by hand.
 -->
 
@@ -788,9 +784,8 @@ layout: none
 <SectionGate :current="4" />
 
 <!--
-Review, about 11 minutes including a 3-minute walkthrough.
+Review, about 14 minutes including a 3-minute walkthrough.
 
-- On screen: verify ticks to done, the track fills to review, then the row zooms into it. The arc back to verify is the loop: after review, the next slice gets verified.
 - Say: "Let the models review first. They review each slice and the PR, and a stop rule ends the loop."
 - The question is the point of the part: models do the first passes so your attention goes to what they can't judge.
 -->
@@ -808,7 +803,7 @@ clicks: 1
 <!--
 About 1 minute.
 
-- On screen: two opposite failures. The rubber stamp: 1,940 lines and "LGTM" two minutes later.
+- Two opposite failures. The rubber stamp: 1,940 lines and "LGTM" two minutes later.
 - The endless loop: bots keep finding things, fixes create new findings, two reviewers undo each other.
 - Where you're the bottleneck: you relay the bot comments to the agent, and you're the one who decides when the loop stops.
 
@@ -942,7 +937,7 @@ clicks: 2
 <!--
 About 45 seconds.
 
-- On screen, empty at first: two lists I write before the loop runs. Say: "The local loop needs a stop before we start it."
+- The slide starts empty: two lists I write before the loop runs. Say: "The local loop needs a stop before we start it."
 
 [click] Left: what earns a fix. "Consider handling errors" doesn't. A reproducible finding above the bar does.
 
@@ -964,7 +959,7 @@ clicks: 3
 <!--
 About 1 minute.
 
-- On screen, nothing yet: this slide builds. Say: "The local loop is done. The PR is where other eyes come in."
+- The slide starts empty. Say: "The local loop is done. The PR is where other eyes come in."
 
 [click] Reviewers from other model families. The model that wrote the code shares its own blind spots. Another family, or a provider's review bot, may catch what it missed. This picture is illustrative. I found no credible public data on overlap between providers, so measure your own.
 - The reviewers I use: GitHub Copilot code review, my own reviewer bot, and a different model family run locally.
@@ -983,7 +978,7 @@ layout: none
 <!--
 Prepared walkthrough in T3 Code, about 3 minutes.
 
-- On screen: the babysitter's own prompt. This is what I hand the agent once the PR is open. It's the stop rule from two slides back, written into the prompt: what earns a fix, when to merge, and when to stop and ask me.
+- This is the babysitter's prompt, what I hand the agent once the PR is open. It's the stop rule from two slides back, written into the prompt: what earns a fix, when to merge, and when to stop and ask me.
 - Probably talk this through instead of switching to T3 Code. The next slide shows the real bot findings. If there's time:
 1. Show the different bots' actual comments on the PR from the next slide. Pick a finding that earned a fix and one that didn't, and the reply that explains why.
 2. If the babysitter is ready, show its fix, push, the next CI results and where it actually stopped or escalated. Don't imply a working integration I haven't shown.
@@ -1028,7 +1023,7 @@ clicks: 2
 <!--
 About 1.5 minutes. A candidate to cut after rehearsal.
 
-- On screen: PRs with bugs we already know about, graded easy, medium and hard. "Measure your own" from two slides back, made concrete. This is how Uber benchmarks its review bot, uReview.
+- On screen: PRs with bugs we already know about, graded easy, medium and hard. "Measure your own" from the second-opinion slide, made concrete. This is how Uber benchmarks its review bot, uReview.
 - Their words: "We built its benchmark from real pull requests with known bugs and graded them easy, medium, and hard. We score precision, recall, and F1 against those bugs, plus cost per review, latency, timeouts, and noise." https://www.uber.com/gb/en/blog/efficient-software-factory/
 
 [click] Run the reviewer you use today. Count what it caught, what it missed, false alarms, minutes and cost.
@@ -1104,9 +1099,8 @@ layout: none
 <SectionGate :current="5" />
 
 <!--
-Production, about 14 minutes as drafted, the longest part. Rehearsal decides the cuts: the Polylane case study and the Jev aside are the obvious candidates.
+Production, about 15 minutes as drafted, the longest part. Rehearsal decides the cuts: the Polylane case study and the Jev aside are the obvious candidates.
 
-- On screen: every earlier part is done, the track fills to production, then the row zooms into it.
 - Say: "What happens after merge? Watch the change in real use, and limit how far it can spread."
 -->
 
@@ -1123,7 +1117,7 @@ clicks: 1
 <!--
 About 1 minute.
 
-- On screen: two failures after merge. CI doesn't know production: the traffic, the locks, the queues. A four-line migration can block every write to a table.
+- Two failures after merge. CI doesn't know production: the traffic, the locks, the queues. A four-line migration can block every write to a table.
 - And the quiet one: the same correction, typed into review or into a prompt again and again.
 - Where you're the bottleneck: you repeat last month's correction, because nothing remembers it for you.
 
@@ -1470,7 +1464,7 @@ clicks: 2
 <!--
 About 1 minute.
 
-- On screen: commits per day in my repo's first twelve days. None of the system from the start of the talk was designed up front.
+- On screen: commits per day in my repo's first twelve days. None of the rules in this talk were planned up front.
 - 11 to 13 October: the start. Feature slices, CONTEXT.md required, browser evidence in every PR. Most rules were still prose, in a 13.7 KB AGENTS.md.
 
 [click] 14 to 16 October: the checks arrived. The 14th was the hardening day: scripts/check and the pre-commit hook, AGENTS.md cut to a 7.3 KB map, the verify skill, local CI and the PR template. The 15th: review by another provider's model, CI once per PR, a visual check by implementer and reviewer, API parity enforced. The 16th: the owner decisions ledger, squashed migrations, Linux CI.
@@ -1559,7 +1553,7 @@ clicks: 1
 <!--
 About 1.5 minutes.
 
-- On screen: the one thing to do on Monday. A correction is anything you keep saying: a review comment, or the same instruction you keep typing into the agent's prompt.
+- A correction is anything you keep saying: a review comment, or the same instruction you keep typing into the agent's prompt.
 - Ask the room: what's the correction you make most often? That's your first check.
 
 [click] My example is from this deck's repository. Agents kept making the same layout mistakes, so a pre-commit script renders every slide and fails with a rule name and a fix. The agent reads the fix and corrects itself.
@@ -1591,7 +1585,7 @@ layout: none
 <!--
 Questions, then done.
 
-- On screen: thank you, questions, and the feedback QR code. Point at the QR code before taking questions: "Feedback helps, especially the critical kind."
+- Point at the QR code before taking questions: "Feedback helps, especially the critical kind."
 - The QR box is a placeholder. Put the code's image in the .qr figure.
 - If the room is quiet, use the line under my name: what would convince you a change is safe?
 - The sources slide follows as backup.
