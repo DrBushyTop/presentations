@@ -188,7 +188,7 @@ About 1 minute. This is the agenda. Keep it quick.
 [click] Three before any code: research, design, slice. Each part answers one question.
 
 [click] Two for every slice: verify and review, in a loop until the feature is done. One after merge: production.
-- Each part opens with where you're the bottleneck at that point, and what goes wrong if you just step out. The rest of the part is how to step out safely.
+- Each part opens with where you're the bottleneck at that point, and what goes wrong if you just stop. The rest of the part is how to stop safely.
 
 [click] Who carries each part. On the left, your steering has the most leverage. Changing what gets built costs a conversation before any code exists, and a wrong decision there is paid for in every later part. But it's manual: questions, decisions, the issue.
 - To the right, the agent produces code faster than anyone can read it. So you rely more and more on checks that run without you: tests, scripts, review agents, rollout gates.
@@ -247,11 +247,12 @@ clicks: 1
 <HowItFails :gate="0" :step="$clicks" />
 
 <!--
-About 30 seconds. Every part opens like this: the job you do by hand today, then what happens if you just stop doing it.
+About 30 seconds. Every part opens like this: the job you do by hand today, then what happens if you stop. It reads as two sentences: "Today, you …" and "If you stop, …".
 
 - Say: "The agent reads the code fine. What it can't reach is everything outside it: telemetry, the platform's docs, what we found last time. So I go and get it, and paste it in."
 
-[click] Stop doing that with nothing in your place, and research stops where the code stops. It found that the limits cap whole replies, not one message. Whether the platform caps one message, the code can't say. So the question comes back to me, or the agent fills the gap with a guess.
+[click] If you stop, research stops where the code stops. Does the platform cap one message? The code can't say. So the question comes back to you, or the agent fills the gap with a guess. A few slides on, the agent answers that one itself.
+- From research.md in my repo: the limits it found in the code cap whole replies, not one message.
 - Say: "So how does the agent get there itself?"
 -->
 
@@ -358,7 +359,8 @@ About 30 seconds.
 
 - Say: "The agent asks a product question. I answer it in a chat, and that's the only place the answer lives. Every agent and every colleague has to come back to me."
 
-[click] Stop answering, and the agent decides for you. I once went through a day's merged PRs and made 11 decisions the code had already made. Each one was a follow-up PR.
+[click] If you stop answering, the agent decides for you. I once went through a day's merged PRs and made 11 decisions the code had already made. Each one was a follow-up PR.
+- One of them, from PR #364: "Owner decision (October 16 PR review, Q9)…"
 - Say: "So settle them before the code, and write them down."
 -->
 
@@ -470,7 +472,7 @@ About 30 seconds.
 
 - Say: "The agent says the feature is done. That's the first time I click it, and the first time anyone can say the idea is wrong."
 
-[click] Leave the agent to plan the order, and it builds by layer: database, then API, then UI. Nothing works end to end until the last layer lands. In my repo, the agent's first plan for exploration sessions put the button a researcher actually presses in ticket three.
+[click] If you stop, there's nothing to click until the end. Left to plan the order, the agent builds by layer: database, then API, then UI. Nothing works end to end until the last layer lands. In my repo, the agent's first plan for exploration sessions put the button a researcher actually presses in ticket three.
 - Say: "So put a thin working path in front of a person first."
 -->
 
@@ -568,12 +570,12 @@ clicks: 1
 <HowItFails :gate="3" :step="$clicks" />
 
 <!--
-About 45 seconds. Two jobs here, one for each half of verify.
+About 30 seconds.
 
-- Top: you hold the structure. The agent puts new code in the easiest place, and you point it to the folder structure you want, in every review. Poteto: without trust in your environment, "the only way to cope is to lock in and micromanage your agents."
-- Bottom: you're the first user. The agent says it's done, you open the app and paste the error back.
+- The agent says it's done and the tests pass. You're the first user: you open the app and paste the error back.
+- The other half of verify, holding the structure, opens on the next slide with Poteto's god files.
 
-[click] Stop doing either, and every agent piles onto one file: Poteto's app at SpaceX AI had eight god files, each over 10,000 lines. And nobody runs it: every test passes, and the app doesn't even start.
+[click] If you stop, nobody runs it: 2,404 tests pass, and the app doesn't even start.
 - Say: "So the repository holds the structure, and the agent runs the app."
 -->
 
@@ -590,7 +592,7 @@ clicks: 2
 <!--
 About 1 minute.
 
-- On screen, left: the app from the opener, an early version of Poteto's app at SpaceX AI. Eight god files, each at least 10,000 lines. Every agent appended to one, because that's the easy thing.
+- On screen, left: an early version of Poteto's app at SpaceX AI. Eight god files, each at least 10,000 lines. Every agent appended to one, because that's the easy thing.
 
 [click] Right: their internal framework, Dune, gives every feature its own directory, and a registry discovers them. Lint rules leave one way to add a feature. The tree and the lint message are my illustration.
 - The habit behind it: watch how agents fail, and each time ask "how do I turn this into a lint rule? How do I make it so that the codebase makes this impossible?"
@@ -801,7 +803,7 @@ About 30 seconds.
 
 - Say: "A review bot says something is major. I copy it to the agent, and I decide whether it's real. At this volume, that's how a review turns into a rubber stamp."
 
-[click] Stop relaying, and the agent obeys every bot. This finding is from a real PR you'll see in a minute: CodeRabbit said text selection wouldn't move. It does. A blind fix would have changed code that worked.
+[click] If you stop relaying, the agent obeys every bot and fixes a bug that isn't there. This finding is from a real PR you'll see later in this part, T3 Code #11354: CodeRabbit said "Selection won't move in inputs." It does. A blind fix would have changed code that worked.
 - Say: "So the agent has to check a finding before it fixes it."
 -->
 
@@ -1129,7 +1131,7 @@ About 30 seconds.
 
 - Say: "Reading every line is how most of us protect production. I read the diff and picture the traffic, the locks, the queues. Nothing else in the pipeline knows them."
 
-[click] Stop reading with nothing in your place, and it breaks under real traffic. Spotify's words, from their September 2026 post.
+[click] If you stop reading with nothing in its place, it breaks under real traffic. Spotify's words, from their September 2026 post.
 - Say: "Some teams have already stopped reading every line. Here's what they put in its place."
 - Source: https://engineering.atspotify.com/2026/9/ai-changed-how-spotify-builds-what-we-learned-and-fixed-about-quality-at-higher-velocity
 -->

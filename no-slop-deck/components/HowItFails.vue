@@ -2,8 +2,9 @@
   Opens each part: where you're the bottleneck at this gate, and what goes
   wrong if you step out with nothing in your place. The slide title names the
   bottleneck. The rest of the part is the fix, so it isn't shown here.
+  It reads aloud as two sentences: "Today, you … If you stop, …".
   Left, the relay: messages queue up and every one goes through you.
-  Right, the real artifact once you're gone.
+  Right, the failure once you're gone, with one line that shows it.
   0 the relay you do today · 1 you step out, and what happens
 -->
 <script setup lang="ts">
@@ -11,16 +12,16 @@ import { computed } from 'vue'
 import { relays } from '../lib/failures'
 
 const props = withDefaults(defineProps<{ gate: number, step?: number }>(), { step: 99 })
-const rows = computed(() => relays[props.gate])
+const r = computed(() => relays[props.gate])
 </script>
 
 <template>
-  <div class="hf" :class="{ two: rows.length > 1, out: step >= 1 }">
+  <div class="hf" :class="{ out: step >= 1 }">
     <div class="labels">
-      <span class="today"><Icon name="user" />Today, through you</span>
-      <span class="gone"><Icon name="x" />If you just step out</span>
+      <span class="today"><Icon name="user" />Today</span>
+      <span class="gone"><Icon name="x" />If you stop</span>
     </div>
-    <div v-for="r in rows" :key="r.name" class="row">
+    <div class="row">
       <div class="relay">
         <div class="msg">
           <span class="ghost g2" />
@@ -42,9 +43,7 @@ const rows = computed(() => relays[props.gate])
       <div class="fail">
         <b class="name">{{ r.name }}</b>
         <div class="doc">
-          <span class="src"><Icon :name="r.icon" />{{ r.source }}</span>
           <p class="ev" :class="{ code: r.code }">{{ r.evidence }}</p>
-          <span v-if="r.note" class="note"><Icon name="alert" />{{ r.note }}</span>
         </div>
       </div>
     </div>
@@ -232,26 +231,14 @@ const rows = computed(() => relays[props.gate])
   box-shadow: 0 10px 30px rgb(0 0 0 / 0.07);
 }
 
-.src {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  padding: 12px 22px;
-  background: var(--ns-soft);
-  border-bottom: 2px solid var(--ns-line);
-  font-size: var(--ns-label);
-  font-weight: 700;
-  color: var(--z-grey-600);
-}
-
 .ev {
   flex: 1;
   margin: 0;
   max-width: none;
   display: flex;
   align-items: center;
-  padding: 18px 26px;
-  font-size: 32px;
+  padding: 24px 32px;
+  font-size: 36px;
   font-weight: 700;
   line-height: 1.25;
   letter-spacing: -0.01em;
@@ -261,46 +248,9 @@ const rows = computed(() => relays[props.gate])
 
 .ev.code {
   font-family: var(--ns-mono);
-  font-size: 25px;
+  font-size: 30px;
   font-weight: 400;
   line-height: 1.5;
   letter-spacing: 0;
 }
-
-.note {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  padding: 14px 22px;
-  background: #fff1ee;
-  border-left: 6px solid var(--ns-red);
-  font-size: 24px;
-  font-weight: 700;
-  line-height: 1.25;
-}
-
-.note :deep(.ns-icon) {
-  color: var(--ns-red);
-}
-
-/* Verify has two relays, so each one is compact. */
-.two { gap: 16px; }
-.two .row { gap: 56px; }
-.two .msg { margin-bottom: 14px; }
-.two .card { padding: 10px 18px 12px; }
-.two .g1 { transform: translateY(7px) scaleX(0.94); }
-.two .g2 { transform: translateY(14px) scaleX(0.88); }
-.two .tag { gap: 8px; font-size: 16px; }
-.two .from { font-size: 15px; }
-.two .ask { margin-top: 2px; font-size: 22px; }
-.two .wire { min-height: 10px; margin-left: 28px; padding-left: 18px; border-left-width: 3px; }
-.two .you { gap: 16px; }
-.two .avatar { width: 60px; height: 60px; border-width: 4px; font-size: 32px; }
-.two .you b { font-size: 24px; }
-.two .fail { gap: 8px; }
-.two .name { font-size: 26px; border-left-width: 5px; }
-.two .src { padding: 6px 16px; font-size: 15px; }
-.two .ev { padding: 8px 18px; }
-.two .ev.code { font-size: 19px; line-height: 1.4; }
-.two .note { padding: 7px 16px; font-size: 18px; border-left-width: 5px; }
 </style>
