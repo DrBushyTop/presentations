@@ -1,10 +1,7 @@
 <!--
-  The plan has to work for the team, not only the author.
-  Left: Honeycomb's Tenant team, before and after reviewing plans together.
-  Right: a question about my repo three weeks after a decision. Someone who
-  didn't build it answers from the decision log. The decision is the repo's
-  (docs/decisions.md, 17 Oct); the conversation is illustrative.
-  0 producers and reviewers · 1 team plan review · 2 three weeks later · 3 the question
+  The plan has to work for the team, not only the author. Honeycomb's Tenant
+  team, before and after reviewing plans together.
+  0 producers and reviewers · 1 team plan review · 2 the question
 -->
 <script setup lang="ts">
 withDefaults(defineProps<{ step?: number }>(), { step: 0 })
@@ -12,43 +9,31 @@ withDefaults(defineProps<{ step?: number }>(), { step: 0 })
 
 <template>
   <div class="team">
-    <section class="hc">
-      <header>Honeycomb's Tenant team</header>
-
-      <div class="row split">
-        <div class="pic" aria-hidden="true">
-          <span class="who"><Icon name="user" /><small>Producer</small></span>
-          <span class="prs"><i v-for="n in 3" :key="n" class="ns-mono">PR</i><Icon name="arrow" /></span>
-          <span class="who"><Icon name="user" /><small>Reviewer</small></span>
-        </div>
-        <p>"Knowledge concentration got amplified."</p>
+    <section class="col split">
+      <header>Split into producers and reviewers</header>
+      <div class="pic" aria-hidden="true">
+        <span class="who"><Icon name="user" /><small>Producer</small></span>
+        <span class="prs"><i v-for="n in 3" :key="n" class="ns-mono">PR</i><Icon name="arrow" /></span>
+        <span class="who"><Icon name="user" /><small>Reviewer</small></span>
       </div>
-
-      <div class="row joint" :class="{ on: step >= 1 }">
-        <div class="pic" aria-hidden="true">
-          <span class="who"><Icon name="user" /></span>
-          <span class="plan ns-mono">plan.md</span>
-          <span class="who"><Icon name="user" /></span>
-          <span class="who"><Icon name="user" /></span>
-        </div>
-        <p>Review the plan together: "everyone was more aware of what was happening."</p>
-      </div>
+      <p>"Knowledge concentration got amplified."</p>
+      <small class="cap">Each person knew more and more about less of the stack.</small>
     </section>
 
-    <section class="later" :class="{ on: step >= 2 }">
-      <header>Three weeks later</header>
-      <div class="msg q">
-        <small><Icon name="user" />A researcher</small>
-        <p>"Why did my session stop recording the screen?"</p>
+    <section class="col joint" :class="{ on: step >= 1 }">
+      <header>Review the plan together</header>
+      <div class="pic" aria-hidden="true">
+        <span class="who"><Icon name="user" /></span>
+        <span class="who"><Icon name="user" /></span>
+        <span class="plan ns-mono">plan.md</span>
+        <span class="who"><Icon name="user" /></span>
+        <span class="who"><Icon name="user" /></span>
       </div>
-      <div class="msg a">
-        <small><Icon name="user" />On call, didn't build it</small>
-        <p>"It hit its 2 GiB budget. Only the screen stops; voice keeps going. We decided that in plan review."</p>
-        <span class="ns-mono">docs/decisions.md · 17 Oct</span>
-      </div>
+      <p>"Everyone was more aware of what was happening."</p>
+      <small class="cap">Now for the bigger and riskier changes, not every one.</small>
     </section>
 
-    <div class="ask" :class="{ on: step >= 3 }">
+    <div class="ask" :class="{ on: step >= 2 }">
       <b>Before approving a plan</b>
       <span>Could someone other than the author explain it and debug a failure?</span>
     </div>
@@ -59,7 +44,7 @@ withDefaults(defineProps<{ step?: number }>(), { step: 0 })
 .team {
   height: 510px;
   display: grid;
-  grid-template-columns: 1fr 440px;
+  grid-template-columns: 1fr 1fr;
   grid-template-rows: 1fr auto;
   column-gap: 44px;
   row-gap: 22px;
@@ -69,26 +54,24 @@ header {
   font-size: 22px;
   font-weight: 800;
   padding-bottom: 10px;
-  border-bottom: 2px solid var(--z-ink);
+  border-bottom: 4px solid var(--ns-red);
 }
 
-.hc {
-  display: grid;
-  grid-template-rows: auto 1fr 1fr;
+.joint header {
+  border-color: var(--ns-teal);
 }
 
-.row {
-  display: grid;
-  grid-template-columns: 340px 1fr;
-  align-items: center;
-  gap: 26px;
-  border-bottom: 1px solid var(--ns-line);
+.col {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  padding-bottom: 6px;
   transition: opacity 600ms var(--ns-ease), transform 700ms var(--ns-ease);
 }
 
-.row p {
+.col p {
   margin: 0;
-  font-size: 23px;
+  font-size: 27px;
   line-height: 1.3;
   font-weight: 700;
   max-width: none;
@@ -107,19 +90,29 @@ header {
   transform: translateY(12px);
 }
 
+.cap {
+  margin-top: auto;
+  font-size: var(--ns-label);
+  font-weight: 600;
+  color: var(--z-grey-600);
+}
+
 .pic {
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+  padding: 0 12px;
+  background: var(--ns-soft);
 }
 
 .who {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
-  font-size: 40px;
+  gap: 4px;
+  font-size: 56px;
   color: var(--z-ink);
 }
 
@@ -132,27 +125,24 @@ header {
 .prs {
   flex: 1;
   display: flex;
-  gap: 8px;
-  justify-content: center;
-  padding-bottom: 24px;
-}
-
-.prs {
   align-items: center;
-  font-size: 22px;
+  justify-content: center;
+  gap: 8px;
+  padding-bottom: 28px;
+  font-size: 24px;
 }
 
 .prs i {
   padding: 2px 6px;
   font-style: normal;
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 700;
-  background: var(--ns-soft);
+  background: #fff;
   border: 2px solid var(--z-ink);
 }
 
 .plan {
-  padding: 8px 12px;
+  padding: 10px 14px;
   background: #e3f4f6;
   border: 2px solid var(--ns-teal);
   font-size: var(--ns-label);
@@ -160,71 +150,6 @@ header {
 }
 
 .joint .who {
-  color: var(--ns-teal);
-}
-
-.later {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-  transition: opacity 600ms var(--ns-ease), transform 700ms var(--ns-ease);
-}
-
-.later:not(.on) {
-  opacity: 0;
-  transform: translateY(12px);
-}
-
-.msg {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 16px 18px;
-}
-
-.msg small {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: var(--ns-label);
-  font-weight: 700;
-  color: var(--z-grey-600);
-}
-
-.msg small :deep(.ns-icon) {
-  font-size: 20px;
-}
-
-.msg p {
-  margin: 0;
-  max-width: none;
-  font-size: 23px;
-  line-height: 1.3;
-  font-weight: 700;
-}
-
-.msg.q {
-  background: #fff1ee;
-  border-left: 6px solid var(--ns-red);
-}
-
-.msg.a {
-  flex: 1;
-  background: #e6f4f6;
-  border-left: 6px solid var(--ns-teal);
-}
-
-.msg.a small :deep(.ns-icon) {
-  color: var(--ns-teal);
-}
-
-.msg.a span {
-  margin-top: auto;
-  align-self: flex-start;
-  padding: 4px 10px;
-  background: #fff;
-  font-size: 16px;
-  font-weight: 700;
   color: var(--ns-teal);
 }
 

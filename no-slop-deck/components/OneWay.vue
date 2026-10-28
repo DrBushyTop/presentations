@@ -3,7 +3,7 @@
   early version of their app. Their Dune framework puts every feature
   in its own directory, found by a registry, with lint rules that leave one way
   to add a feature. The tree and lint message are illustrative.
-  0 god files · 1 one directory per feature, and the rule · 2 the quote
+  0 god files · 1 one directory per feature, and the rule · 2 the takeaway
 -->
 <script setup lang="ts">
 withDefaults(defineProps<{ step?: number }>(), { step: 0 })
@@ -40,8 +40,7 @@ const gods = [10.2, 14.8, 11.6, 10.4, 12.9, 10.1, 16.3, 11.0]
     </section>
 
     <div class="foot" :class="{ on: step >= 2 }">
-      <p>"An environment where it's actually very hard to write bad code."</p>
-      <span>Poteto, on Dune</span>
+      <p>Build an environment where bad code is hard to write.</p>
     </div>
   </div>
 </template>

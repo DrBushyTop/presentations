@@ -2,6 +2,7 @@ import { execFileSync } from 'node:child_process'
 import { readFileSync } from 'node:fs'
 import { isIP } from 'node:net'
 import { networkInterfaces } from 'node:os'
+import { parseTimeString } from '@slidev/parser/utils'
 import { renderUnicodeCompact } from 'uqr'
 
 const PAGE = readFileSync(new URL('./clicker.html', import.meta.url), 'utf8')
@@ -61,6 +62,32 @@ async function readJson(req) {
   return JSON.parse(body)
 }
 
+// Where the talk should be by when: `checkpoint: 10:30` on a slide is the
+// time into the talk when that slide should come up. It takes its label from
+// the next `part` at or after it, so a section divider is named after the
+// section it opens. The headmatter's `duration` is the end.
+function seconds(time) {
+  try {
+    const { seconds } = parseTimeString(time)
+    if (Number.isFinite(seconds)) return seconds
+  }
+  catch {}
+}
+
+function talkPlan(data) {
+  const plan = []
+  data.slides.forEach((slide, i) => {
+    const at = slide.frontmatter?.checkpoint
+    if (at == null) return
+    if (seconds(at) === undefined) return console.warn(`  phone clicker: slide ${i + 1} has checkpoint "${at}", which is not a time such as 10:30`)
+    const label = data.slides.slice(i).find(s => s.frontmatter?.part)?.frontmatter.part ?? slide.title ?? `Slide ${i + 1}`
+    plan.push({ page: i + 1, seconds: seconds(at), label })
+  })
+  const end = seconds(data.headmatter?.duration)
+  if (end !== undefined) plan.push({ page: data.slides.length + 1, seconds: end, label: 'End' })
+  return plan
+}
+
 const escapeHtml = s => String(s).replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`)
 
 // Where a phone can press from: the tailnet name (or this machine's Tailscale
@@ -88,20 +115,29 @@ export default function clickerPlugin(options) {
         const title = escapeHtml(options.data.config.title ?? 'Slides')
         res.setHeader('content-type', 'text/html; charset=utf-8')
         res.setHeader('cache-control', 'no-store')
-        res.end(PAGE.replaceAll('%TITLE%', () => title).replace('%TOTAL%', String(options.data.slides.length)))
+        const plan = JSON.stringify(talkPlan(options.data)).replaceAll('<', '\\u003c')
+        res.end(PAGE.replaceAll('%TITLE%', () => title).replace('%TOTAL%', String(options.data.slides.length)).replace('%PLAN%', () => plan))
       })
 
       // A press goes to the presenter's tabs, which take the step themselves
-      // (setup/root.ts), so clicks and transitions match the arrow keys.
+      // (setup/root.ts), so clicks and transitions match the arrow keys. So do
+      // the clock's start, pause and reset: Slidev's own timer, which the
+      // presenter view shows too.
       server.middlewares.use('/__slidev-clicker', async (req, res) => {
         if (req.method !== 'POST' || !trustedAddress(req.socket.remoteAddress) || !fromClicker(req, tailnetName)) {
           res.statusCode = 403
           return res.end()
         }
         try {
-          const { dir, page, clicks } = await readJson(req)
-          if (!['next', 'prev'].includes(dir) || ![page, clicks].every(Number.isInteger)) throw new Error('Bad press')
-          server.ws.send('slidev-clicker:press', { dir, page, clicks })
+          const { dir, page, clicks, timer } = await readJson(req)
+          if (timer !== undefined) {
+            if (!['start', 'pause', 'reset'].includes(timer)) throw new Error('Bad press')
+            server.ws.send('slidev-clicker:timer', { op: timer })
+          }
+          else {
+            if (!['next', 'prev'].includes(dir) || ![page, clicks].every(Number.isInteger)) throw new Error('Bad press')
+            server.ws.send('slidev-clicker:press', { dir, page, clicks })
+          }
           res.statusCode = 204
         }
         catch {

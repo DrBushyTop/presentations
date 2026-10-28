@@ -1,7 +1,7 @@
 <!--
   Where you are the bottleneck: the person relaying context between the agent
-  and everything it can't reach. Poteto's phrase is "the meat proxy".
-  0 you relay everything · 1 the quote · 2 the agent reaches each source itself
+  and everything it can't reach.
+  0 you relay everything · 1 what each relay costs · 2 the agent reaches each source itself
 -->
 <script setup lang="ts">
 withDefaults(defineProps<{ step?: number }>(), { step: 0 })
@@ -31,8 +31,7 @@ const rows = [
     </div>
     <div class="foot">
       <Show :step="step" :at="1" :until="2" class="q">
-        <p>"I was the meat proxy between my agent and Chrome DevTools."</p>
-        <span>Poteto, SpaceX AI</span>
+        <p>Every relay is slow, and something gets lost on the way.</p>
       </Show>
       <Show :step="step" :at="2" class="q ok">
         <p>Your job moves to setting up what the agent can reach.</p>

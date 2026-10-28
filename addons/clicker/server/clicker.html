@@ -18,8 +18,9 @@
       position: fixed;
       inset: 0;
       display: grid;
-      grid-template-rows: auto 1fr auto 2fr auto;
-      grid-template-areas: "head" "prev" "where" "next" "note";
+      grid-template-rows: auto auto auto 1fr auto;
+      grid-template-columns: 1fr 2fr;
+      grid-template-areas: "head head" "clock clock" "where where" "prev next" "note note";
       gap: 12px;
       padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
       box-sizing: border-box;
@@ -33,9 +34,8 @@
     }
     @media (orientation: landscape) {
       body {
-        grid-template-rows: auto 1fr auto auto;
-        grid-template-columns: 1fr 2fr;
-        grid-template-areas: "head head" "prev next" "where where" "note note";
+        grid-template-rows: auto auto 1fr auto;
+        grid-template-areas: "head where" "clock clock" "prev next" "note note";
       }
     }
     header {
@@ -84,6 +84,86 @@
     #next:active:not(:disabled) {
       background: #02606e;
     }
+    .clock {
+      grid-area: clock;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      grid-template-areas: "time toggle" "pace pace";
+      align-items: center;
+      gap: 10px 12px;
+      padding: 16px 18px;
+      border-radius: 20px;
+      background: #181c1f;
+    }
+    #time {
+      grid-area: time;
+      font-size: 52px;
+      font-weight: 700;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+    .clock[data-status="paused"] #time {
+      color: #8a9399;
+    }
+    .toggle {
+      grid-area: toggle;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    #timer {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: #2b3238;
+      font-size: 24px;
+    }
+    #timer:active:not(:disabled) {
+      background: #3b444b;
+    }
+    #reset {
+      padding: 0 12px;
+      height: 44px;
+      border-radius: 12px;
+      background: transparent;
+      color: #8a9399;
+      font-size: 15px;
+      font-weight: 600;
+    }
+    #pace {
+      grid-area: pace;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin: 0;
+      color: #c9d0d4;
+      font-size: 21px;
+      font-variant-numeric: tabular-nums;
+    }
+    #pace b {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      font-size: 32px;
+      font-weight: 800;
+      line-height: 1;
+      white-space: nowrap;
+    }
+    #pace b[hidden] {
+      display: none;
+    }
+    #pace-num {
+      font-size: 60px;
+    }
+    #pace-word {
+      font-size: 30px;
+    }
+    #pace[data-tone="ok"] b {
+      color: #6fd39a;
+    }
+    #pace[data-tone="late"] b {
+      color: #ff7a6b;
+    }
     .where {
       grid-area: where;
       display: flex;
@@ -121,18 +201,48 @@
       text-align: center;
       font-size: 15px;
     }
+    @media (orientation: landscape) {
+      .where {
+        justify-content: flex-end;
+      }
+      .clock {
+        gap: 8px 12px;
+        padding: 10px 18px;
+      }
+      #time {
+        font-size: 44px;
+      }
+      #pace {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 16px;
+      }
+      #pace b {
+        flex: none;
+      }
+    }
   </style>
 </head>
 <body data-total="%TOTAL%">
+  <script id="plan" type="application/json">%PLAN%</script>
   <header>
     <span class="title">%TITLE%</span>
     <span id="link" hidden>Reconnecting…</span>
   </header>
-  <button id="prev" type="button" disabled>← Back</button>
+  <section class="clock" data-status="stopped">
+    <span id="time">0:00</span>
+    <span class="toggle">
+      <button id="reset" type="button" hidden>Reset</button>
+      <button id="timer" type="button" aria-label="Start the clock" disabled>&#9654;&#xFE0E;</button>
+    </span>
+    <p id="pace" hidden><span id="pace-what"></span><b id="pace-left"><span id="pace-num"></span><span id="pace-word"></span></b></p>
+  </section>
   <div class="where">
     <span id="slide">–</span>
     <span id="steps"></span>
   </div>
+  <button id="prev" type="button" disabled>← Back</button>
   <button id="next" type="button" disabled>Next →</button>
   <p id="note" role="status"></p>
 
@@ -145,14 +255,72 @@
     nav.$syncUp = false
 
     const total = Number(document.body.dataset.total)
+    // Checkpoints from the slides' frontmatter, by slide, then the end.
+    const plan = JSON.parse(document.getElementById('plan').textContent)
     const $ = id => document.getElementById(id)
     let connected = true
     let shown = ''
     let waiting
+    let timerWaiting
 
     const say = (text) => { $('note').textContent = text }
 
+    const clock = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`
+    const slidesLeft = n => `${n} slide${n === 1 ? '' : 's'}`
+
+    // The talk's time from Slidev's timer. The phone's clock and the laptop's
+    // differ by well under a second when both keep network time.
+    function elapsed() {
+      const t = nav.timer
+      if (!t || t.status === 'stopped' || !t.startedAt) return 0
+      return Math.max(0, ((t.status === 'paused' ? t.pausedAt : Date.now()) - t.startedAt) / 1000)
+    }
+
+    // On a checkpoint slide: how far off the plan you arrived. Before one:
+    // how long until you should be there, and how many slides that is.
+    function renderPace(page, status, now) {
+      const here = plan.find(c => c.page === page)
+      const ahead = plan.find(c => c.page > page)
+      // The number is the big part: how far off, or how long until.
+      const show = (what, num, word, tone) => {
+        $('pace').hidden = false
+        $('pace-what').textContent = what
+        $('pace-num').textContent = num
+        $('pace-word').textContent = word
+        $('pace-left').hidden = !num
+        $('pace').dataset.tone = tone
+      }
+      if (!plan.length || !page) return ($('pace').hidden = true)
+      if (status === 'stopped') {
+        const first = here ?? ahead
+        return first ? show(`${first.label} at ${clock(first.seconds)}`, '', '', '') : ($('pace').hidden = true)
+      }
+      if (here) {
+        const off = now - here.seconds
+        if (Math.abs(off) < 30) return show(`${here.label}, planned ${clock(here.seconds)}`, 'On time', '', 'ok')
+        return show(`${here.label}, planned ${clock(here.seconds)}`, clock(Math.abs(off)), off > 0 ? 'behind' : 'ahead', off > 0 ? 'late' : 'ok')
+      }
+      if (!ahead) return ($('pace').hidden = true)
+      const left = ahead.seconds - now
+      const what = `${ahead.label} at ${clock(ahead.seconds)} · ${slidesLeft(ahead.page - page)}`
+      if (left < 0) return show(what, clock(-left), 'late', 'late')
+      show(what, clock(left), 'left', '')
+    }
+
+    function renderClock() {
+      const status = nav.timer?.status ?? 'stopped'
+      const now = elapsed()
+      $('time').textContent = clock(now)
+      document.querySelector('.clock').dataset.status = status
+      $('timer').textContent = status === 'running' ? '❚❚' : '▶\uFE0E'
+      $('timer').ariaLabel = status === 'running' ? 'Pause the clock' : 'Start the clock'
+      $('timer').disabled = !connected
+      $('reset').hidden = status !== 'paused'
+      renderPace(Number(nav.page) || 0, status, now)
+    }
+
     function render() {
+      renderClock()
       const page = Number(nav.page) || 0
       const clicks = Number(nav.clicks) || 0
       const steps = Number(nav.clicksTotal) || 0
@@ -205,6 +373,34 @@
       }, 1500)
     }
 
+    // Start, pause and reset go to the presenter view too, which runs the
+    // timer. The phone asks for the state it wants, not a toggle.
+    async function setTimer(op) {
+      navigator.vibrate?.(10)
+      clearTimeout(timerWaiting)
+      say('')
+      const before = nav.timer?.status
+      let res
+      try {
+        res = await fetch('/__slidev-clicker', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json', 'x-slidev-clicker': '1' },
+          body: JSON.stringify({ timer: op }),
+        })
+      }
+      catch {
+        return say('Can\'t reach the laptop.')
+      }
+      if (res.status === 403) return say('This device can\'t start the clock. Use Tailscale.')
+      if (!res.ok) return say(`The laptop answered ${res.status}.`)
+      timerWaiting = setTimeout(() => {
+        if (nav.timer?.status === before)
+          say('The clock didn\'t change. Is the presenter view open on the laptop?')
+      }, 1500)
+    }
+
+    $('timer').addEventListener('click', () => setTimer(nav.timer?.status === 'running' ? 'pause' : 'start'))
+    $('reset').addEventListener('click', () => setTimer('reset'))
     $('next').addEventListener('click', () => press('next'))
     $('prev').addEventListener('click', () => press('prev'))
     // A Bluetooth clicker or keyboard paired with this device works too.
@@ -220,6 +416,7 @@
     hot.on('vue-server-ref', () => setTimeout(render))
     hot.on('vite:ws:disconnect', () => { connected = false; render() })
     hot.on('vite:ws:connect', () => { connected = true; render() })
+    setInterval(renderClock, 250)
     render()
   </script>
 </body>

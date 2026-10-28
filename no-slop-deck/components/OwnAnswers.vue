@@ -4,7 +4,7 @@
   From my repo's issue #257: the telemetry, code and tests are real; the last
   question had no answer in code or docs, so the agent measured it in a
   throwaway environment. The numbers are that probe's.
-  0 the questions · 1 telemetry · 2 code and tests · 3 the live run · 4 Poteto
+  0 the questions · 1 telemetry · 2 code and tests · 3 the live run · 4 the rule
 -->
 <script setup lang="ts">
 withDefaults(defineProps<{ step?: number }>(), { step: 0 })
@@ -36,8 +36,7 @@ const delay = (i: number) => i - rows.findIndex(r => r.at === rows[i].at)
       </div>
     </div>
     <div class="foot" :class="{ on: step >= 4 }">
-      <p>"Not by hallucinating, not by guessing, but actually real data."</p>
-      <span>Poteto</span>
+      <p>Not a guess, not a question for you: real data, with a reference.</p>
     </div>
   </div>
 </template>

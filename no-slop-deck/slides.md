@@ -141,7 +141,7 @@ About 1 minute.
 - This is what checking everything yourself looks like in a normal day. You copy the error out of the browser, answer a question the code could have answered, paste in the bug report from Slack, tell it which CI check failed.
 - Each relay is slow, and it's lossy. You summarise, you forget a detail, the agent fills the gap with a guess. And the agent can't loop on its own work while you're in the middle.
 
-[click] Poteto described the start of their performance work this way: they were "the meat proxy between my agent and Chrome DevTools".
+[click] Every relay is slow, and something gets lost on the way. Poteto calls this being "the meat proxy between my agent and Chrome DevTools".
 
 [click] Each of those wires can go straight to the agent: a browser it drives, code it reads and cites, a routine that passes reports in, a babysitter that reads the checks. Your job moves to setting that up. That's the top of the ladder: you fix the environment, not the code. Poteto's question for every task: "Why do my agents need me to answer this question?"
 - The rest of the talk keeps asking it: where are you the relay, and what would let the agent check for itself?
@@ -198,6 +198,7 @@ About 1 minute. This is the agenda. Keep it quick.
 
 ---
 layout: none
+checkpoint: "10:30"
 ---
 
 <SectionGate :current="0" />
@@ -322,7 +323,7 @@ About 1 minute.
 [click] The last question had no answer in the code or the docs. So the agent measured it: a throwaway sandbox environment, messages of growing size. 16,376 bytes arrived. 16,404 vanished, with no error and no close. Then it deleted the environment.
 - That closes the loop: 16 KiB pieces become about 21,900-byte messages after base64, and the platform drops them silently. The fix was smaller pieces, a test fake that drops oversized messages like the real platform, and tests at 100 KB, 1 MiB and 8 MiB. From issue to merge took a little over an hour.
 
-[click] Poteto's question: "How do I get the agent to answer its own question? Not by hallucinating, not by guessing, but actually real data." What comes back to you are the product choices, which is where the design part starts.
+[click] The rule: a factual question gets answered from real data, with a reference, not a guess and not a question for you. What comes back to you are the product choices, which is where the design part starts.
 - What makes this work is access, not a smarter model: read access to telemetry, a place to run experiments, notes it can search.
 - Telemetry, not logs: with OpenTelemetry, failures arrive as structured events with attributes like the reply size, so the agent can query them instead of grepping text.
 - Source: https://www.youtube.com/watch?v=MN9dGgmLyso
@@ -330,12 +331,13 @@ About 1 minute.
 
 ---
 layout: none
+checkpoint: "17:30"
 ---
 
 <SectionGate :current="1" />
 
 <!--
-Design, about 6 minutes.
+Design, about 7 minutes.
 
 - Say: "Grill the decisions, keep the answers. Settle what the feature means before any code, and write it down."
 - Grilling is useful as soon as implementing directly would need guesses. It can be a short conversation or part of a larger design phase. A separate detailed plan isn't required.
@@ -389,7 +391,7 @@ About 1.5 minutes.
 ---
 part: Design
 class: ns
-clicks: 6
+clicks: 3
 ---
 
 # Plans should be shared, not a private chat
@@ -397,9 +399,9 @@ clicks: 6
 <PlanningTools :step="$clicks" />
 
 <!--
-About 2 minutes. Decide timing in rehearsal.
+About 1.5 minutes.
 
-- On screen: my starting-states plan from the last slide, as it would look in a shared planning tool. The interface is redrawn after GitHub Next's Chopin, a research prototype for planning with people and agents; it's not a screenshot. The plan is my repo's issue: the notes, the decision, the research answer and the open bug are real, shortened. It didn't happen in Chopin, and Roosa and Antti, two colleagues from Zure, didn't take part. Their lines are made up to show what the tool is for.
+- On screen: my starting-states plan from the last slide, as it would look in a shared planning tool. The interface is redrawn after GitHub Next's Chopin, a research prototype for planning with people and agents; it's not a screenshot. The plan is my repo's issue: the notes, the decision and the research answer are real, shortened. It didn't happen in Chopin, and Roosa and Antti, two colleagues from Zure, didn't take part. Their lines are made up to show what the tool is for.
 - GitHub Next's argument: "The important work is now everything that happens before and after code gets written: planning and review." And "all the tools on the market are designed as single-player experiences." My grilling session was one: me, one agent, and a decision log only I write to.
 - It starts from rough notes. Roosa, a user researcher, says what went wrong in the pilot. I ask the agent, which Chopin calls Planner, to turn the notes into a plan, and anything it isn't sure about into decisions.
 
@@ -410,12 +412,7 @@ About 2 minutes. Decide timing in rehearsal.
 - Free text was the agent's recommendation in the grilling session; the middle option is reconstructed.
 
 [click] Research happens inside the plan. Antti, a frontend developer, asks what reads the starting state today. The answer lands in the plan with its sources: only a hook that hands the app the free text.
-
-[click] Roosa asks what the plan puts at risk, and it says so under Open: a state that navigates triggers a replay bug we already knew about.
-
-[click] Anyone can comment on a passage. Antti asks what happens if apply navigates, because prototypes often do full page loads.
-
-[click] He applies the comment, and Planner rewrites the passage: apply routes inside the app, and a page load while it runs is a failure. That's a real decision from the issue.
+- Chopin also lets anyone comment on a passage and have Planner apply it, and flags risks under Open. I leave those out for time.
 - Say: "This is the steering from the agenda, the part that's all by hand. Tools like this make it cheaper, and make it shared."
 - Chopin's status: published September 2026 and open source under MIT, but in their words "neither a product nor a finished prototype. We don't recommend you attempt to use it today." A team at GitHub is working on collaborative planning documents for github.com. Don't claim any of it is available.
 - In Chopin's own demo, Maggie Appleton and Krzysztof Cieślak plan a drawing canvas, and Planner also draws Mermaid diagrams on request. Their page argues for visuals because people read about 15 times slower than agents write. That's the figure from the slop slide.
@@ -426,7 +423,7 @@ About 2 minutes. Decide timing in rehearsal.
 ---
 part: Design
 class: ns
-clicks: 3
+clicks: 2
 transition: gate | gate-back
 ---
 
@@ -435,21 +432,19 @@ transition: gate | gate-back
 <TeamUnderstanding :step="$clicks" />
 
 <!--
-About 1.5 minutes.
+About 1 minute.
 
-- On screen, left: Honeycomb's Tenant team. Right, soon: a decision in my repo, three weeks after it was made. Both are about whether anyone besides the author understands the work.
+- On screen: Honeycomb's Tenant team, before and after. It's about whether anyone besides the author understands the work.
 - Honeycomb's team first split into producers and reviewers: reviewers didn't produce, producers picked up more tasks. Their words: "knowledge concentration got amplified. We were each rapidly over-specializing in some portions of our stack."
 
 [click] Their fix was to review the plan and the prompt given to the agent, as a team. "It started feeling like everyone was more aware of what was happening." Plans could be borrowed later for caveats. They don't do the strict version for everything now. https://www.honeycomb.io/blog/embracing-code-review-bottleneck
-
-[click] Three weeks later, a researcher asks why their session stopped recording the screen halfway. The person on call didn't build it, but they were in the plan review, and the grill wrote the decision down: every session has a capture budget, and at the limit only the screen stops, voice keeps going. So they can answer in a minute, and they know where to start if it's a bug.
-- This is the failure from the start of the part, "Nobody knows", turned around. The decision is real, from my repo's decision log; the conversation is illustrative.
 
 [click] One question before approving a plan: could someone other than the author explain this decision and investigate a failure? If not, the plan isn't done. That's the second half of the slop definition: someone who can explain why it's built that way.
 -->
 
 ---
 layout: none
+checkpoint: "24:00"
 ---
 
 <SectionGate :current="2" />
@@ -551,6 +546,7 @@ About 1.5 minutes.
 
 ---
 layout: none
+checkpoint: "27:30"
 ---
 
 <SectionGate :current="3" />
@@ -600,7 +596,7 @@ About 1 minute.
 - The habit behind it: watch how agents fail, and each time ask "how do I turn this into a lint rule? How do I make it so that the codebase makes this impossible?"
 - The same thinking applies to the agent's own tooling. Agents kept writing their own scripts to verify their work, differently each time, so they moved the deterministic part into a CLI inside the verification skill. The agent keeps the judgement, the script does the mechanics.
 
-[click] Their words: "an environment where it's actually very hard to write bad code."
+[click] The takeaway: build an environment where bad code is hard to write. Poteto's phrase for it: "an environment where it's actually very hard to write bad code."
 - Source: https://www.youtube.com/watch?v=MN9dGgmLyso
 -->
 
@@ -717,7 +713,7 @@ About 1 minute.
 
 - On screen: three steps the agent does on its own, left to right: start the app, reproduce the problem, fix it and repeat the same action. Lints and tests check the code. This checks the behaviour, the way a person would, except the agent does it.
 - The bug, from my repo: researchers watch a replay of each participant's session. If the participant moved to another page inside the app, the replay stayed on the first page.
-- Start a fresh instance with known data. In my repo that's two commands: one starts this worktree's own copy of the app, one seeds a recorded session where someone opens an invoice and goes back to the list.
+- Start a fresh instance with known data. Keep it as close to production as you can locally: the same database engine, the same config shape, realistic data. In my repo that's two commands: one starts this worktree's own copy of the app, one seeds a recorded session where someone opens an invoice and goes back to the list.
 
 [click] Reproduce it in a browser the agent controls. Open the replay two seconds in, after the participant opened the invoice. It still shows the list. The agent also swapped the old player back in, to prove that what it sees is the bug, not its setup.
 
@@ -778,12 +774,13 @@ About 1 minute.
 
 ---
 layout: none
+checkpoint: "39:30"
 ---
 
 <SectionGate :current="4" />
 
 <!--
-Review, about 14 minutes including a 3-minute walkthrough.
+Review, about 6.5 minutes.
 
 - Say: "Let the models review first. They review each slice and the PR, and you decide when another round stops paying off."
 - The question is the point of the part: models do the first passes so your attention goes to what they can't judge.
@@ -888,15 +885,19 @@ About 1.5 minutes.
   - Forks share the reviewer's framing. If it misread the issue, all three inherit that. This is why I fork the reviewer, not the implementer: the reviewer's context holds the decisions and the diff, not the builder's reasons.
   - A fork runs on the same model. A second opinion from a different model comes at the PR, on the next slides.
   - The cache is per model, and in Claude Code a subagent's cache lives five minutes by default. Fork right after reading.
-- How many more findings? No public study compares forked reviewers with lenses against one reviewer on the same PRs. The closest numbers:
+- Why split the review into lenses: the research points the same way. A structured split, where reviewers have to back their disagreements with evidence from the code, beats pooling independent reviews. Just adding reviewers doesn't reliably help. Anthropic's own Code Review is built as a structured split. Forking is how I make that split cheap. No study compares forks with fresh subagents on the same PRs; the difference there is cost, not findings. The numbers:
+  - Adversarial Review (Qiu and Gill, August 2026), 100 real PRs from SWE-PRBench: reviewers that must ground their disagreement in code evidence reached F1 0.533. Two independent reviewers got 0.503, three reviewers plus a meta-reviewer 0.501, one reviewer 0.495. The naive version, without the evidence rule, fell to 0.457: the reviewers just agreed with each other.
+  - CodeAgent (EMNLP 2024): a supervising QA-Checker agent that keeps the others on task. 449 of 483 findings were confirmed (93%) with it, 413 of 564 (73%) without.
   - SWR-Bench, 1,000 real PRs: merging ten runs of Gemini 2.5 Flash more than doubled recall, from about 14% to 30%, and raised F1 by 44%. These are repeated runs, not lenses.
   - CodeX-Verify, 99 samples: four specialised agents against one, accuracy 33% to 72%. Each added agent helped less: 15, then 14, then 11 points.
   - MultiVer, vulnerability detection: four lenses (security, correctness, performance, style) added 17 points of recall over a security agent alone. Precision fell to 49%.
   - Anthropic's Code Review runs several agents in parallel, verifies, then dedupes. At Anthropic, the share of PRs with substantive comments went from 16% to 54%, and under 1% of findings were marked incorrect. That's against human review, not a single agent. It costs $15 to $25 a review.
   - Cursor's Bugbot launched with eight parallel passes and kept only bugs found in more than one.
+  - Against: a study of 1.02M reviewed PRs in 207 projects (July 2026) found that PRs reviewed by several agents got decisions faster, but not consistently better quality. It's observational, so it shows association, not cause.
   - Against: a controlled October 2026 study of one agent against a team of three, on financial memos rather than code. The team caught 8 to 10 points more defects, raised more false alarms on all four models and used 2.2 to 2.4 times the tokens. Balanced accuracy barely moved.
+  - Anthropic's Frontier Red Team, August 2026: 45 agents with a shared forum, peer review and an arbiter found 266 vulnerabilities in 15 open-source projects. Independent agents found 21. But the swarm used 27M tokens against 6.5M and searched more widely: about half its finds were outside the core directories. Inside them, the cost per vulnerability was about the same.
   - Anthropic's multi-agent research post: a lead agent with parallel subagents beat a single agent by 90% on research tasks, at about 15 times the tokens of a chat. It notes coding has fewer parallel parts than research.
-- So: more reviewers find more, and they flag more. Merge and verify before the implementer sees the list. Forking makes the extra reviewers cheap. It doesn't make their findings any more correct.
+- So: a structured split finds more, and it also flags more. Make the lenses back their findings with evidence, then merge and verify before the implementer sees the list. Forking keeps the split cheap.
 - Sources:
   - https://code.claude.com/docs/en/sub-agents
   - https://code.claude.com/docs/en/prompt-caching
@@ -908,6 +909,10 @@ About 1.5 minutes.
   - https://cursor.com/blog/building-bugbot
   - https://arxiv.org/abs/2610.27488
   - https://www.anthropic.com/engineering/multi-agent-research-system
+  - https://arxiv.org/abs/2608.18167
+  - https://arxiv.org/abs/2402.02172
+  - https://anthropic.com/research/multiagent-systems
+  - https://arxiv.org/abs/2607.13196
 -->
 
 ---
@@ -992,6 +997,7 @@ Prepared walkthrough in T3 Code, about 3 minutes.
 ---
 part: Review
 class: ns
+transition: gate | gate-back
 ---
 
 # A real PR carries its own evidence
@@ -1040,7 +1046,7 @@ About 1.5 minutes. A candidate to cut after rehearsal.
 part: Review
 class: ns
 clicks: 3
-transition: gate | gate-back
+hide: true
 ---
 
 # When does another review stop paying off?
@@ -1097,12 +1103,13 @@ About 2 minutes. The controls work. Change reviewers, rounds or the lens live if
 
 ---
 layout: none
+checkpoint: "46:00"
 ---
 
 <SectionGate :current="5" />
 
 <!--
-Production, about 15 minutes as drafted, the longest part. Rehearsal decides the cuts: the Polylane case study and the Jev aside are the obvious candidates.
+Production, about 6 minutes.
 
 - Say: "What happens after merge? Watch the change in real use, and limit how far it can spread."
 -->
@@ -1150,7 +1157,7 @@ About 2 minutes. Give this a fair hearing.
 
 [click] One team moved the other way. HumanLayer, whose research and planning workflow I borrowed earlier, went lights-off in July 2025: "Just read the specs and the tickets, background agents for all the small/medium stuff." Months later they were digging into "the codebase you stopped reading three months ago", and by November one co-founder spent two weeks rewriting by hand. Dex Horthy's 2026 AI Engineer keynote, "Why software factories fail", puts code review back: "For now, the judge is you." They kept the planning; plans now cut the review, they don't replace it.
 - Dex's speed claim: you can "move 2-3x faster, safely" instead of chasing 10 to 100 times.
-- My view: reading all the code gives the best quality I've seen. It's also the slowest option. Pick where on this line each change sits, don't default to one end.
+- My view: reading all the code gives the best quality I've seen. It's also the slowest option. As models get better, their code gets easier to trust, so more changes can move to the right. Pick where on this line each change sits, don't default to one end.
 
 [click] The common thread: the less you read, the cheaper a bad merge has to be. These go hand in hand. Automating review means some mistakes get through, so every team on the right made a mistake cheap: small changes, flags, fast rollback, someone watching. And a change that's cheap to undo is also one you can review less. The next slides are how.
 - Numbers as of each post: Intercom April 2026, Spotify September 2026.
@@ -1164,6 +1171,7 @@ About 2 minutes. Give this a fair hearing.
 part: Production
 class: ns
 clicks: 2
+hide: true
 ---
 
 # More change means more chances to break
@@ -1280,6 +1288,7 @@ About 1 minute.
 part: Production
 class: ns
 clicks: 2
+hide: true
 ---
 
 # Cheap rules point the agent at known risks
@@ -1352,6 +1361,7 @@ About 1.5 minutes. No dragging: the caption under the chart says each step.
 part: Production
 class: ns
 clicks: 2
+transition: gate | gate-back
 ---
 
 # A no-go comes with the mechanism, the evidence and a fix
@@ -1373,6 +1383,7 @@ About 1 minute.
 part: Production
 class: ns
 clicks: 2
+hide: true
 ---
 
 # It has to fit inside CI
@@ -1397,7 +1408,7 @@ About 1 minute.
 part: Production
 class: ns
 clicks: 1
-transition: gate | gate-back
+hide: true
 ---
 
 # Aside: use a decision model for decisions
@@ -1416,6 +1427,7 @@ Thirty seconds, keep it moving. Same company as the case study.
 
 ---
 part: Close
+checkpoint: "52:00"
 class: ns
 clicks: 11
 ---

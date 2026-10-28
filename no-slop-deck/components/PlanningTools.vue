@@ -2,14 +2,13 @@
   A shared plan in the style of GitHub Next's Chopin, redrawn from their demo
   videos (not a screenshot). The plan is my repo's issue #526, starting
   states, the feature from the grilling slide: the notes, decisions, research
-  answer and open bug are real, shortened. It didn't happen in Chopin, and
+  answer are real, shortened. It didn't happen in Chopin, and
   the colleagues' lines are made up.
   The document scrolls to what each click adds; the conversation grows from
   the bottom. One change per click: the conversation first, then what it
   does to the document.
   0 the rough notes · 1 a decision as a question · 2 the answer, written back
-  · 3 research in the plan · 4 what's open · 5 a comment · 6 the agent
-  applies it
+  · 3 research in the plan
 -->
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
@@ -36,16 +35,11 @@ const chat = [
   { at: 2, d: 600, who: 'Planner', bot: true, t: 'Answers are in. Writing them into the prose.' },
   { at: 3, d: 200, who: 'Antti Sartjärvi', av: 'AS', t: '@chopin What reads the starting state today?' },
   { at: 3, d: 900, who: 'Planner', bot: true, t: 'Researching it in the plan.', tool: 'Search repository' },
-  { at: 4, d: 200, who: 'Roosa Melkko', av: 'RM', t: '@chopin Can you call out what this puts at risk?' },
-  { at: 4, d: 900, who: 'Planner', bot: true, t: 'Added one under Open.' },
-  { at: 6, d: 100, sys: true, t: 'Antti Sartjärvi applied a comment' },
-  { at: 6, d: 800, who: 'Planner', bot: true, t: 'Answering Antti\'s question in the prose: apply routes inside the app, and a page load during it is a failure.' },
 ]
 
 // When each click's change reaches the document, after the conversation
-// that asks for it. Click 2's pick and click 5's comment are people acting
-// in the document, so they show at once; what follows them waits.
-const docDelay = [0, 1000, 1400, 1700, 1700, 0, 1600]
+// that asks for it.
+const docDelay = [0, 1000, 1400, 1700]
 
 // Scroll the document so what this click adds is in view, keeping as much
 // of what came before as fits. `marks[i]` is what click i adds.
@@ -78,7 +72,7 @@ function deliver(now: number, ahead: boolean) {
 
 function measure() {
   const v = view.value
-  const el = marks.value[Math.max(0, Math.min(props.step, 6))]
+  const el = marks.value[Math.max(0, Math.min(props.step, 3))]
   if (!v || !el || !v.clientHeight) return
   const bottom = el.offsetTop + el.offsetHeight
   shift.value = Math.max(0, Math.min(el.offsetTop - 8, bottom - v.clientHeight + 18))
@@ -99,7 +93,7 @@ onBeforeUnmount(() => {
 })
 watch(() => props.step, (now, before) => {
   forward.value = now > before
-  delay.value = forward.value ? docDelay[Math.min(now, 6)] : 0
+  delay.value = forward.value ? docDelay[Math.min(now, 3)] : 0
   deliver(now, forward.value)
   measure()
 })
@@ -148,7 +142,7 @@ watch(() => props.step, (now, before) => {
               <p :ref="mark(2)" class="changed reveal" :class="{ on: step >= 2 }">The app's developer registers each state in the SDK, with a label and a description. The researcher picks one, or "As is".</p>
             </div>
 
-            <!-- 3-4: research inside the plan, then what's open -->
+            <!-- 3: research inside the plan -->
             <div class="part">
               <div :ref="mark(3)" class="card reveal" :class="{ on: step >= 3 }">
                 <div class="meta">
@@ -159,25 +153,6 @@ watch(() => props.step, (now, before) => {
                 <p>Only the SDK's <code>onTaskStart</code> hook. It hands the app the free text, and nothing checks that the app can produce the state.</p>
                 <span class="foot">Sources: the SDK, docs/decisions.md · Researched by Planner</span>
               </div>
-              <div class="doc-h2 reveal" :class="{ on: step >= 4 }">Open</div>
-              <div :ref="mark(4)" class="callout reveal" :class="{ on: step >= 4 }">
-                <b><Icon name="alert" />A state that navigates hits #476</b>
-                <p>Replay freezes after the first route change. Out of scope here, but every task start will trigger it.</p>
-              </div>
-            </div>
-
-            <!-- 5-6: a comment on a passage, then the agent applies it -->
-            <div class="part" :class="{ commented: step >= 5, applied: step >= 6 }">
-              <p><span class="anchor">A state's <code>apply</code> brings the app there from any state, so it's the reset too.</span></p>
-              <div :ref="mark(5)" class="pop reveal" :class="{ on: step >= 5 }">
-                <div class="pop-who"><i>AS</i><b>Antti Sartjärvi</b></div>
-                <p>Our prototypes often do full page loads. What happens if <code>apply</code> navigates?</p>
-                <div class="pop-foot">
-                  <span>Planner will use this feedback to update the document.</span>
-                  <b class="apply"><span class="todo">Apply feedback</span><span class="done"><Icon name="check" />Applied</span></b>
-                </div>
-              </div>
-              <p :ref="mark(6)" class="changed reveal" :class="{ on: step >= 6 }"><code>apply</code> routes inside the app. A page load while it runs counts as a failure, and the next page load offers "Try again".</p>
             </div>
           </div>
         </div>
@@ -187,17 +162,14 @@ watch(() => props.step, (now, before) => {
         <div class="tabs"><span class="ptab">Conversation</span></div>
         <TransitionGroup tag="div" name="msg" class="msgs">
           <template v-for="(m, i) in chat.slice(0, count)" :key="i">
-            <div class="msg" :class="{ sys: m.sys }">
-              <template v-if="m.sys">{{ m.t }}</template>
-              <template v-else>
-                <i class="av" :class="{ bot: m.bot }">{{ m.bot ? '' : m.av }}</i>
-                <div class="txt">
-                  <b>{{ m.who }}</b>
-                  <p>{{ m.t }}</p>
-                  <span v-if="m.tool" class="tool ns-mono">{{ m.tool }}</span>
-                  <p v-if="m.t2">{{ m.t2 }}</p>
-                </div>
-              </template>
+            <div class="msg">
+              <i class="av" :class="{ bot: m.bot }">{{ m.bot ? '' : m.av }}</i>
+              <div class="txt">
+                <b>{{ m.who }}</b>
+                <p>{{ m.t }}</p>
+                <span v-if="m.tool" class="tool ns-mono">{{ m.tool }}</span>
+                <p v-if="m.t2">{{ m.t2 }}</p>
+              </div>
             </div>
           </template>
         </TransitionGroup>
@@ -209,7 +181,6 @@ watch(() => props.step, (now, before) => {
 
 <style scoped>
 .chopin {
-  --hl: #fff3c4;
   --chg: #d7f3f6;
   height: 510px;
   display: grid;
@@ -256,7 +227,6 @@ code {
 }
 
 .people i,
-.pop-who i,
 .av {
   display: grid;
   place-items: center;
@@ -489,99 +459,6 @@ code {
   color: var(--z-grey-600);
 }
 
-.callout {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 10px 16px 12px;
-  background: var(--z-callout-bg);
-  border-left: 4px solid var(--ns-red);
-}
-
-.callout b {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 18px;
-  color: var(--ns-red);
-}
-
-.callout p { font-size: 17px; }
-
-/* A comment on a passage, then Apply feedback and the agent's answer in
-   the prose. */
-.anchor {
-  transition: background-color 500ms, box-shadow 500ms;
-}
-
-.commented .anchor {
-  background: var(--hl);
-  box-shadow: 0 2px 0 #e2c94c;
-}
-
-.pop {
-  align-self: flex-end;
-  width: 520px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 12px 14px;
-  background: #fff;
-  border: 1px solid var(--ns-line);
-  box-shadow: 0 16px 40px -18px rgba(26, 26, 26, 0.45);
-}
-
-.pop-who {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 16px;
-}
-
-.part .pop p { font-size: 17px; }
-
-.pop-foot {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  font-size: 15px;
-  color: var(--z-grey-600);
-}
-
-.apply {
-  position: relative;
-  flex: none;
-  display: grid;
-  padding: 3px 10px;
-  border: 1px solid var(--ns-teal);
-  color: var(--ns-teal);
-  font-size: 15px;
-}
-
-.apply > span {
-  grid-area: 1 / 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  transition: opacity 300ms;
-}
-
-.apply .done { opacity: 0; }
-
-.apply {
-  transition: background-color 300ms, color 300ms;
-}
-
-.applied .apply {
-  background: var(--ns-teal);
-  color: #fff;
-}
-
-.applied .apply .todo { opacity: 0; }
-.applied .apply .done { opacity: 1; }
-
 /* ---------- Conversation ---------- */
 
 .msgs {
@@ -646,12 +523,6 @@ code {
   padding: 1px 8px;
   background: var(--ns-soft);
   font-size: 14px;
-  color: var(--z-grey-600);
-}
-
-.msg.sys {
-  justify-content: center;
-  font-size: 15px;
   color: var(--z-grey-600);
 }
 

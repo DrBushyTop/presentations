@@ -15,11 +15,31 @@ export default defineRootSetup(() => {
   // Phone clicker presses (server/plugin.mjs). Every tab that may report a
   // position and is on the step the phone saw takes it; they all land on the
   // same step. Page 0: nobody has moved since the dev server started.
+  const drives = () => isPresenter.value || (isPlaying.value && TRUSTED_HOSTS.includes(location.hostname))
   import.meta.hot?.on('slidev-clicker:press', ({ dir, page, clicks: c }) => {
-    const drives = isPresenter.value || (isPlaying.value && TRUSTED_HOSTS.includes(location.hostname))
-    if (!drives || (page && !at(page, c))) return
+    if (!drives() || (page && !at(page, c))) return
     if (dir === 'next') next()
     else prev()
+  })
+
+  // The phone's clock button drives Slidev's timer, the one in the presenter
+  // view, as its own buttons do (composables/useTimer.ts). The phone asks for
+  // the state it wants, so two tabs taking the same press agree.
+  import.meta.hot?.on('slidev-clicker:timer', ({ op }) => {
+    if (!drives()) return
+    const timer = sharedState.timer
+    const now = Date.now()
+    if (op === 'start' && timer.status !== 'running') {
+      timer.startedAt = timer.status === 'paused' ? now - (timer.pausedAt - timer.startedAt) : now
+      timer.status = 'running'
+    }
+    else if (op === 'pause' && timer.status === 'running') {
+      timer.pausedAt = now
+      timer.status = 'paused'
+    }
+    else if (op === 'reset' && timer.status !== 'stopped') {
+      sharedState.timer = { status: 'stopped', slides: {}, startedAt: 0, pausedAt: 0 }
+    }
   })
 
   // Slidev's presenter views ignore each other's moves: they follow play views
