@@ -51,6 +51,49 @@ reach it, and those would now reach every viewer. Use the phone clicker over
 Tailscale, or start with `--trust-lan` to let the local network in too (only
 on a network you trust; not on venue Wi-Fi).
 
+## Joining, sound and a password
+
+```bash
+npm run live -- --deck hill-climb --password hill2026
+```
+
+Viewers join from a card in the middle of the page. Sound is on by default:
+the voice and any sound the slides make with Web Audio, such as the hit
+markers in `hill-climb`. Browsers only play sound after a click, so while the
+browser holds it back the card has a Join with sound button, and that click
+turns it on. The card also says where the speaker button is, bottom right, for
+mute and volume. It shows all talk, and moves aside for the camera bubble. A
+browser that already allows sound gets no card.
+
+With `--password` (or `SLIDEV_LIVE_PASSWORD`), the password covers the slides
+and the talk:
+
+- **The slides.** Every file of the viewer site is published encrypted
+  (AES-GCM, with a key PBKDF2 makes from the password and the deck's name).
+  The page that opens has only the title and author, for the card, and a
+  small unlock script (`site/unlock.js`). The password opens a check file,
+  the key goes to IndexedDB, and a service worker (`site/sw.js`) opens each
+  file as the app asks for it. A new password seals a new build, so
+  `npm run live` deploys again.
+- **The talk.** The relay only follows, and only opens Realtime connections
+  for, viewers who have the key the password makes, so the slide position,
+  drawings, screen share, camera and voice stay behind it too.
+
+The command prints a link with `?password=` that fills the field in; viewers
+still click Join, and that click also turns the sound on. The browser keeps
+the key, so a reload or a second tab asks only for the sound click. A talk
+with a password that takes over sends every viewer back to the card.
+
+- Private windows in some browsers have no service workers, and say they
+  cannot open the slides there.
+- `--no-deploy` keeps the site's build, which may not be sealed with this
+  password. The command warns.
+- The password needs the relay from this version: `npm run live` refuses to
+  start with one against an older relay, which would let everyone in. Deploy
+  it with `npm run live:relay`.
+- `npm run live:deploy -- --deck <deck> --password <text>` seals a deploy
+  without presenting.
+
 ## Share your screen
 
 Slidev's Screen Mirror goes to viewers too while `npm run live` publishes. In
@@ -111,9 +154,8 @@ as you drag, and the presenter view remembers the place.
 - The presenter view's bubble never shows in play tabs, such as the
   projector's: the room sees you in person.
 
-Browsers only play sound once the viewer has touched the page, so until then
-a "Turn on sound" button shows, and the first tap anywhere turns it on. After
-that a speaker button opens a panel with mute and a volume slider. The volume
+Sound starts from the join card (see above). The speaker button opens a panel
+with mute and a volume slider, for the voice and the slides' sound alike. The volume
 starts at half. The tab remembers a mute, the page the volume. Turning the
 volume up unmutes. In the room, phones playing the voice can echo the
 speaker: ask people there to mute. iPhones and iPads ignore a page's volume,
@@ -242,6 +284,12 @@ presenter tab ──► dev server ──wss──► Cloudflare Worker + Durabl
   tab stops sending.
 - The viewer bundle has no speaker notes and no presenter routes. The deck
   itself is public while deployed, as is this repository.
+- With a password, the deck on the site is sealed and the talk is locked
+  (see Joining). PBKDF2 at 300,000 rounds makes each guess slow, but the
+  sealed files are public, so a short password can still be guessed offline:
+  use a few words. The viewer sends the relay key in the socket URL; the
+  relay keeps only its SHA-256, and the dev server gets only that, never the
+  password. The deploy step gets the password itself, to seal the files.
 
 ## Latency
 

@@ -5,6 +5,7 @@ import { createStatus } from './status'
 import { SYNC_CHANNEL } from './bridge'
 import { sanitizeDrawing } from './sanitize'
 import { createMedia, type Shown } from './media'
+import { createJoin, storedKey } from './join'
 
 declare const __SLIDEV_LIVE_RELAY__: string
 declare const __SLIDEV_LIVE_DECK__: string
@@ -12,7 +13,8 @@ declare const __SLIDEV_LIVE_BUILD__: string
 
 interface Nav { page: number, clicks: number }
 interface Message {
-  t: 'snapshot' | 'live' | 'nav' | 'cursor' | 'drawings' | 'synced' | 'presenter' | 'media' | 'bubble'
+  t: 'snapshot' | 'live' | 'nav' | 'cursor' | 'drawings' | 'synced' | 'presenter' | 'media' | 'bubble' | 'locked'
+  wrong?: boolean
   ts?: number
   live?: boolean
   on?: boolean
@@ -45,7 +47,18 @@ const trace: Trace[] = []
 export function startFollower() {
   const { slides, go, currentSlideNo, clicks } = useNav()
   const status = createStatus()
-  const media = createMedia(__SLIDEV_LIVE_RELAY__)
+  // The talk's key, when it has a password. Kept for the tab, so a reload
+  // does not ask again.
+  let key = storedKey()
+  // The relay wants a password: wait for one before connecting again.
+  let locked = false
+  const join = createJoin((next) => {
+    key = next
+    locked = false
+    retry = 500
+    connect()
+  })
+  const media = createMedia(__SLIDEV_LIVE_RELAY__, join, () => key)
   const synced = new Map<string, unknown>()
   const channel = new BroadcastChannel(SYNC_CHANNEL)
   let target: Nav | undefined
@@ -63,6 +76,15 @@ export function startFollower() {
   ;(window as any).__slidevLive = { trace, current: () => ({ page: currentSlideNo.value, clicks: clicks.value }) }
   lockShortcuts()
   document.documentElement.classList.add('slidev-live-viewer')
+  // A site sealed with a password (site/unlock.js) opens its files through a
+  // service worker. A site that is not sealed has no use for it.
+  if (!document.getElementById('slidev-live-sealed') && 'serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then((all) => {
+      for (const registration of all) {
+        if (registration.active?.scriptURL.endsWith('/live-sw.js')) registration.unregister()
+      }
+    }).catch(() => {})
+  }
 
   // A component that mounts after its state arrived asks for it.
   channel.onmessage = (event) => {
@@ -160,7 +182,14 @@ export function startFollower() {
   }
 
   function handle(msg: Message) {
+    if (msg.t === 'locked') {
+      locked = true
+      if (msg.wrong) key = ''
+      join.locked(!!msg.wrong)
+      return
+    }
     if (msg.t === 'snapshot') {
+      join.unlocked()
       // A new talk of this same deck and build: drop the old one's drawings
       // and interactive state by starting over. For another build, the reload
       // waits for the site to have it (below).
@@ -231,7 +260,7 @@ export function startFollower() {
     }
   }
 
-  const url = `${__SLIDEV_LIVE_RELAY__.replace(/\/$/, '')}/viewer`
+  const base = `${__SLIDEV_LIVE_RELAY__.replace(/\/$/, '')}/viewer`
   let ws: WebSocket | undefined
   let retry = 500
   let reconnect: ReturnType<typeof setTimeout> | undefined
@@ -240,7 +269,7 @@ export function startFollower() {
 
   function connect() {
     clearTimeout(reconnect)
-    const socket = new WebSocket(url)
+    const socket = new WebSocket(key ? `${base}?key=${key}` : base)
     ws = socket
     let ping: ReturnType<typeof setInterval> | undefined
     // Drops this socket without waiting for its closing handshake, which can
@@ -254,6 +283,8 @@ export function startFollower() {
         socket.close()
       }
       catch {}
+      // Refused for the password: the join card asks, and connects again.
+      if (locked) return
       status.connecting()
       // Jitter, so a relay restart does not bring every viewer back at once.
       reconnect = setTimeout(connect, retry * (0.5 + Math.random()))
@@ -288,7 +319,7 @@ export function startFollower() {
   // Phones suspend background tabs, and a socket can look open long after its
   // network went away. On return, check that the relay still answers.
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState !== 'visible') return
+    if (document.visibilityState !== 'visible' || locked) return
     const socket = ws
     // Waiting to reconnect: do it now.
     if (!socket) {

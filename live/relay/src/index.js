@@ -12,6 +12,12 @@ import { DurableObject } from 'cloudflare:workers'
 
 const DECK = /^[a-z0-9-]{1,40}$/
 const SESSION = /^[\w-]{8,64}$/
+// A talk may need a password. The viewer turns it into a key, the SHA-256 of
+// the password, and sends that; the stage keeps only the key's own SHA-256,
+// the lock, which the presenter's dev server set when it claimed the stage.
+const KEY = /^[0-9a-f]{64}$/
+// A viewer that gave no key, or the wrong one, is told so and closed.
+const LOCKED = 4003
 // Durable Object storage takes up to 2 MB per value; the snapshot stays well
 // under it.
 const MAX_MESSAGE = 1024 * 1024
@@ -106,6 +112,9 @@ async function watch(request, env, stage) {
   const session = step === 'connect' ? '' : await verify(env, body.token)
   if (session === undefined) return json({ error: 'Bad token' }, 400)
   const params = { step, session, ip: request.headers.get('cf-connecting-ip') ?? '' }
+  // Opening a connection needs the talk's key, if it has a password. Only a
+  // connection opened that way gets a token for the other steps.
+  if (step === 'connect' && typeof body.key === 'string' && KEY.test(body.key)) params.key = body.key
   if (step === 'pull') {
     const tracks = body.tracks
     const valid = Object.hasOwn(MEDIA, body.kind) && Array.isArray(tracks) && tracks.length >= 1
@@ -229,23 +238,33 @@ export class LiveRoom extends DurableObject {
   async fetch(request) {
     const url = new URL(request.url)
     switch (url.pathname) {
-      case '/viewer': return this.viewer()
+      case '/viewer': return this.viewer(url.searchParams)
       case '/publish': return this.publish(url.searchParams)
       case '/stop': return this.stop(url.searchParams)
       case '/build': return this.setBuild(url.searchParams)
       case '/media': return this.media(url.searchParams, request)
       case '/admit': return this.admit(url.searchParams)
       case '/status': {
-        const { session, host, startedAt, stopped, retired = [] } = this.stage
-        return json({ ...this.public(), session, host, startedAt, stopped: !!stopped, connected: this.hasPublisher(), retired, screenReady: sfuReady(this.env) })
+        const { session, host, startedAt, stopped, retired = [], lock } = this.stage
+        // `passwords`: this relay checks them. `npm run live --password` refuses
+        // an older relay, which would let everyone in.
+        return json({ ...this.public(), session, host, startedAt, stopped: !!stopped, connected: this.hasPublisher(), retired, screenReady: sfuReady(this.env), passwords: true, locked: !!lock })
       }
     }
   }
 
-  viewer() {
+  async viewer(params) {
     if (this.ctx.getWebSockets('viewer').length >= MAX_VIEWERS)
       return new Response('Too many viewers', { status: 503 })
     const { 0: client, 1: server } = new WebSocketPair()
+    // A browser cannot read a refused upgrade's status, so a viewer without
+    // the password is accepted, told, and closed.
+    const key = params.get('key') ?? ''
+    if (!(await this.unlocks(key))) {
+      this.ctx.acceptWebSocket(server, ['refused'])
+      this.dismiss(server, LOCKED, key ? 'Wrong password' : 'Password required', { t: 'locked', wrong: !!key })
+      return new Response(null, { status: 101, webSocket: client })
+    }
     this.ctx.acceptWebSocket(server, ['viewer'])
     server.send(JSON.stringify({ t: 'snapshot', ...this.public() }))
     return new Response(null, { status: 101, webSocket: client })
@@ -279,6 +298,7 @@ export class LiveRoom extends DurableObject {
         startedAt: Date.now(),
         build: (params.get('build') ?? '').slice(0, 40),
         host: (params.get('host') ?? 'another machine').slice(0, 40),
+        ...(KEY.test(params.get('lock') ?? '') ? { lock: params.get('lock') } : {}),
       })
     }
     // The same session reconnecting: drop any half-dead socket it left behind.
@@ -302,6 +322,11 @@ export class LiveRoom extends DurableObject {
     const retired = [this.stage.session, ...(this.stage.retired ?? [])].filter(Boolean).slice(0, MAX_RETIRED)
     this.stage = { ...next, retired, revoking: this.stage.revoking }
     this.save('stage', 'snapshot')
+    // A talk with a password lets in only viewers who have it. Everyone
+    // connects again, and the key they hold decides.
+    if (next.lock) {
+      for (const ws of this.ctx.getWebSockets('viewer')) this.dismiss(ws, 4001, 'A new talk started')
+    }
     // Viewers start over from the new stage: a viewer on another deck reloads.
     this.broadcast(JSON.stringify({ t: 'snapshot', ...this.public() }))
   }
@@ -487,9 +512,10 @@ export class LiveRoom extends DurableObject {
   // For the Worker's `/watch`: admits a viewer's step against the budgets,
   // and for a pull returns what is on stage. Only the Worker can ask; it is
   // not a public route.
-  admit(params) {
+  async admit(params) {
     const step = params.get('step')
     if (!this.snapshot.live || this.stage.stopped) return json({ error: 'Not live' }, 409)
+    if (step === 'connect' && !(await this.unlocks(params.get('key') ?? ''))) return json({ error: 'Password required' }, 403)
     const minute = Math.floor(Date.now() / 60_000)
     if (this.budget?.minute !== minute) this.budget = { minute, steps: {}, ips: new Map(), viewers: new Map(), shares: new Map() }
     const b = this.budget
@@ -522,13 +548,24 @@ export class LiveRoom extends DurableObject {
 
   // Closes a publisher. The reason also goes as a message first: the closing
   // handshake can take seconds to reach the other side.
-  dismiss(ws, code, reason) {
+  dismiss(ws, code, reason, message = { t: 'closing', code, reason }) {
     reason = reason.slice(0, 120)
     try {
-      ws.send(JSON.stringify({ t: 'closing', code, reason }))
+      ws.send(JSON.stringify(message))
       ws.close(code, reason)
     }
     catch {}
+  }
+
+  // Whether a viewer's key opens the talk on stage. A talk without a
+  // password is open to all.
+  async unlocks(key) {
+    const lock = this.stage.lock
+    if (!lock) return true
+    if (!KEY.test(key)) return false
+    const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(key)))
+    const want = hexBytes(lock)
+    return digest.length === want.length && crypto.subtle.timingSafeEqual(digest, want)
   }
 
   // What viewers may see. `since` tells them a new talk started.

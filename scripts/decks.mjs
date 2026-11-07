@@ -9,6 +9,7 @@ export const decks = [
   { name: 'agent-building-blocks', title: 'Skills, tools and agent boundaries', dir: 'agent-building-blocks', port: 3030 },
   { name: 'workshop-intro', title: 'App modernization lab', dir: 'workshop-intro', port: 3030 },
   { name: 'no-slop', title: 'The no slop engineer', dir: 'no-slop-deck', port: 3131 },
+  { name: 'hill-climb', title: 'Hill climbing a UI', dir: 'hill-climb', port: 3232 },
 ]
 
 export function deckArgument(args) {

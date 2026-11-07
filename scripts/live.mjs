@@ -8,6 +8,8 @@
 //   npm run live:deploy -- --deck <name>  build and upload the viewer page
 //   npm run live -- --deck <name>         present: dev server that publishes; the
 //                                         latest one started always takes the site
+//       --password <text>                 seals the slides on the site and locks the talk
+//                                         (or SLIDEV_LIVE_PASSWORD)
 //   npm run live:stop [-- --deck <name>]  end whatever talk is live (or only that deck)
 //   npm run live:url                      print the audience URL
 //
@@ -15,12 +17,13 @@
 // is read with `az`; the relay only stores its SHA-256.
 
 import { execFileSync, spawn } from 'node:child_process'
-import { createHash, randomBytes, randomUUID } from 'node:crypto'
-import { createWriteStream, existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs'
+import { createCipheriv, createHash, randomBytes, randomUUID } from 'node:crypto'
+import { copyFileSync, createWriteStream, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { hostname, tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { chooseDeck, deckArgument, findDeck } from './decks.mjs'
+import { derive, MAGIC } from '../addons/live/site/derive.js'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const configPath = join(root, 'live/config.json')
@@ -35,6 +38,28 @@ const SWA_CLI = '@azure/static-web-apps-cli@2.0.10'
 
 const [command = 'start', ...args] = process.argv.slice(2)
 const flag = name => args.includes(`--${name}`)
+// `--name value` or `--name=value`.
+function option(name) {
+  const inline = args.find(argument => argument.startsWith(`--${name}=`))
+  if (inline) return inline.slice(name.length + 3)
+  const index = args.indexOf(`--${name}`)
+  if (index === -1) return undefined
+  const value = args[index + 1]
+  if (value === undefined || value.startsWith('--')) fail(`--${name} needs a value, for example \`--${name} hill2026\`.`)
+  return value
+}
+const sha256 = text => createHash('sha256').update(text).digest('hex')
+
+// A talk's password, from `--password` or SLIDEV_LIVE_PASSWORD, and what it
+// opens (addons/live/site/derive.js): the key the published slides are sealed
+// with, and the relay's key. The relay and the dev server only get the lock,
+// the relay key's SHA-256.
+async function secretFor(deck) {
+  const password = (option('password') ?? process.env.SLIDEV_LIVE_PASSWORD ?? '').trim()
+  if (!password) return undefined
+  const { content, relay } = await derive(password, deck.name)
+  return { password, content: Buffer.from(content), lock: sha256(relay) }
+}
 
 function run(cmd, cmdArgs, options = {}) {
   return execFileSync(cmd, cmdArgs, { encoding: 'utf8', stdio: ['pipe', 'pipe', 'inherit'], ...options })?.trim() ?? ''
@@ -87,7 +112,9 @@ function publishKey() {
 
 // Identifies a viewer build by its sources, so `npm run live` can tell whether
 // the site is up to date, on any machine.
-function buildId(deck) {
+// A sealed build differs by its password too, so changing the password
+// deploys again.
+function buildId(deck, secret) {
   const listed = run('git', ['ls-files', '-co', '--exclude-standard', '-z', '--', deck.dir, 'addons', 'themes', 'package-lock.json', 'live/config.json'], { cwd: root })
   const hash = createHash('sha256')
   for (const file of listed.split('\0').filter(Boolean).sort()) {
@@ -95,6 +122,7 @@ function buildId(deck) {
     if (!existsSync(path) || !statSync(path).isFile()) continue
     hash.update(file).update('\0').update(readFileSync(path)).update('\0')
   }
+  if (secret) hash.update('sealed\0').update(secret.lock)
   return hash.digest('hex').slice(0, 16)
 }
 
@@ -302,9 +330,79 @@ function buildViewer(deck, build) {
   }, null, 2)}\n`)
 }
 
+// With a password, every file of the slides is published encrypted with the
+// key it makes. The page that opens holds only the unlock script
+// (addons/live/site/unlock.js) and the list of the app's files; a service
+// worker opens the rest once the viewer has entered the password. The page's
+// title and author stay readable, for the card; the description goes.
+const SITE_FILES = ['card.js', 'derive.js', 'join.css', 'unlock.js']
+const PLAIN = new Set(['index.html', 'live.json', 'staticwebapp.config.json', 'live-sw.js', 'live-check.bin', 'live-site'])
+
+function seal(bytes, key) {
+  const iv = randomBytes(12)
+  const cipher = createCipheriv('aes-256-gcm', key, iv)
+  return Buffer.concat([Buffer.from(MAGIC), iv, cipher.update(bytes), cipher.final(), cipher.getAuthTag()])
+}
+
+function sealSite(deck, secret) {
+  const site = siteDir(deck)
+  const addon = join(root, 'addons/live/site')
+  let sealed = 0
+  const walk = (dir, top) => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      if (top && PLAIN.has(entry.name)) continue
+      const path = join(dir, entry.name)
+      if (entry.isDirectory()) walk(path, false)
+      else if (entry.isFile()) {
+        writeFileSync(path, seal(readFileSync(path), secret.content))
+        sealed++
+      }
+    }
+  }
+  walk(site, true)
+  writeFileSync(join(site, 'live-check.bin'), seal(Buffer.from('slidev-live'), secret.content))
+  mkdirSync(join(site, 'live-site'), { recursive: true })
+  for (const file of SITE_FILES) copyFileSync(join(addon, file), join(site, 'live-site', file))
+  copyFileSync(join(addon, 'sw.js'), join(site, 'live-sw.js'))
+
+  // The app's own styles, preloads and entry wait for the unlock script.
+  const indexPath = join(site, 'index.html')
+  let html = readFileSync(indexPath, 'utf8')
+  const app = []
+  const local = value => value.startsWith('/') && !value.startsWith('//')
+  html = html.replace(/<(script|link)\b([^>]*)>(?:<\/script>)?\s*/g, (tag, name, rest) => {
+    const attrs = Object.fromEntries([...rest.matchAll(/([\w:-]+)(?:="([^"]*)")?/g)].map(([, k, v]) => [k, v ?? '']))
+    const url = name === 'script' ? attrs.src : attrs.href
+    const ours = url && local(url) && (name === 'script' ? attrs.type === 'module' : ['modulepreload', 'stylesheet'].includes(attrs.rel))
+    if (!ours) return tag
+    app.push([name, attrs])
+    return ''
+  })
+  if (!app.some(([name]) => name === 'script')) fail('Sealing the viewer: no entry script found in index.html.')
+  html = html.replace(/\s*<meta (name="description"|property="og:description")[^>]*>/g, '')
+  const config = JSON.stringify({ deck: deck.name, app }).replace(/</g, '\\u003c')
+  html = html.replace('</head>', `  <style>html, body { margin: 0; background: #05080f; }</style>
+  <link rel="stylesheet" href="/live-site/join.css">
+  <script type="application/json" id="slidev-live-sealed">${config}</script>
+  <script type="module" src="/live-site/unlock.js"></script>
+</head>`)
+  writeFileSync(indexPath, html)
+
+  // Asset names come from the plain content, so the same name can hold
+  // another password's ciphertext: no year-long caching.
+  const configPath = join(site, 'staticwebapp.config.json')
+  const swa = JSON.parse(readFileSync(configPath, 'utf8'))
+  swa.routes = (swa.routes ?? []).filter(route => route.route !== '/assets/*')
+  swa.navigationFallback.exclude = [...new Set([...(swa.navigationFallback.exclude ?? []), '/live-site/*', '/live-sw.js', '/live-check.bin'])]
+  writeFileSync(configPath, `${JSON.stringify(swa, null, 2)}\n`)
+  console.log(`Sealed ${sealed} files with the password.`)
+}
+
 async function deployViewer(deck) {
-  const build = process.env.SLIDEV_LIVE_BUILD || buildId(deck)
+  const secret = await secretFor(deck)
+  const build = process.env.SLIDEV_LIVE_BUILD || buildId(deck, secret)
   buildViewer(deck, build)
+  if (secret) sealSite(deck, secret)
   if (flag('build-only')) return console.log(`\nBuilt ${siteDir(deck)}`)
   // Started by `npm run live`: upload only while that presentation holds the
   // stage. If that cannot be confirmed, do not upload; it retries later.
@@ -461,12 +559,17 @@ function keepSiteInStep({ deck, build, viewerBuild, session, key, env, noDeploy,
 }
 
 async function start(deck) {
+  const secret = await secretFor(deck)
+  const password = secret?.password
   const relay = relayUrl()
   const key = publishKey()
-  const build = buildId(deck)
+  const build = buildId(deck, secret)
   const session = randomUUID()
   const url = viewerUrl()
   const [stage, site] = await Promise.all([relayStatus(key), siteInfo()])
+  // An older relay ignores the password and lets everyone in.
+  if (password && !stage?.passwords)
+    fail(stage ? 'The relay does not check passwords yet. Deploy it with `npm run live:relay`, then start again.' : 'Could not reach the relay to check that it supports passwords.')
 
   // The latest presentation started always takes the live site.
   if (stage?.deck && !stage.stopped && (stage.connected || stage.live))
@@ -477,9 +580,12 @@ async function start(deck) {
   const viewerBuild = noDeploy && site?.deck === deck.name ? site.build : build
   if (noDeploy && site?.deck && site.deck !== deck.name)
     console.warn(`\nThe site shows ${site.deck}, not ${deck.name}. Viewers wait until it is deployed.`)
+  if (noDeploy && password && site?.build !== build)
+    console.warn('\nThe site has another build of these slides, which may not be sealed with this password. Leave out --no-deploy to seal this one.')
 
+  const { SLIDEV_LIVE_PASSWORD: _password, ...inherited } = process.env
   const env = {
-    ...process.env,
+    ...inherited,
     SLIDEV_LIVE_RELAY: relay,
     SLIDEV_LIVE_DECK: deck.name,
     SLIDEV_LIVE_KEY: key,
@@ -488,6 +594,8 @@ async function start(deck) {
     // While live, only localhost and Tailscale may change the deck (phone
     // remote included). --trust-lan also lets the local network in.
     ...(flag('trust-lan') ? { SLIDEV_LIVE_TRUST_LAN: '1' } : {}),
+    // Only the lock reaches the dev server, never the password.
+    ...(secret ? { SLIDEV_LIVE_LOCK: secret.lock } : {}),
   }
   const stopSync = keepSiteInStep({
     deck,
@@ -495,13 +603,15 @@ async function start(deck) {
     viewerBuild,
     session,
     key,
-    env: { ...env, SLIDEV_LIVE_BUILD: build },
+    // The deploy seals the slides, so it needs the password itself.
+    env: { ...env, SLIDEV_LIVE_BUILD: build, ...(password ? { SLIDEV_LIVE_PASSWORD: password } : {}) },
     noDeploy,
     force: flag('deploy'),
   })
 
   console.log(`\nLive: viewers follow this dev server through ${relay}`)
   if (url) console.log(`Audience URL: ${url}`)
+  if (password && url) console.log(`Viewers need the password. This link fills it in: ${url}?password=${encodeURIComponent(password)}`)
   console.log('Ctrl+C ends the talk for viewers. A crash keeps them on the last slide.\n')
 
   let interrupted = false

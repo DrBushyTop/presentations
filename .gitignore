@@ -3,3 +3,7 @@ dist/
 **/dist/
 .render-check/
 .DS_Store
+
+# Your own sound clips for the hill-climb hit-marker slide. Not for the public repo.
+hill-climb/public/sounds/hit.*
+hill-climb/public/sounds/ending.*

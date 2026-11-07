@@ -1,0 +1,122 @@
+/* The way in: a card in the middle of the screen, over the slides and the
+   notices, while the talk needs a password or the browser needs a click
+   before it plays sound. */
+.slidev-live-join {
+  position: fixed;
+  inset: 0;
+  z-index: 1001;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgb(5 8 18 / 0.72);
+  backdrop-filter: blur(6px);
+  font: 500 1rem/1.45 system-ui, sans-serif;
+}
+
+.slidev-live-join-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  width: min(26rem, 100%);
+  padding: 1.75rem;
+  border-radius: 1rem;
+  background: #111827;
+  color: #e5e7eb;
+  box-shadow: 0 20px 50px rgb(0 0 0 / 0.45);
+}
+
+.slidev-live-join-card h1 {
+  margin: 0;
+  color: #fff;
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.slidev-live-join-card p {
+  margin: 0;
+}
+
+.slidev-live-join-by {
+  margin-top: -0.5rem !important;
+  color: #9ca3af;
+}
+
+.slidev-live-join-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  color: #d1d5db;
+  font-size: 0.9rem;
+}
+
+.slidev-live-join-field input {
+  height: 2.75rem;
+  padding: 0 0.85rem;
+  border: 1px solid #374151;
+  border-radius: 0.6rem;
+  background: #0b1020;
+  color: #fff;
+  font: inherit;
+  font-size: 1rem;
+}
+
+.slidev-live-join-field input:focus {
+  outline: 2px solid #60a5fa;
+  outline-offset: 1px;
+}
+
+.slidev-live-join-error {
+  color: #fca5a5;
+  font-size: 0.9rem;
+}
+
+.slidev-live-join-go {
+  height: 3rem;
+  border: 0;
+  border-radius: 0.6rem;
+  background: #2563eb;
+  color: #fff;
+  font: inherit;
+  font-size: 1.05rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.slidev-live-join-go:hover {
+  background: #1d4ed8;
+}
+
+.slidev-live-join-go:disabled {
+  opacity: 0.7;
+  cursor: progress;
+}
+
+.slidev-live-join-hint {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  color: #9ca3af;
+  font-size: 0.85rem;
+}
+
+.slidev-live-join-hint svg {
+  width: 1.15rem;
+  height: 1.15rem;
+  flex: none;
+  margin-top: 0.1rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.slidev-live-join-hint svg path:first-child {
+  fill: currentColor;
+}
+
+.slidev-live-join[hidden],
+.slidev-live-join-card [hidden] {
+  display: none;
+}

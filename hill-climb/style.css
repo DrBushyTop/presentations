@@ -1,0 +1,100 @@
+/*
+  Hill climbing a UI. Deck-local layer on the Zure theme.
+
+  Colour keeps one meaning:
+    teal/frozen  Opus 5.5
+    ink/white    GPT-6.1 Sol
+    red          the 9.5 target, and anything that went wrong
+*/
+
+:root {
+  --hc-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  --hc-opus: var(--z-teal);
+  --hc-sol: var(--z-ink);
+  --hc-goal: var(--z-red);
+  --hc-line: var(--z-grey-200);
+  --hc-soft: var(--z-grey-100);
+  --hc-night: #101214;
+  --hc-night-2: #1b1e21;
+  --hc-night-3: #2c3034;
+  --slidev-transition-duration: 520ms;
+}
+
+.slide-enter-active,
+.slide-leave-active {
+  transition: opacity 0.45s ease;
+}
+
+.slidev-layout.hc {
+  padding: 40px 72px 0;
+}
+
+.slidev-layout.hc h1 {
+  font-size: 40px;
+  line-height: 1.08;
+  max-width: none;
+  margin: 0;
+}
+
+/* The exhibit: everything between the title and the footer band. */
+.hc-stage {
+  position: absolute;
+  left: 72px;
+  right: 72px;
+  top: 106px;
+  bottom: 60px;
+  font-family: var(--z-font-text);
+}
+
+.hc-stage svg {
+  display: block;
+}
+
+/* Full-canvas dark scenes. */
+.hc-night {
+  position: absolute;
+  inset: 0;
+  background: var(--hc-night);
+  color: #fff;
+  font-family: var(--z-font-text);
+  overflow: hidden;
+}
+
+.hc-mono {
+  font-family: var(--hc-mono);
+}
+
+.hc-num {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.hc-label {
+  font-size: 16px;
+  color: var(--z-grey-600);
+}
+
+.hc-card {
+  background: #fff;
+  border: 1px solid var(--hc-line);
+  border-radius: 12px;
+}
+
+.hc-key {
+  display: inline-block;
+  min-width: 26px;
+  padding: 1px 7px;
+  border: 1px solid var(--z-grey-200);
+  border-bottom-width: 2px;
+  border-radius: 6px;
+  font: 600 15px/1.4 var(--hc-mono);
+  text-align: center;
+  background: #fff;
+  color: var(--z-ink);
+}
+
+/* The logo sits on a dark cover here. */
+.z-brand-cover {
+  filter: brightness(0) invert(1);
+}

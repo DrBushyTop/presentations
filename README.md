@@ -11,6 +11,7 @@ This repository contains reusable Slidev themes and individual presentations.
 - `workshop-intro/` contains an eight-slide, ten-minute **App modernization lab**
   introduction, including setup and lab troubleshooting tips.
 - `no-slop-deck/` contains **The no slop engineer**, a 60-minute ESPC talk.
+- `hill-climb/` contains **Hill climbing a UI**, a 30 to 45-minute internal talk with Motion animations. Its game sound clips are gitignored; `npm run sounds:hill-climb` fetches them.
   Each slide builds with clicks. Components take a `step` prop set from
   `$clicks` instead of using `v-click`. The export lab and review budget
   slides are live: their controls work during the talk.
@@ -30,6 +31,7 @@ npm run dev:database-modernization
 npm run dev:agent-building-blocks
 npm run dev:workshop-intro
 npm run dev:no-slop
+npm run dev:hill-climb
 ```
 
 `npm run build` builds every deck. Use `npm run export` or
@@ -45,6 +47,7 @@ camera bubble goes to them too, with the voice.
 
 ```bash
 npm run live -- --deck no-slop          # present; Ctrl+C ends the talk for viewers
+npm run live -- --deck no-slop --password <text>   # slides and talk open only with the password
 npm run live:stop                       # end whatever talk is live
 ```
 
