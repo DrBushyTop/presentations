@@ -18,6 +18,7 @@ function publisher() {
     key: env.SLIDEV_LIVE_KEY,
     session: env.SLIDEV_LIVE_SESSION,
     build: env.SLIDEV_LIVE_BUILD,
+    lock: env.SLIDEV_LIVE_LOCK,
     host: hostname().split('.')[0],
   })
   return globalThis.__slidevLivePublisher

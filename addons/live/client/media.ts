@@ -1,16 +1,19 @@
 // The viewer's side of the screen share and the camera. While the presenter
 // shares a screen, a video covers the slides; while Slidev's camera bubble is
 // on, a bubble shows it here too, on the same spot of the slide, with the
-// presenter's voice if a microphone is on. Browsers only play sound after the
-// viewer has touched the page, so until then a button asks for it, and the
-// first touch anywhere turns it on. A viewer who mutes it stays muted in that
-// tab.
+// presenter's voice if a microphone is on. Sounds the slides make play too
+// (see sound.ts). Sound is on by default and one button mutes both. Browsers
+// only play sound after the viewer has touched the page, so until then the
+// button asks for it, and the first touch anywhere turns it on. A viewer who
+// mutes it stays muted in that tab.
 // Each viewer keeps one connection to Cloudflare Realtime for the whole talk,
 // opened when the page opens. Opening one takes a moment, and an audience
 // opening the page at once is spread over a minute or so; a share then only
 // adds its tracks to connections that are already up.
 import type { Place } from './place'
 import { circle, clampPlace } from './place'
+import { routeSlideSound } from './sound'
+import type { createJoin } from './join'
 
 const ICE = [{ urls: 'stun:stun.cloudflare.com:3478' }]
 const KINDS = ['screen', 'camera'] as const
@@ -25,8 +28,12 @@ type Kind = typeof KINDS[number]
 export interface Media { id: string, tracks: string[] }
 export type Shown = Partial<Record<Kind, Media>>
 
-export function createMedia(relay: string) {
+// `join` is the card in the middle of the screen; `key` is the talk's key if
+// it has a password, which the relay wants before it opens a connection.
+export function createMedia(relay: string, join: ReturnType<typeof createJoin>, key: () => string) {
   const base = relay.replace(/^ws/, 'http').replace(/\/$/, '')
+  // Before any slide mounts, so every slide's AudioContext goes through it.
+  const slideSound = routeSlideSound()
   const screen = document.createElement('video')
   screen.className = 'slidev-live-screen'
   // The speaker button sits in the corner, next to the camera bubble when the
@@ -47,7 +54,7 @@ export function createMedia(relay: string) {
   const listen = document.createElement('button')
   listen.type = 'button'
   listen.className = 'slidev-live-listen'
-  listen.title = 'Presenter\'s sound'
+  listen.title = 'Sound'
   const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
   icon.setAttribute('viewBox', '0 0 24 24')
   icon.setAttribute('aria-hidden', 'true')
@@ -65,7 +72,7 @@ export function createMedia(relay: string) {
   volume.min = '0'
   volume.max = '1'
   volume.step = '0.05'
-  volume.setAttribute('aria-label', 'Presenter volume')
+  volume.setAttribute('aria-label', 'Volume')
   panel.append(mute, volume)
   sound.append(panel, listen)
   // One stream for the voice. A new voice track replaces the one in it. It
@@ -84,6 +91,7 @@ export function createMedia(relay: string) {
   volume.addEventListener('input', () => {
     audio.volume = volume.valueAsNumber
     localStorage.setItem(VOLUME, String(audio.volume))
+    level()
     // Turning it up while muted means the viewer wants to hear it.
     if (!listening) setListening(true)
   })
@@ -105,8 +113,21 @@ export function createMedia(relay: string) {
   let closing: ReturnType<typeof setTimeout> | undefined
   let listening = sessionStorage.getItem(MUTED) !== '1'
   audio.muted = !listening
-  // The browser refused to play sound before the viewer touched the page.
+  // The browser refused to play the voice before the viewer touched the page.
   let blocked = false
+  // The voice or a slide is waiting for the viewer's go-ahead.
+  const waiting = () => blocked || slideSound.blocked()
+  // Slide sounds follow the mute and the volume. Where the page has no volume
+  // (iPhones and iPads), they play at full level and the device's buttons set it.
+  function level() {
+    slideSound.level(!listening ? 0 : adjustable ? volume.valueAsNumber : 1)
+  }
+  level()
+  slideSound.onChange(() => {
+    join.sound(slideSound.held())
+    render()
+  })
+  join.sound(slideSound.held())
   let open = false
   let shownIcon = ''
   let active = false
@@ -173,7 +194,7 @@ export function createMedia(relay: string) {
       peer.onconnectionstatechange = () => {
         if (pc === peer && peer.connectionState === 'failed') reset()
       }
-      const opened = await post('connect', {})
+      const opened = await post('connect', { key: key() })
       token = opened.token
       await answer(peer, opened.sdp)
       await connected(peer)
@@ -234,23 +255,25 @@ export function createMedia(relay: string) {
     // The speaker button moves out of the bubble's way, to its left.
     corner.style.right = ''
     if (bubble.hidden || sound.hidden) return
-    const button = corner.getBoundingClientRect()
-    const overlaps = left < button.right && left + size > button.left && top < button.bottom && top + size > button.top
+    // The button, and the panel above it while it is open.
+    const rects = [listen.getBoundingClientRect(), ...(panel.hidden ? [] : [panel.getBoundingClientRect()])]
+    const overlaps = rects.some(r => left < r.right && left + size > r.left && top < r.bottom && top + size > r.top)
     if (overlaps) corner.style.right = `${innerWidth - left + 12}px`
   }
 
   function render() {
     screen.hidden = !active || !shows(screen, 'screen')
     bubble.hidden = !active || !shows(camera, 'camera')
-    sound.hidden = !active || !wanted.camera?.tracks.includes('voice')
-    const state = !listening ? 'muted' : blocked ? 'blocked' : 'on'
+    // Shown all talk, as the join card says.
+    sound.hidden = !active
+    const state = !listening ? 'muted' : waiting() ? 'blocked' : 'on'
     if (sound.hidden || state === 'blocked') open = false
     listen.dataset.state = state
     const drawn = state === 'muted' ? ICONS.muted : ICONS.on
     if (shownIcon !== drawn) icon.innerHTML = shownIcon = drawn
     label.hidden = state !== 'blocked'
     // Without a volume to set there is nothing to open: the button mutes.
-    listen.setAttribute('aria-label', state === 'blocked' ? 'Turn on sound' : adjustable ? 'Presenter\'s sound' : listening ? 'Mute presenter' : 'Unmute presenter')
+    listen.setAttribute('aria-label', state === 'blocked' ? 'Turn on sound' : adjustable ? 'Sound' : listening ? 'Mute' : 'Unmute')
     if (adjustable) listen.setAttribute('aria-expanded', String(open))
     panel.hidden = !open
     panel.classList.toggle('muted', !listening)
@@ -359,6 +382,7 @@ export function createMedia(relay: string) {
     listening = on
     audio.muted = !on
     sessionStorage.setItem(MUTED, on ? '0' : '1')
+    level()
     if (on) {
       if (audio.srcObject) play()
       sync()
@@ -372,6 +396,8 @@ export function createMedia(relay: string) {
   for (const type of ['pointerdown', 'keydown', 'touchend']) {
     addEventListener(type, (event) => {
       const inside = sound.contains(event.target as Node)
+      slideSound.resume()
+      join.sound(false)
       if (blocked && listening && audio.srcObject && !inside) play()
       if (open && ((type === 'pointerdown' && !inside) || (event as KeyboardEvent).key === 'Escape')) {
         open = false
@@ -382,20 +408,25 @@ export function createMedia(relay: string) {
 
   listen.addEventListener('click', () => {
     // While blocked, the click is the go-ahead.
-    if (listening && blocked) return play()
+    if (listening && waiting()) {
+      slideSound.resume()
+      if (audio.srcObject) play()
+      return render()
+    }
     if (!adjustable) return setListening(!listening)
     open = !open
     render()
   })
   mute.addEventListener('click', () => setListening(!listening))
 
-  ;(window as any).__slidevLiveMedia = { screen, camera, audio, listen, mute, panel, volume, sound, pc: () => pc }
+  ;(window as any).__slidevLiveMedia = { screen, camera, bubble, audio, listen, mute, panel, volume, sound, position, place: (next: Partial<Place>) => { placed = next; position() }, pc: () => pc }
 
   return {
     // While the talk is live, keep a connection ready.
     active(on: boolean) {
       if (on === active) return
       active = on
+      join.live(on)
       if (on) return sync()
       wanted = {}
       clearTimeout(timer)

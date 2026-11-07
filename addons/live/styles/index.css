@@ -1,3 +1,6 @@
+/* The join card, shared with a sealed site's unlock page. */
+@import '../site/join.css';
+
 .slidev-live-cover {
   position: fixed;
   inset: 0;

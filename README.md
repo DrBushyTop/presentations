@@ -47,6 +47,7 @@ camera bubble goes to them too, with the voice.
 
 ```bash
 npm run live -- --deck no-slop          # present; Ctrl+C ends the talk for viewers
+npm run live -- --deck no-slop --password <text>   # slides and talk open only with the password
 npm run live:stop                       # end whatever talk is live
 ```
 

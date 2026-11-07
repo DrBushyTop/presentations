@@ -16,8 +16,9 @@ const CLAIM_WINDOW = 120_000
 // The relay shows one talk at a time. Until its first connection opens, and
 // only within CLAIM_WINDOW of starting, this server claims the stage; after
 // that it only resumes. The relay never lets a replaced session back in.
-export function createPublisher({ relay, deck, key, session, build = '', host = '', log = console }) {
-  const base = `${relay.replace(/\/$/, '')}/publish?${new URLSearchParams({ session, deck, build, host })}`
+// `lock`, when the talk has a password, is the SHA-256 of the viewers' key.
+export function createPublisher({ relay, deck, key, session, build = '', host = '', lock = '', log = console }) {
+  const base = `${relay.replace(/\/$/, '')}/publish?${new URLSearchParams({ session, deck, build, host, ...(lock ? { lock } : {}) })}`
   const created = performance.now()
   let opened = false
   const last = { nav: undefined, cursor: undefined, drawings: undefined, bubble: undefined, synced: {} }
