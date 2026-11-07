@@ -416,6 +416,7 @@ Each member's own frozen weights across all rounds, so the line is consistent.
 class: hc
 part: Results
 clicks: 1
+hide: true
 ---
 
 # Every row
@@ -440,7 +441,7 @@ clicks: 1
 
 <!--
 - That's what I wrote in round 18. Members could read earlier rounds, including their own scores.
-- [click] One rule change: don't open any earlier report. 9.22 to 8.64, 9.06 to 8.65.
+- [click] One rule change: don't open any earlier report. 9.22 to 8.64, 9.06 to 8.65. Every row stepped back at once. A whole product doesn't get worse overnight, so this was the instrument changing.
 - Sol had also moved Frame.io from 8.7 to 9.0 and Linear from 8.5 to 8.9 on unchanged images, which is why the rival scores had been frozen.
 - If you run a council, assume it remembers unless you've made that impossible.
 -->
@@ -449,6 +450,7 @@ clicks: 1
 class: hc
 part: Results
 clicks: 2
+hide: true
 ---
 
 # The blind test
@@ -473,8 +475,9 @@ clicks: 2
 <!--
 Click once on the slide window before the talk, or the browser keeps it silent. On a fresh checkout run `npm run sounds:hill-climb` first.
 - Calm screen. "Every PR had to show what changed."
-- [click] Let it run for 12 seconds. Don't talk over it. When the last pin lands the screen shakes, drains to grey and the ending sound plays for 7 seconds. Let that finish too.
-- [click] After the sound, the payoff.
+- [click] Let it run for 12 seconds. Don't talk over it. When the last pin lands the screen shakes, drains to grey and the ending sound plays for 7 seconds. After the yell, Game Over builds from the left while the calls play. Let that finish too.
+- [click] After the sound, the payoff. First review to last blind round: Opus 6.42 to 8.67, Sol 6.39 to 8.70. Phone is out of both.
+- If asked: old master and the final build, scored side by side and blind in round 23, gain +1.87 and +0.94, about 22 and 8 times the noise. Old master itself scored 7.00 and 7.62 there, higher than in round 1, and Sol's round 23 ran on Copilot, not Codex.
 - The pins are real, from the PR images, and the feed lines are real pin captions. They come from many screens, so the positions are mapped onto this one. It's a joke with true numbers: 1,274 pins in total, 855 on after-images, and the ones on this screen are the laptop-width ones.
 -->
 

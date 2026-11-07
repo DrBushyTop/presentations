@@ -1,8 +1,9 @@
 <!--
   Every changed-screen pin from the PRs, fired at one screen. Positions are real
   pin coordinates from many screens, mapped onto this one, so it is a joke with
-  true numbers, not a map. Sound plays only in the main slide window, and
-  browsers mute it until that window has had one click.
+  true numbers, not a map. Sound plays only in the main slide window and on
+  the live viewer page, and browsers mute it until that page has had one
+  click (the viewer's join card asks for it).
 
   Sounds: public/sounds/hit.mp3 and ending.mp3 are used if they exist. Both are
   gitignored, for your own clips. Without them the tick is synthesised here and
@@ -14,15 +15,18 @@ import { animate, motion } from 'motion-v'
 import { useSlideContext } from '@slidev/client'
 import data from '../lib/pins.json'
 import { asset, useStage } from '../lib/stage'
+import GameOver from './GameOver.vue'
 
 const props = withDefaults(defineProps<{ step?: number }>(), { step: 99 })
-const { still, active, spring, ease } = useStage()
+const { still, active, ease } = useStage()
 const { $renderContext } = useSlideContext()
 
 const pins = data.pins as [number, number][]
 const feed = data.feed as string[]
 const SCALE = 720 / 800
 const LIFE = 340
+// The yell in ending.mp3 lasts this long. Game over builds over the calls after it.
+const YELL = 1800
 
 const canvas = ref<HTMLCanvasElement>()
 const fired = ref(0)
@@ -38,6 +42,8 @@ let lastTick = 0
 let lastLine = 0
 const live: { x: number, y: number, at: number }[] = []
 const dead = ref(still.value)
+const over = ref(still.value)
+let overTimer: ReturnType<typeof setTimeout> | undefined
 
 // The dev server answers a missing file with the app page, so a clip only
 // counts once it decodes.
@@ -164,6 +170,8 @@ function reset() {
   live.length = 0
   fired.value = 0
   dead.value = false
+  clearTimeout(overTimer)
+  over.value = false
   try { endSource?.stop() }
   catch {}
   lines.value = []
@@ -188,6 +196,7 @@ function fire() {
       draw(performance.now())
       if (shake.value) animate(shake.value, { x: [0, -10, 10, -6, 6, 0], y: [0, 6, -6, 3, 0] }, { duration: 0.5 })
       if (audio && endClip && $renderContext.value === 'slide') endSource = playClip(endClip)
+      overTimer = setTimeout(() => { over.value = true }, YELL)
     },
   })
 }
@@ -196,8 +205,10 @@ watch([() => props.step, active, canvas], ([s, on]) => {
   if (!canvas.value) return
   if (still.value || s >= 2) {
     run?.stop()
+    clearTimeout(overTimer)
     fired.value = pins.length
     dead.value = true
+    over.value = true
     if (still.value) lines.value = feed.slice(0, 6).map((t, id) => ({ id, t }))
     draw(performance.now())
   }
@@ -208,6 +219,7 @@ watch([() => props.step, active, canvas], ([s, on]) => {
 onMounted(setUpSound)
 onBeforeUnmount(() => {
   run?.stop()
+  clearTimeout(overTimer)
   cancelAnimationFrame(raf)
   audio?.close()
 })
@@ -229,9 +241,7 @@ const big = computed(() => props.step >= 2 || still.value)
     <div class="score">
       <b class="hc-num">{{ count }}</b><span>pins</span>
     </div>
-    <motion.div class="award" :initial="false" :animate="{ opacity: big ? 1 : 0, scale: big ? 1 : 1.4 }" :transition="spring({ bounce: 0.4 })">
-      <b>+1.87</b><span>Opus, scored blind</span>
-    </motion.div>
+    <GameOver :on="over" :gains="big" />
   </div>
 </template>
 
@@ -246,7 +256,4 @@ const big = computed(() => props.step >= 2 || still.value)
 .score { position: absolute; left: 22px; bottom: 16px; display: flex; align-items: baseline; gap: 8px; padding: 4px 16px; border-radius: 8px; background: rgba(16, 18, 20, 0.84); }
 .score b { font-size: 56px; line-height: 1.1; color: #fff; }
 .score span { font-size: 20px; color: #b5b9bd; }
-.award { position: absolute; left: 0; right: 128px; top: 250px; text-align: center; pointer-events: none; }
-.award b { display: block; font: 800 150px/1 var(--z-font-display); letter-spacing: -0.04em; color: var(--z-red); -webkit-text-stroke: 10px #fff; paint-order: stroke fill; }
-.award span { display: inline-block; margin-top: 12px; padding: 6px 14px; border-radius: 6px; font-size: 22px; color: #fff; background: rgba(16, 18, 20, 0.84); }
 </style>

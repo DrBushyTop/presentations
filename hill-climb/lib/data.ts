@@ -23,6 +23,10 @@ export const calibration = {
   },
 }
 
+// First review to last blind round, from rounds.json: Opus 6.42 to 8.665, Sol 6.392 to 8.702.
+// Both leave out phone. The stricter figure is calibration's side-by-side gain above.
+export const climbGain = { opus: 2.25, sol: 2.31 }
+
 // Frozen benchmark scores, council/frozen-{opus,sol}.md (each member's round 12).
 export const frozen = {
   opus: { A: 8.8, B: 8.6, C: 8.2, D: 9.0, E: 8.3, F: 8.6, G: 8.1, H: 9.0 },
