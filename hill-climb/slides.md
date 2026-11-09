@@ -408,7 +408,8 @@ Each member's own frozen weights across all rounds, so the line is consistent.
 - Round 1: 6.42 and 6.39.
 - [click] Round 4: over 8 in three rounds, like Theo's.
 - [click] Round 18: 9.22 and 9.06. The goal looks reachable.
-- [click] Round 19. I made them blind. 8.64 and 8.65.
+- [click] Round 19. I made them blind. 8.64 and 8.65. Members could read earlier rounds, including their own scores. In round 18 I wrote: "It seems like opus is at least reading the previous rounds reviews." One rule change, don't open any earlier report, and every row stepped back at once. A whole product doesn't get worse overnight, so this was the instrument changing.
+- Sol had also moved Frame.io from 8.7 to 9.0 and Linear from 8.5 to 8.9 on unchanged images, which is why the rival scores had been frozen. If you run a council, assume it remembers unless you've made that impossible.
 - [click] Then flat. Round 22: 8.67 and 8.70.
 -->
 
@@ -427,23 +428,6 @@ hide: true
 - Mean of both members. Red is low, yellow is about 8, blue is high.
 - Capture and reading started the lowest and rose the most. Those are the rows used most.
 - [click] Blind rounds. Every row steps back at once. A whole product doesn't get worse overnight, so this is the instrument changing.
--->
-
----
-class: hc
-part: Results
-clicks: 1
----
-
-# The memory leak
-
-<Anchor :step="$clicks" />
-
-<!--
-- That's what I wrote in round 18. Members could read earlier rounds, including their own scores.
-- [click] One rule change: don't open any earlier report. 9.22 to 8.64, 9.06 to 8.65. Every row stepped back at once. A whole product doesn't get worse overnight, so this was the instrument changing.
-- Sol had also moved Frame.io from 8.7 to 9.0 and Linear from 8.5 to 8.9 on unchanged images, which is why the rival scores had been frozen.
-- If you run a council, assume it remembers unless you've made that impossible.
 -->
 
 ---
@@ -553,22 +537,6 @@ List price, not what was paid. Subscriptions and the Copilot flat rate cover mos
 - [click] Council, orchestrator, review. GPT was $92, all in council and review. The whole thing comes to $1,539.
 - Two cancelled m4 turns have no usage data. Session logs put m4 about $5 higher.
 - About 2.6 billion of 2.66 billion Claude input tokens were cache reads. Without caching this would be a different slide.
--->
-
----
-class: hc
-part: Verdict
-clicks: 2
----
-
-# Where the gain came from
-
-<Stagnation :step="$clicks" />
-
-<!--
-- Rounds 1 to 4: +1.82 in about 9 hours.
-- [click] Rounds 4 to 18: +0.91 in about 25 hours, and that's the phase with memory, so it's hatched. Treat it as an upper limit.
-- [click] Rounds 19 to 22, blind: +0.04 in about 7 hours. That's the plateau.
 -->
 
 ---
