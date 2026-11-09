@@ -221,6 +221,37 @@ function wrangler(wranglerArgs, options = {}) {
   return run('npx', ['wrangler', ...wranglerArgs], { cwd: relayDir, ...options })
 }
 
+// The relay this checkout has (live/relay/src/index.js).
+const RELAY_VERSION = Number(readFileSync(join(relayDir, 'src/index.js'), 'utf8').match(/^const VERSION = (\d+)/m)?.[1] ?? 0)
+
+// Brings the running relay up to this checkout's version, so presenting is one
+// command. Never goes back: a machine with an older checkout leaves it be.
+// Secrets and the URL stay as they are; `npm run live:relay` sets those up.
+async function updateRelay(stage, key) {
+  // Only the relay in live/config.json: SLIDEV_LIVE_RELAY may point at a test one.
+  if (!stage || (stage.version ?? 0) >= RELAY_VERSION || relayUrl() !== config.relay) return stage
+  console.log(`\nUpdating the relay to version ${RELAY_VERSION} (it runs ${stage.version ?? 1}).`)
+  try {
+    wrangler(['deploy'], { stdio: ['ignore', 'ignore', 'pipe'] })
+  }
+  catch (error) {
+    const message = String(error.stderr ?? error.message)
+    fail(/auth|log ?in|token/i.test(message)
+      ? 'Updating the relay needs a Cloudflare sign-in on this machine. Run `npm run live:login` once, then start again.'
+      : `Updating the relay failed:\n${message.trim().split('\n').slice(-5).join('\n')}`)
+  }
+  // The new version answers within seconds.
+  for (let i = 0; i < 20; i++) {
+    const next = await relayStatus(key)
+    if ((next?.version ?? 0) >= RELAY_VERSION) {
+      console.log('The relay is up to date.')
+      return next
+    }
+    await sleep(1500)
+  }
+  fail('The relay did not come back after the update. Try again, or run `npm run live:relay`.')
+}
+
 function deployRelay() {
   const key = publishKey()
   console.log('Deploying the relay Worker')
@@ -566,10 +597,11 @@ async function start(deck) {
   const build = buildId(deck, secret)
   const session = randomUUID()
   const url = viewerUrl()
-  const [stage, site] = await Promise.all([relayStatus(key), siteInfo()])
-  // An older relay ignores the password and lets everyone in.
+  const [reached, site] = await Promise.all([relayStatus(key), siteInfo()])
+  const stage = await updateRelay(reached, key)
+  // An older relay would ignore the password and let everyone in.
   if (password && !stage?.passwords)
-    fail(stage ? 'The relay does not check passwords yet. Deploy it with `npm run live:relay`, then start again.' : 'Could not reach the relay to check that it supports passwords.')
+    fail(stage ? 'The relay does not check passwords. Run `npm run live:relay`, then start again.' : 'Could not reach the relay to check that it supports passwords.')
 
   // The latest presentation started always takes the live site.
   if (stage?.deck && !stage.stopped && (stage.connected || stage.live))

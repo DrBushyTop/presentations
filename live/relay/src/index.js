@@ -10,6 +10,10 @@ import { DurableObject } from 'cloudflare:workers'
 // a dev server forgotten somewhere cannot retake it, not even by retrying a
 // claim whose answer it never saw.
 
+// Bump on every change to the relay. `npm run live` deploys the relay when the
+// one running is older than its own, and never deploys an older one.
+const VERSION = 3
+
 const DECK = /^[a-z0-9-]{1,40}$/
 const SESSION = /^[\w-]{8,64}$/
 // A talk may need a password. The viewer turns it into a key, the SHA-256 of
@@ -248,7 +252,7 @@ export class LiveRoom extends DurableObject {
         const { session, host, startedAt, stopped, retired = [], lock } = this.stage
         // `passwords`: this relay checks them. `npm run live --password` refuses
         // an older relay, which would let everyone in.
-        return json({ ...this.public(), session, host, startedAt, stopped: !!stopped, connected: this.hasPublisher(), retired, screenReady: sfuReady(this.env), passwords: true, locked: !!lock })
+        return json({ ...this.public(), session, host, startedAt, stopped: !!stopped, connected: this.hasPublisher(), retired, screenReady: sfuReady(this.env), passwords: true, locked: !!lock, version: VERSION })
       }
     }
   }

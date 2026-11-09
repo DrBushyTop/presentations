@@ -88,9 +88,6 @@ with a password that takes over sends every viewer back to the card.
   cannot open the slides there.
 - `--no-deploy` keeps the site's build, which may not be sealed with this
   password. The command warns.
-- The password needs the relay from this version: `npm run live` refuses to
-  start with one against an older relay, which would let everyone in. Deploy
-  it with `npm run live:relay`.
 - `npm run live:deploy -- --deck <deck> --password <text>` seals a deploy
   without presenting.
 
@@ -190,12 +187,21 @@ npm run live:login        # Cloudflare sign-in for the relay's own wrangler
 npm run live:relay        # Cloudflare Worker, stores the key's SHA-256
 ```
 
+After that, `npm run live` keeps the relay current by itself. The relay
+reports its `VERSION` (top of `live/relay/src/index.js`; bump it with every
+change), and when it is older than this checkout's, `npm run live` deploys it
+before the talk starts. It never deploys an older one, so a machine with an
+older checkout leaves the relay alone. A relay too old to check passwords is
+never used with one.
+
 `live/config.json` holds the resource names, the relay URL and the site URL.
 None of it is secret.
 
 To present from another machine, sign in with `az login`. Your account
 needs **Key Vault Secrets Officer** on the vault, which `live:setup` grants.
-`npm run live:login` is only needed to redeploy the relay. Wrangler is a
+`npm run live:login` is needed once per machine for the relay updates
+`npm run live` makes. Without it, starting stops and says so when the relay
+needs an update. Wrangler is a
 dependency of `live/relay` only, installed on first use.
 
 The screen share and camera need a Cloudflare Realtime app (Realtime, SFU,
