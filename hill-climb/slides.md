@@ -465,6 +465,24 @@ hide: true
 -->
 
 ---
+class: hc
+part: Results
+---
+
+# One PR, as the agent showed it
+
+<PrPins />
+
+<!--
+- A real PR image from the run, as the agent posted it.
+- Before, on the left: the Evidence header says "3 corrected" as plain text, and nothing says which three moments it means.
+- After, on the right: "3 corrected" opens a list. Each correction has a time, a participant and what changed: "Same words, now a quote".
+- The legend is the agent's own. Note 4 is the careful one: it says only what the app can check.
+- The participants are test data.
+- Now picture that on every PR. That's the next slide.
+-->
+
+---
 layout: none
 nofooter: true
 clicks: 2

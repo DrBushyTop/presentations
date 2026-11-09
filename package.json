@@ -63,7 +63,7 @@
     "test:rehearsal": "node --test addons/rehearsal/timing.test.mjs"
   },
   "devDependencies": {
-    "@slidev/cli": "^52.19.1",
+    "@slidev/cli": "^53.1.0",
     "@slidev/theme-default": "^0.25.0",
     "motion-v": "^2.11.1",
     "playwright-chromium": "^1.50.0"
