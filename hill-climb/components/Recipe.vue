@@ -9,7 +9,7 @@ const rules = [
   { h: 'Lanes, not swarms', s: 'Each file has one owner' },
   { h: 'Two runs on the same build', s: 'Measure the noise first' },
   { h: 'Stop rule up front', s: 'Three flat rounds' },
-  { h: 'People at the end', s: 'A score is not a designer' },
+  { h: 'People at both ends', s: 'A walkthrough first, a study last' },
 ]
 </script>
 

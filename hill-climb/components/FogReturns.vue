@@ -22,7 +22,7 @@ const roof = py(T) - 76
 const fog = computed(() => (entered.value ? 230 : 1500))
 const ideas = [
   { h: 'Local peak?', s: 'The rulings fenced the climb' },
-  { h: 'Noise?', s: '+0.01 a round, 0.1 of noise' },
+  { h: 'Noise?', s: 'Gains too small to see' },
   { h: 'Top of the scale?', s: 'Rivals stop at 9.0' },
 ]
 const fence = [0.13, 0.47]

@@ -1,6 +1,7 @@
 <!--
   A second climb with the opposite goal: remove code, and treat the UI score as
-  a floor rather than a target. The analysis suggested about 8.6.
+  a floor rather than a target. The analysis suggested about 8.6. The study's
+  tasks join the floor, so removing code can't break what people could do.
 -->
 <script setup lang="ts">
 import { computed } from 'vue'
@@ -25,9 +26,9 @@ const bars = computed(() => (props.step >= 1 ? heights : heights.map(() => 100))
         :animate="{ scaleY: entered ? h / 100 : 0 }"
         :transition="ease(1, { delay: still ? 0 : i * 0.1 })"
       />
-      <Rise :on="step >= 2" class="floor" :y="0"><span>UI floor 8.6</span></Rise>
+      <Rise :on="step >= 2" class="floor" :y="0"><span>Floor: UI 8.6 and the study’s tasks</span></Rise>
     </div>
-    <p>Goal: less code. Rule: the score may not fall below the floor.</p>
+    <p>Goal: less code. Rule: never drop below the floor.</p>
   </div>
 </template>
 

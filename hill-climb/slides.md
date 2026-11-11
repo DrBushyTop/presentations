@@ -387,9 +387,10 @@ clicks: 3
 
 <!--
 One screen, 23 rounds. All data here is synthetic. It plays by itself. Drag the rail on the right to go to a round, in this window or the presenter view.
-- [click] Findings, before and after. It wipes by itself. Drag anywhere on the screen to compare.
-- [click] Task results.
+- [click] Findings, round 1 on the left, round 23 on the right. Both sides are cropped to the same part of the screen, at about 80% of real size. The thumbnail shows where the crop sits.
+- [click] Task results. Round 1 had a table of counts. Round 23 has the success bar, a timeline per run and the paths taken.
 - [click] The Reader.
+- These used to be drag wipes. The designers in the study said a wipe doesn't work for comparing UI, because elements move. It works for photos, not interfaces, so this is side by side now.
 - It looks better. Everyone agrees on that. Now the numbers.
 -->
 
@@ -501,15 +502,78 @@ part: Results
 ---
 class: hc
 part: Results
+clicks: 1
 ---
 
-# What designers said
+# People agreed, by less
 
-<StudyResults />
+<PeopleAgreed :step="$clicks" />
 
 <!--
-PLACEHOLDER. Fill in hill-climb/lib/study.ts.
-The four questions from the study plan: same direction as the council, same size, what the council missed, what's overbuilt.
+Three designers, one hour each. Did people see the same gain as the council?
+- Hands-on first. Each used the old build and the new one and rated both from 1 to 10. Two went up, 3 to 7 and 5 to 8. The third gave both a 4 and saw "no real difference". The mean went from 4.0 to 6.3, and two of three picked the new build.
+- Be straight about order: both people who preferred new used it second, so practice explains some of it. Finding where a run went wrong worked 3 of 3 in new and 1 of 3 in old, and that one doesn't depend on order, because the drill-down only exists in new.
+- [click] Then blind pairs: the original against the final build, the same screen side by side, shuffled, minus 2 to plus 2. Twelve pairs, three people.
+- The mean is +0.47. That's about halfway between "no difference" and "slightly better". Not "slightly better". The final build won 19 judgments, tied 8 and lost 9.
+- Biggest wins: Transcript and New invitation, +5 each out of a possible 6. Losses: Tasks −4 and Settings −3.
+- The council said +1.87 for Opus and +0.94 for Sol, on a 10-point scale. The scales differ, so don't compare the numbers. Same direction, smaller step.
+-->
+
+---
+class: hc
+part: Results
+clicks: 2
+---
+
+# People picked round 10
+
+<PeopleRank :step="$clicks" />
+
+<!--
+The ranking task: four builds of six screens, shuffled and unlabelled. Three people, so 18 rankings. Lower mean rank is better, and best is on the right.
+- First the two the council compared. The final build beats the original, just: 2.61 against 2.89.
+- [click] Now the rounds in between. Round 2/3 at 2.50. And round 10 at 2.00, the best of all four. Round 10 is the end of the sweet spot on the cost chart, $539 in.
+- [click] Head to head, round 10 placed above the final build in 13 of 18 rankings. For one designer, all six. On Sessions, all three put round 10 first.
+- Setup went the other way: everyone put the original or round 2 first, and the final build came last on average. It leads with "Recordings are arriving" and hides the failed checks behind Details.
+- So the late rounds lifted the score and not the screens. More on what they changed in a minute.
+-->
+
+---
+class: hc
+part: Results
+clicks: 1
+---
+
+# What the score couldn't see
+
+<Unseen :step="$clicks" />
+
+<!--
+From the debrief after the sessions. None of this is a row in the council's rubric.
+- No map. Where am I, how do I get back, how do recording, participant and the rest link together? The hierarchy, project to prototype to tasks to runs, isn't visible. One designer's diagnosis: by hand, the structure follows from mapping use cases and user journeys. Here it looks like concepts were put on a board and allowed to spread. A feature list with no links between the features. Agents need hints to prioritise, or they prioritise everything.
+- Capture a moment: 0 of 6 runs, old and new. Pin moment looks like the step and doesn't finish it. This one is a real problem. It's pretty much the core job of the app, and that UX clearly needs work.
+- [click] Buttons with shortcut chips act at once. One designer: "Too instant and quick and what if I do something wrong?" They want choose, then confirm. Even when nothing can break, nobody should feel unsure.
+- Legends. The designers said the charts had none, so they couldn't tell a good result from a bad one. I don't fully agree: the legends are there, but they're not visible or distinct enough from the rest of the page, and the study didn't leave much time to take the information in.
+- All of this points to the app needing a better overall story of the research process, one the UI tells as you go. That's also something people would probably learn after using it once, and a single session can't show that.
+- What's overbuilt? One designer answered "The whole application": decoration and colour without logic, icon buttons with shortcut chips.
+- What worked: the replay with cursor, timeline and success markers, and the transcript, "really, really good".
+-->
+
+---
+class: hc
+part: Results
+clicks: 1
+---
+
+# Start from the work
+
+<StartHere :step="$clicks" />
+
+<!--
+The designers' recipe for next time.
+- Record a session where a researcher narrates their own customer-research workflow. That gives the order, the transitions and what they value. Hand it to the agent as the critical paths that must be easy, and take the next usability-test tasks from the same recording.
+- [click] Give agents a base: a design system with styles, components and layout rules. Without it you get the median of every reference on the internet. And fixing basics late is harder than getting them right at the start, because you first undo what's built.
+- A colleague has a beta design system built for agents, and its instructions say: don't invent, ask what it should be. Worth trying.
 -->
 
 ---
@@ -556,7 +620,8 @@ Score on the y axis, money on the x axis. Mean of both members, real spend by ro
 - [click] Now the blind rounds. They sit at 8.67, on later and better builds. So anything above that line can't be real. I've shaded it: memory, not design. And blind, the rate is +0.02 per $100.
 - [click] So my sweet spot is rounds 4 to 10, about $230 to $540. Round 4 gives the cheap wins, and by round 10 the curve meets the level it ended on.
 - Be straight about the limit. Scores before round 19 weren't blind, so round 4 and round 10 are upper bounds. Blind rescoring of those two builds would settle it. The calibration councils cost about $10 a run, so that's cheap.
-- Stopping at round 10 has a cost the score can't see: round 11 removed a 5-second stall and round 13 stopped a written note being lost. Those are real fixes. The designer study should say whether the late rounds were worth it.
+- Stopping at round 10 has a cost the score can't see: round 11 removed a 5-second stall and round 13 stopped a written note being lost. Those are real fixes.
+- The designer study answers the rest: people ranked round 10 above the final build in 13 of 18 rankings. So the late rounds weren't worth it for how the screens look. Keep the fixes, not the polish.
 -->
 
 ---
@@ -588,7 +653,7 @@ clicks: 3
 <!--
 Same hill as the start. The fog closes in, because this is where the run left us: flat at 8.68, and unable to see what's around us. Three explanations fit, and the data can't separate them.
 - [click] A local peak. The rulings fenced the climb: the fixed Portal UI look, one search box, the Reader as an opt-in. In round 18 Opus said of the distance from pin to dock: "That's the price of the ruling, and I have no design that beats it." The big-moves workshop in round 16 was an attempt to jump off, and no jump shows in the scores.
-- [click] Noise. A blind round added about +0.01, and repeat scores of one build differ by about 0.1. We could still be climbing without being able to see it.
+- [click] Noise. Scoring the same build twice can give results 0.1 apart, and each blind round added only about 0.01. The app could still be improving, just by too little for the scores to show.
 - [click] The top of the scale. The brief calls 10 reference-quality work, and the frozen rival scores stop at 9.0. A strict blind reviewer may simply not go much above this for any real product.
 - More rounds of the same loop won't tell these apart. That's the real finding: the method can't report what stopped it.
 -->
@@ -604,8 +669,9 @@ clicks: 1
 <Bloat :step="$clicks" />
 
 <!--
-- The brief says "Prefer removing things." The result is +17,344 and −4,028 in web/src, plus over 23,000 lines of tests by round 22.
+- The brief says "Prefer removing things." The result is +17,344 and −4,028 in web/src.
 - Score loops reward adding: a missing feature is easy to see, and an unneeded one isn't.
+- The designers saw it too. Asked what was overbuilt, one answered "The whole application": decoration, colour without logic, icon buttons with shortcut chips.
 - [click] High findings in diff review rose late. The review tool changed too, so this isn't a clean trend, but it's a reason to stop.
 -->
 
@@ -636,7 +702,28 @@ clicks: 2
 <!--
 - Blind from round 1 and freeze rival scores in the first round.
 - [click] Lanes with file owners. Score the same build twice before you start, so you know your noise.
-- [click] Agree a stop rule up front. I'd use three flat rounds. And end with people.
+- [click] Agree a stop rule up front. I'd use three flat rounds. The study says round 10 was enough.
+- And people at both ends, not in the middle: a walkthrough and a design system before round 1, a designer study after. The next slide is what that loop looks like.
+-->
+
+---
+class: hc
+part: Verdict
+clicks: 2
+---
+
+# People set the scale, agents climb
+
+<PeopleLoop :step="$clicks" />
+
+<!--
+This is a bet, not a result. Nothing on this slide has been run yet. The loop stays as automated as it was. What changes is what goes in.
+- This climb started from one designer's tweet saying the UI wasn't good, and a feature list. Now there's real user feedback: ten failures from the study, most with session evidence behind them. Capturing a moment failed 0 of 6 in both builds. Run cards look clickable and don't open. "Draft" means two things. Setup hides what failed. The Tasks list lost its outcome bars. Chart legends nobody noticed. Icons and shortcut chips where people wanted labels. No information architecture people can build a model of. No layout rules. One person never found search.
+- That feedback goes two places. It's the council's brief: specific failures with a place in the app, not "make it better". And it's the score sheet. The council doesn't invent its own rubric. The rows come from what people struggled with and valued: can a first-time user capture a moment, does every chart read at a glance, can you always answer "where am I".
+- [click] Then the council climbs on its own, as before. No people inside the loop. The bet is a few rounds, not 23, because it's climbing the right hill.
+- Why I think so: in the debrief a designer said one design-critique round gives the big jump, and then the margin shrinks. They also said a loop based on precise user feedback could give much more interesting results than one started from a tweet. And the cost chart already showed the early rounds pay best.
+- [click] People come back once, at the end, like this study. That's the check, not a step in the loop.
+- That's the next real loop, and it climbs. The last slide is the one that goes down.
 -->
 
 ---
@@ -648,8 +735,8 @@ clicks: 2
 <NextHill :step="$clicks" />
 
 <!--
-- The analysis suggested a second climb with the opposite goal.
+- The loop on the last slide climbs. The analysis suggested a second climb with the opposite goal, and the two fit together as one plan.
 - [click] Remove code. The bars are a sketch, not data. This is the answer to the fog: small steps can't get you off a peak, so you change the start or the rules. This climb changes the rule.
-- [click] The UI score becomes a floor of about 8.6, not a target. A score works better as a guard rail.
+- [click] The floor. The UI score stays at about 8.6, not a target. And now the study's tasks join it: removing code mustn't break anything people could already do. A score works better as a guard rail, and so do people.
 - Questions.
 -->
